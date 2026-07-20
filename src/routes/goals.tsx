@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Sparkles } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
+import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { goals } from "@/lib/nova-data";
+import { useCurrency } from "@/lib/currency";
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -14,6 +16,7 @@ export const Route = createFileRoute("/goals")({
 });
 
 function GoalsPage() {
+  const { format } = useCurrency();
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target, 0);
   const overall = totalSaved / totalTarget;
@@ -24,13 +27,16 @@ function GoalsPage() {
         subtitle="Savings"
         title="Goals"
         right={
-          <button
-            className="grid h-10 w-10 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
-            style={{ background: "var(--gradient-primary)" }}
-            aria-label="Add goal"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-          </button>
+          <div className="flex items-center gap-2">
+            <CurrencyPicker />
+            <button
+              className="grid h-10 w-10 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
+              style={{ background: "var(--gradient-primary)" }}
+              aria-label="Add goal"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2.5} />
+            </button>
+          </div>
         }
       />
 
@@ -44,12 +50,8 @@ function GoalsPage() {
               <p className="text-xs uppercase tracking-widest text-muted-foreground">
                 Total saved
               </p>
-              <p className="mt-1 text-3xl font-semibold tracking-tight">
-                ${totalSaved.toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                of ${totalTarget.toLocaleString()} goal
-              </p>
+              <p className="mt-1 text-3xl font-semibold tracking-tight">{format(totalSaved)}</p>
+              <p className="text-xs text-muted-foreground">of {format(totalTarget)} goal</p>
             </div>
             <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
               <Sparkles className="h-3 w-3" /> On track
@@ -81,10 +83,8 @@ function GoalsPage() {
                   <p className="truncate text-xs text-muted-foreground">Target · {g.eta}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-sm font-semibold">${g.saved.toLocaleString()}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    of ${g.target.toLocaleString()}
-                  </p>
+                  <p className="text-sm font-semibold">{format(g.saved)}</p>
+                  <p className="text-[11px] text-muted-foreground">of {format(g.target)}</p>
                 </div>
               </div>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
@@ -95,7 +95,7 @@ function GoalsPage() {
               </div>
               <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>{Math.round(pct * 100)}% complete</span>
-                <span>${(g.target - g.saved).toLocaleString()} to go</span>
+                <span>{format(g.target - g.saved)} to go</span>
               </div>
             </article>
           );

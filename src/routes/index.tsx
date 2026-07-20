@@ -1,13 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, ArrowDownRight, Bell, Plus, Sparkles } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Plus, Sparkles } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import {
-  financialScore,
-  categoryOf,
-  formatMoney,
-  spendingByDay,
-} from "@/lib/nova-data";
+import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
+import { financialScore, categoryOf, spendingByDay } from "@/lib/nova-data";
 import { useNova, monthlyTotals, totalBalance, formatTxDate } from "@/lib/nova-store";
+import { useCurrency } from "@/lib/currency";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -15,6 +12,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { state } = useNova();
+  const { format } = useCurrency();
   const balance = totalBalance(state.accounts);
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(state.transactions);
   const primaryAccount = state.accounts[0];
@@ -26,14 +24,7 @@ function Home() {
       <PageHeader
         subtitle="Good morning"
         title="Alex Morgan"
-        right={
-          <button
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-          </button>
-        }
+        right={<CurrencyPicker variant="chip" />}
       />
 
       <section className="px-5">
@@ -70,7 +61,7 @@ function Home() {
           <div className="mb-3 flex items-end justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Spent</p>
-              <p className="text-2xl font-semibold tracking-tight">$593.20</p>
+              <p className="text-2xl font-semibold tracking-tight">{format(593.2)}</p>
             </div>
             <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
               −12% vs last
@@ -132,7 +123,7 @@ function Home() {
                     positive ? "text-primary" : "text-foreground"
                   }`}
                 >
-                  {formatMoney(t.amount)}
+                  {format(t.amount)}
                 </span>
               </li>
             );
@@ -221,6 +212,7 @@ function BalanceCard({
   brand: string;
   gradient: string;
 }) {
+  const { format } = useCurrency();
   return (
     <div
       className="relative overflow-hidden rounded-3xl border border-white/10 p-5 text-white shadow-[var(--shadow-elevated)]"
@@ -233,18 +225,16 @@ function BalanceCard({
           {brand}
         </span>
       </div>
-      <p className="mt-2 text-4xl font-semibold tracking-tight">
-        ${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-      </p>
+      <p className="mt-2 text-4xl font-semibold tracking-tight">{format(balance)}</p>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <MiniStat
           label="Income"
-          value={`+$${income.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+          value={format(income, { signed: true })}
           tone="up"
         />
         <MiniStat
           label="Expenses"
-          value={`−$${expenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+          value={format(-expenses)}
           tone="down"
         />
       </div>
