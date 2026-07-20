@@ -1,10 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Wallet, Plus, BarChart3, Target, Settings as SettingsIcon } from "lucide-react";
+import { Home, Wallet, Plus, Sparkles, Target, Settings as SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
-  to: "/" | "/wallet" | "/add" | "/stats" | "/goals" | "/settings";
+  to: "/" | "/wallet" | "/add" | "/insights" | "/goals" | "/settings" | "/calendar" | "/stats";
   label: string;
   icon: typeof Home;
   primary?: boolean;
@@ -14,7 +14,7 @@ const tabs: Tab[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/wallet", label: "Wallet", icon: Wallet },
   { to: "/add", label: "Add", icon: Plus, primary: true },
-  { to: "/stats", label: "Stats", icon: BarChart3 },
+  { to: "/insights", label: "Insights", icon: Sparkles },
   { to: "/goals", label: "Goals", icon: Target },
 ];
 

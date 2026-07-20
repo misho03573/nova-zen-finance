@@ -14,6 +14,7 @@ import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -42,6 +43,11 @@ const GoalsRoute = GoalsRouteImport.update({
   path: '/goals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AddRoute = AddRouteImport.update({
   id: '/add',
   path: '/add',
@@ -56,6 +62,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
   '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
   '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
   '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
@@ -86,17 +95,27 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/add'
+    | '/calendar'
     | '/goals'
     | '/insights'
     | '/settings'
     | '/stats'
     | '/wallet'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add' | '/goals' | '/insights' | '/settings' | '/stats' | '/wallet'
+  to:
+    | '/'
+    | '/add'
+    | '/calendar'
+    | '/goals'
+    | '/insights'
+    | '/settings'
+    | '/stats'
+    | '/wallet'
   id:
     | '__root__'
     | '/'
     | '/add'
+    | '/calendar'
     | '/goals'
     | '/insights'
     | '/settings'
@@ -107,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddRoute: typeof AddRoute
+  CalendarRoute: typeof CalendarRoute
   GoalsRoute: typeof GoalsRoute
   InsightsRoute: typeof InsightsRoute
   SettingsRoute: typeof SettingsRoute
@@ -151,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GoalsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/add': {
       id: '/add'
       path: '/add'
@@ -171,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddRoute: AddRoute,
+  CalendarRoute: CalendarRoute,
   GoalsRoute: GoalsRoute,
   InsightsRoute: InsightsRoute,
   SettingsRoute: SettingsRoute,
