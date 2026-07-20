@@ -9,6 +9,10 @@ import {
   Zap,
   Briefcase,
   Gift,
+  Landmark,
+  Repeat,
+  Shield,
+  Droplet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,6 +34,10 @@ export const categories: Category[] = [
   { id: "bills", name: "Bills", icon: Zap, color: "oklch(0.82 0.17 80)" },
   { id: "salary", name: "Salary", icon: Briefcase, color: "oklch(0.82 0.18 155)" },
   { id: "gift", name: "Gift", icon: Gift, color: "oklch(0.75 0.18 15)" },
+  { id: "loan", name: "Loan", icon: Landmark, color: "oklch(0.66 0.16 20)" },
+  { id: "subscription", name: "Subs", icon: Repeat, color: "oklch(0.7 0.16 280)" },
+  { id: "insurance", name: "Insurance", icon: Shield, color: "oklch(0.72 0.14 140)" },
+  { id: "utilities", name: "Utilities", icon: Droplet, color: "oklch(0.72 0.15 210)" },
 ];
 
 export type Transaction = {
