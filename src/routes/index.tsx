@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
+import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
 import { financialScore, categoryOf } from "@/lib/nova-data";
 import {
   useNova,
@@ -53,13 +54,13 @@ function Home() {
             <Link
               to="/calendar"
               aria-label="Calendar"
-              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+              className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur transition-colors hover:bg-card"
             >
               <CalendarDays className="h-4 w-4" />
             </Link>
             <Link
               to="/settings"
-              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+              className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur transition-colors hover:bg-card"
               aria-label="Settings"
             >
               <SettingsIcon className="h-4 w-4" />
@@ -68,11 +69,11 @@ function Home() {
         }
       />
 
-      <section className="px-5">
+      <section className="animate-rise-in px-5" style={{ animationDelay: "40ms" }}>
         <ScoreCard score={financialScore} />
       </section>
 
-      <section className="mt-6 px-5">
+      <section className="animate-rise-in mt-6 px-5" style={{ animationDelay: "120ms" }}>
         <NetWorthCard
           netWorth={netWorth}
           income={monthlyIncome}
@@ -83,7 +84,7 @@ function Home() {
         />
       </section>
 
-      <section className="mt-6 px-5">
+      <section className="animate-rise-in mt-6 px-5" style={{ animationDelay: "200ms" }}>
         <div className="grid grid-cols-4 gap-3">
           <QuickAction icon={<Plus className="h-4 w-4" />} label="Add" to="/add" primary />
           <QuickAction icon={<ArrowUpRight className="h-4 w-4" />} label="Send" to="/wallet" />
@@ -92,7 +93,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="mt-6 px-5">
+      <section className="animate-rise-in mt-6 px-5" style={{ animationDelay: "260ms" }}>
         <div className="grid grid-cols-2 gap-3">
           <MiniCard
             icon={<PiggyBank className="h-4 w-4" />}
@@ -109,7 +110,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="mt-8 px-5">
+      <section className="animate-rise-in mt-8 px-5" style={{ animationDelay: "320ms" }}>
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-foreground">This week</h2>
           <Link to="/stats" className="text-xs text-muted-foreground hover:text-foreground">
@@ -120,24 +121,29 @@ function Home() {
           <div className="mb-3 flex items-end justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Spent</p>
-              <p className="text-2xl font-semibold tracking-tight">{format(spentWeek)}</p>
+              <AnimatedNumber
+                value={spentWeek}
+                format={(n) => format(n)}
+                className="text-2xl font-semibold tracking-tight"
+              />
             </div>
             <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
               7 days
             </span>
           </div>
           <div className="flex h-24 items-end gap-2">
-            {week.map((d) => {
+            {week.map((d, i) => {
               const max = Math.max(1, ...week.map((x) => x.expense));
               const h = Math.max(6, (d.expense / max) * 100);
               return (
                 <div key={d.m} className="flex flex-1 flex-col items-center gap-1.5">
                   <div
-                    className="w-full rounded-md transition-all"
+                    className="animate-bar-grow w-full rounded-md"
                     style={{
                       height: `${h}%`,
                       background: "var(--gradient-primary)",
                       opacity: 0.85,
+                      animationDelay: `${360 + i * 60}ms`,
                     }}
                   />
                   <span className="text-[10px] text-muted-foreground">{d.m}</span>
@@ -148,7 +154,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="mt-8 px-5">
+      <section className="animate-rise-in mt-8 px-5" style={{ animationDelay: "420ms" }}>
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-foreground">Upcoming bills</h2>
           <span className="text-xs text-muted-foreground">Next {upcoming.length}</span>
@@ -159,7 +165,7 @@ function Home() {
           </div>
         ) : (
           <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
-            {upcoming.map((r) => {
+            {upcoming.map((r, i) => {
               const cat = categoryOf(r.category);
               const Icon = cat.icon;
               const days = Math.max(
@@ -167,7 +173,11 @@ function Home() {
                 Math.ceil((+new Date(r.nextDate) - Date.now()) / (24 * 3600 * 1000)),
               );
               return (
-                <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                <li
+                  key={r.id}
+                  className="animate-rise-in flex items-center gap-3 px-4 py-3"
+                  style={{ animationDelay: `${480 + i * 60}ms` }}
+                >
                   <div
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                     style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
@@ -189,7 +199,7 @@ function Home() {
         )}
       </section>
 
-      <section className="mt-8 px-5">
+      <section className="animate-rise-in mt-8 px-5" style={{ animationDelay: "520ms" }}>
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-foreground">Recent</h2>
           <Link to="/wallet" className="text-xs text-muted-foreground hover:text-foreground">
@@ -197,14 +207,15 @@ function Home() {
           </Link>
         </div>
         <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
-          {recent.map((t) => {
+          {recent.map((t, i) => {
             const cat = categoryOf(t.category);
             const Icon = cat.icon;
             const positive = t.amount > 0;
             return (
               <li
                 key={t.id}
-                className="flex animate-fade-in items-center gap-3 px-4 py-3"
+                className="animate-rise-in flex items-center gap-3 px-4 py-3"
+                style={{ animationDelay: `${580 + i * 60}ms` }}
               >
                 <div
                   className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
@@ -267,6 +278,10 @@ function ScoreCard({ score }: { score: number }) {
       className="relative overflow-hidden rounded-3xl border border-border p-5 shadow-[var(--shadow-card)]"
       style={{ background: "var(--gradient-card)" }}
     >
+      <div
+        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-50 blur-3xl"
+        style={{ background: "var(--gradient-primary)" }}
+      />
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4">
         <div className="relative h-[110px] w-[110px] shrink-0">
           <svg viewBox="0 0 110 110" className="h-full w-full -rotate-90">
@@ -291,7 +306,12 @@ function ScoreCard({ score }: { score: number }) {
           </svg>
           <div className="absolute inset-0 grid place-items-center">
             <div className="text-center">
-              <p className="text-2xl font-semibold tracking-tight">{score}</p>
+              <AnimatedNumber
+                value={score}
+                format={(n) => Math.round(n).toString()}
+                duration={900}
+                className="text-2xl font-semibold tracking-tight"
+              />
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">score</p>
             </div>
           </div>
@@ -340,17 +360,22 @@ function NetWorthCard({
   const { format } = useCurrency();
   return (
     <div
-      className="relative overflow-hidden rounded-3xl border border-white/10 p-5 text-white shadow-[var(--shadow-elevated)]"
+      className="press relative overflow-hidden rounded-3xl border border-white/10 p-5 text-white shadow-[var(--shadow-elevated)]"
       style={{ background: gradient }}
     >
-      <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 animate-float-slow rounded-full bg-white/10 blur-3xl" />
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-widest text-white/70">Net worth</p>
         <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/80">
           {brand}
         </span>
       </div>
-      <p className="mt-2 text-4xl font-semibold tracking-tight">{format(netWorth)}</p>
+      <AnimatedNumber
+        value={netWorth}
+        format={(n) => format(n)}
+        duration={900}
+        className="mt-2 block text-4xl font-semibold tracking-tight"
+      />
       <p className="mt-1 text-[11px] uppercase tracking-widest text-white/60">
         Savings rate · {Math.round(rate * 100)}%
       </p>
@@ -398,9 +423,9 @@ function QuickAction({
   primary?: boolean;
 }) {
   return (
-    <Link to={to} className="flex flex-col items-center gap-1.5">
+    <Link to={to} className="press flex flex-col items-center gap-1.5">
       <span
-        className="grid h-12 w-12 place-items-center rounded-2xl border border-border shadow-[var(--shadow-card)]"
+        className="grid h-12 w-12 place-items-center rounded-2xl border border-border shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5"
         style={
           primary
             ? { background: "var(--gradient-primary)", color: "var(--primary-foreground)" }
