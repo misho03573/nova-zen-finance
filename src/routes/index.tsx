@@ -2,22 +2,25 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, ArrowDownRight, Bell, Plus, Sparkles } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import {
-  balance,
-  cards,
   financialScore,
-  monthlyExpenses,
-  monthlyIncome,
-  transactions,
   categoryOf,
   formatMoney,
   spendingByDay,
 } from "@/lib/nova-data";
+import { useNova, monthlyTotals, totalBalance, formatTxDate } from "@/lib/nova-store";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
 function Home() {
+  const { state } = useNova();
+  const balance = totalBalance(state.accounts);
+  const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(state.transactions);
+  const primaryAccount = state.accounts[0];
+  const recent = [...state.transactions]
+    .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+    .slice(0, 5);
   return (
     <AppShell>
       <PageHeader
@@ -38,7 +41,13 @@ function Home() {
       </section>
 
       <section className="mt-6 px-5">
-        <BalanceCard balance={balance} income={monthlyIncome} expenses={monthlyExpenses} />
+        <BalanceCard
+          balance={balance}
+          income={monthlyIncome}
+          expenses={monthlyExpenses}
+          brand={primaryAccount?.brand ?? "Visa"}
+          gradient={primaryAccount?.gradient ?? "var(--gradient-wallet)"}
+        />
       </section>
 
       <section className="mt-6 px-5">
@@ -97,12 +106,15 @@ function Home() {
           </Link>
         </div>
         <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
-          {transactions.slice(0, 5).map((t) => {
+          {recent.map((t) => {
             const cat = categoryOf(t.category);
             const Icon = cat.icon;
             const positive = t.amount > 0;
             return (
-              <li key={t.id} className="flex items-center gap-3 px-4 py-3">
+              <li
+                key={t.id}
+                className="flex animate-fade-in items-center gap-3 px-4 py-3"
+              >
                 <div
                   className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                   style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
@@ -111,7 +123,9 @@ function Home() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{t.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">{t.date}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {formatTxDate(t.date)}
+                  </p>
                 </div>
                 <span
                   className={`shrink-0 text-sm font-semibold ${
@@ -198,29 +212,36 @@ function BalanceCard({
   balance,
   income,
   expenses,
+  brand,
+  gradient,
 }: {
   balance: number;
   income: number;
   expenses: number;
+  brand: string;
+  gradient: string;
 }) {
-  const primary = cards[0];
   return (
     <div
       className="relative overflow-hidden rounded-3xl border border-white/10 p-5 text-white shadow-[var(--shadow-elevated)]"
-      style={{ background: primary.gradient }}
+      style={{ background: gradient }}
     >
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-widest text-white/70">Total balance</p>
         <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/80">
-          {primary.brand}
+          {brand}
         </span>
       </div>
       <p className="mt-2 text-4xl font-semibold tracking-tight">
         ${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
       </p>
       <div className="mt-5 grid grid-cols-2 gap-3">
-        <MiniStat label="Income" value={`+$${income.toLocaleString()}`} tone="up" />
+        <MiniStat
+          label="Income"
+          value={`+$${income.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+          tone="up"
+        />
         <MiniStat
           label="Expenses"
           value={`−$${expenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}

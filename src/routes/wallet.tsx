@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, Plus, CreditCard } from "lucide-react";
+import { Search, Plus, CreditCard, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import { cards, transactions, categoryOf, formatMoney } from "@/lib/nova-data";
+import { categoryOf, formatMoney } from "@/lib/nova-data";
+import { useNova, groupByBucket, formatTxDate } from "@/lib/nova-store";
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({
@@ -14,6 +15,8 @@ export const Route = createFileRoute("/wallet")({
 });
 
 function WalletPage() {
+  const { state, deleteTransaction } = useNova();
+  const groups = groupByBucket(state.transactions);
   return (
     <AppShell>
       <PageHeader
@@ -31,7 +34,7 @@ function WalletPage() {
 
       <section className="px-5">
         <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {cards.map((c) => (
+          {state.accounts.map((c) => (
             <article
               key={c.id}
               className="relative aspect-[1.6/1] min-w-[280px] snap-center overflow-hidden rounded-3xl border border-white/10 p-5 text-white shadow-[var(--shadow-elevated)]"
@@ -76,38 +79,73 @@ function WalletPage() {
         </div>
       </section>
 
-      <section className="mt-8 px-5">
-        <h2 className="mb-3 text-sm font-semibold">All transactions</h2>
-        <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
-          {transactions.map((t) => {
-            const cat = categoryOf(t.category);
-            const Icon = cat.icon;
-            const positive = t.amount > 0;
-            return (
-              <li key={t.id} className="flex items-center gap-3 px-4 py-3">
-                <div
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
-                  style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
-                >
-                  <Icon className="h-4 w-4" style={{ color: cat.color }} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{t.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {cat.name} · {t.date}
-                  </p>
-                </div>
-                <span
-                  className={`shrink-0 text-sm font-semibold ${
-                    positive ? "text-primary" : "text-foreground"
-                  }`}
-                >
-                  {formatMoney(t.amount)}
+      <section className="mt-8 space-y-5 px-5">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold">Transactions</h2>
+          <span className="text-xs text-muted-foreground">
+            {state.transactions.length} total
+          </span>
+        </div>
+        {groups.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
+            No transactions yet. Tap + to add one.
+          </div>
+        ) : (
+          groups.map((group) => (
+            <div key={group.bucket} className="animate-fade-in">
+              <div className="mb-2 flex items-baseline justify-between px-1">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  {group.bucket}
+                </h3>
+                <span className="text-[11px] text-muted-foreground">
+                  {group.items.length} item{group.items.length === 1 ? "" : "s"}
                 </span>
-              </li>
-            );
-          })}
-        </ul>
+              </div>
+              <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
+                {group.items.map((t) => {
+                  const cat = categoryOf(t.category);
+                  const Icon = cat.icon;
+                  const positive = t.amount > 0;
+                  return (
+                    <li
+                      key={t.id}
+                      className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-card"
+                    >
+                      <div
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                        style={{
+                          backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)`,
+                        }}
+                      >
+                        <Icon className="h-4 w-4" style={{ color: cat.color }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{t.title}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {cat.name} · {formatTxDate(t.date)}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 text-sm font-semibold ${
+                          positive ? "text-primary" : "text-foreground"
+                        }`}
+                      >
+                        {formatMoney(t.amount)}
+                      </span>
+                      <button
+                        onClick={() => deleteTransaction(t.id)}
+                        aria-label="Delete transaction"
+                        className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))
+        )}
       </section>
     </AppShell>
   );
