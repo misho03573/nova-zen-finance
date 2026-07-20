@@ -1,9 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, ArrowDownRight, Plus, Sparkles } from "lucide-react";
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  Plus,
+  Sparkles,
+  Settings as SettingsIcon,
+  CalendarClock,
+  PiggyBank,
+  TrendingUp,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
-import { financialScore, categoryOf, spendingByDay } from "@/lib/nova-data";
-import { useNova, monthlyTotals, totalBalance, formatTxDate } from "@/lib/nova-store";
+import { financialScore, categoryOf } from "@/lib/nova-data";
+import {
+  useNova,
+  monthlyTotals,
+  totalBalance,
+  formatTxDate,
+  savingsRate,
+  cashflowByRange,
+} from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 
 export const Route = createFileRoute("/")({
@@ -13,18 +29,35 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { state } = useNova();
   const { format } = useCurrency();
-  const balance = totalBalance(state.accounts);
+  const netWorth = totalBalance(state.accounts);
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(state.transactions);
-  const primaryAccount = state.accounts[0];
+  const rate = savingsRate(monthlyIncome, monthlyExpenses);
+  const week = cashflowByRange(state.transactions, "week");
+  const spentWeek = week.reduce((s, d) => s + d.expense, 0);
+  const upcoming = [...state.recurring]
+    .sort((a, b) => +new Date(a.nextDate) - +new Date(b.nextDate))
+    .slice(0, 3);
   const recent = [...state.transactions]
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-    .slice(0, 5);
+    .slice(0, 4);
+  const primaryAccount = state.accounts[0];
   return (
     <AppShell>
       <PageHeader
         subtitle="Good morning"
         title="Alex Morgan"
-        right={<CurrencyPicker variant="chip" />}
+        right={
+          <div className="flex items-center gap-2">
+            <CurrencyPicker variant="chip" />
+            <Link
+              to="/settings"
+              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+              aria-label="Settings"
+            >
+              <SettingsIcon className="h-4 w-4" />
+            </Link>
+          </div>
+        }
       />
 
       <section className="px-5">
@@ -32,10 +65,11 @@ function Home() {
       </section>
 
       <section className="mt-6 px-5">
-        <BalanceCard
-          balance={balance}
+        <NetWorthCard
+          netWorth={netWorth}
           income={monthlyIncome}
           expenses={monthlyExpenses}
+          rate={rate}
           brand={primaryAccount?.brand ?? "Visa"}
           gradient={primaryAccount?.gradient ?? "var(--gradient-wallet)"}
         />
@@ -50,6 +84,23 @@ function Home() {
         </div>
       </section>
 
+      <section className="mt-6 px-5">
+        <div className="grid grid-cols-2 gap-3">
+          <MiniCard
+            icon={<PiggyBank className="h-4 w-4" />}
+            label="Savings rate"
+            value={`${Math.round(rate * 100)}%`}
+            hint={rate >= 0.2 ? "Excellent" : rate >= 0.1 ? "On track" : "Push harder"}
+          />
+          <MiniCard
+            icon={<TrendingUp className="h-4 w-4" />}
+            label="Income vs Expenses"
+            value={format(monthlyIncome - monthlyExpenses, { signed: true })}
+            hint={`${format(monthlyIncome)} · −${format(monthlyExpenses).replace("−", "")}`}
+          />
+        </div>
+      </section>
+
       <section className="mt-8 px-5">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-foreground">This week</h2>
@@ -61,32 +112,73 @@ function Home() {
           <div className="mb-3 flex items-end justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Spent</p>
-              <p className="text-2xl font-semibold tracking-tight">{format(593.2)}</p>
+              <p className="text-2xl font-semibold tracking-tight">{format(spentWeek)}</p>
             </div>
             <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
-              −12% vs last
+              7 days
             </span>
           </div>
           <div className="flex h-24 items-end gap-2">
-            {spendingByDay.map((d) => {
-              const max = Math.max(...spendingByDay.map((x) => x.value));
-              const h = Math.max(8, (d.value / max) * 100);
+            {week.map((d) => {
+              const max = Math.max(1, ...week.map((x) => x.expense));
+              const h = Math.max(6, (d.expense / max) * 100);
               return (
-                <div key={d.day} className="flex flex-1 flex-col items-center gap-1.5">
+                <div key={d.m} className="flex flex-1 flex-col items-center gap-1.5">
                   <div
-                    className="w-full rounded-md"
+                    className="w-full rounded-md transition-all"
                     style={{
                       height: `${h}%`,
                       background: "var(--gradient-primary)",
                       opacity: 0.85,
                     }}
                   />
-                  <span className="text-[10px] text-muted-foreground">{d.day}</span>
+                  <span className="text-[10px] text-muted-foreground">{d.m}</span>
                 </div>
               );
             })}
           </div>
         </div>
+      </section>
+
+      <section className="mt-8 px-5">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Upcoming bills</h2>
+          <span className="text-xs text-muted-foreground">Next {upcoming.length}</span>
+        </div>
+        {upcoming.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
+            No upcoming bills.
+          </div>
+        ) : (
+          <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
+            {upcoming.map((r) => {
+              const cat = categoryOf(r.category);
+              const Icon = cat.icon;
+              const days = Math.max(
+                0,
+                Math.ceil((+new Date(r.nextDate) - Date.now()) / (24 * 3600 * 1000)),
+              );
+              return (
+                <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                  <div
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                    style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
+                  >
+                    <Icon className="h-4 w-4" style={{ color: cat.color }} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{r.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      <CalendarClock className="mr-1 inline h-3 w-3" />
+                      In {days} day{days === 1 ? "" : "s"} · {r.frequency}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold">{format(r.amount)}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section className="mt-8 px-5">
@@ -134,6 +226,28 @@ function Home() {
   );
 }
 
+function MiniCard({
+  icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+        <span className="text-primary">{icon}</span> {label}
+      </div>
+      <p className="mt-1 text-xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
 function ScoreCard({ score }: { score: number }) {
   const max = 900;
   const pct = Math.min(1, score / max);
@@ -158,6 +272,7 @@ function ScoreCard({ score }: { score: number }) {
               strokeLinecap="round"
               fill="none"
               strokeDasharray={`${dash} ${c}`}
+              className="transition-[stroke-dasharray] duration-700 ease-out"
             />
             <defs>
               <linearGradient id="novaScore" x1="0" y1="0" x2="1" y2="1">
@@ -199,16 +314,18 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-function BalanceCard({
-  balance,
+function NetWorthCard({
+  netWorth,
   income,
   expenses,
+  rate,
   brand,
   gradient,
 }: {
-  balance: number;
+  netWorth: number;
   income: number;
   expenses: number;
+  rate: number;
   brand: string;
   gradient: string;
 }) {
@@ -220,12 +337,15 @@ function BalanceCard({
     >
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium uppercase tracking-widest text-white/70">Total balance</p>
+        <p className="text-xs font-medium uppercase tracking-widest text-white/70">Net worth</p>
         <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/80">
           {brand}
         </span>
       </div>
-      <p className="mt-2 text-4xl font-semibold tracking-tight">{format(balance)}</p>
+      <p className="mt-2 text-4xl font-semibold tracking-tight">{format(netWorth)}</p>
+      <p className="mt-1 text-[11px] uppercase tracking-widest text-white/60">
+        Savings rate · {Math.round(rate * 100)}%
+      </p>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <MiniStat
           label="Income"
@@ -266,7 +386,7 @@ function QuickAction({
 }: {
   icon: React.ReactNode;
   label: string;
-  to: "/" | "/wallet" | "/add" | "/stats" | "/goals";
+  to: "/" | "/wallet" | "/add" | "/stats" | "/goals" | "/settings";
   primary?: boolean;
 }) {
   return (

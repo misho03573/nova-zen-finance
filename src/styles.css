@@ -63,7 +63,52 @@
 
 :root {
   --radius: 1.25rem;
-  /* NOVA dark theme (default) — inspired by Apple Wallet / Revolut */
+  /* NOVA light theme */
+  --background: oklch(0.985 0.005 250);
+  --foreground: oklch(0.18 0.02 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 265);
+  --primary: oklch(0.62 0.18 155);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --primary-glow: oklch(0.78 0.19 155);
+  --secondary: oklch(0.94 0.01 265);
+  --secondary-foreground: oklch(0.2 0.02 265);
+  --muted: oklch(0.94 0.01 265);
+  --muted-foreground: oklch(0.46 0.02 260);
+  --accent: oklch(0.68 0.19 30);
+  --accent-foreground: oklch(0.99 0.005 250);
+  --destructive: oklch(0.6 0.24 25);
+  --destructive-foreground: oklch(0.99 0.005 250);
+  --success: oklch(0.62 0.18 155);
+  --warning: oklch(0.75 0.18 80);
+  --info: oklch(0.6 0.15 240);
+  --border: oklch(0.18 0.02 265 / 10%);
+  --input: oklch(0.18 0.02 265 / 12%);
+  --ring: oklch(0.62 0.18 155);
+  --chart-1: oklch(0.62 0.18 155);
+  --chart-2: oklch(0.6 0.15 240);
+  --chart-3: oklch(0.75 0.18 80);
+  --chart-4: oklch(0.68 0.19 30);
+  --chart-5: oklch(0.6 0.2 300);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.66 0.18 155), oklch(0.62 0.15 200));
+  --gradient-card: linear-gradient(140deg, oklch(0.99 0.005 250), oklch(0.96 0.008 260));
+  --gradient-wallet: linear-gradient(135deg, oklch(0.32 0.06 280), oklch(0.22 0.05 260));
+  --gradient-accent: linear-gradient(135deg, oklch(0.7 0.19 30), oklch(0.68 0.2 350));
+  --gradient-hero: radial-gradient(circle at 20% 0%, oklch(0.82 0.12 155 / 40%), transparent 60%),
+    radial-gradient(circle at 90% 10%, oklch(0.78 0.15 240 / 25%), transparent 55%);
+
+  --shadow-card: 0 20px 40px -24px oklch(0.18 0.02 265 / 20%), 0 1px 0 0 oklch(1 0 0 / 60%) inset;
+  --shadow-glow: 0 10px 40px -10px oklch(0.62 0.18 155 / 45%);
+  --shadow-elevated: 0 30px 60px -24px oklch(0.18 0.02 265 / 30%);
+
+  --transition-smooth: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark {
+  /* NOVA dark theme — Apple Wallet / Revolut inspired */
   --background: oklch(0.16 0.015 265);
   --foreground: oklch(0.98 0.005 250);
   --card: oklch(0.21 0.02 265);
@@ -105,41 +150,6 @@
   --shadow-elevated: 0 30px 60px -20px oklch(0 0 0 / 70%);
 
   --transition-smooth: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.dark {
-  --background: oklch(0.16 0.015 265);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
 @layer base {

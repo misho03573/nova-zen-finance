@@ -1,10 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Wallet, Plus, BarChart3, Target } from "lucide-react";
+import { Home, Wallet, Plus, BarChart3, Target, Settings as SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
-  to: "/" | "/wallet" | "/add" | "/stats" | "/goals";
+  to: "/" | "/wallet" | "/add" | "/stats" | "/goals" | "/settings";
   label: string;
   icon: typeof Home;
   primary?: boolean;
@@ -17,6 +17,18 @@ const tabs: Tab[] = [
   { to: "/stats", label: "Stats", icon: BarChart3 },
   { to: "/goals", label: "Goals", icon: Target },
 ];
+
+export function SettingsButton() {
+  return (
+    <Link
+      to="/settings"
+      className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
+      aria-label="Settings"
+    >
+      <SettingsIcon className="h-4 w-4" />
+    </Link>
+  );
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
