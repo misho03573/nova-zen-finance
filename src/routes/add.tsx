@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Check, X, Calendar as CalendarIcon, StickyNote, CreditCard } from "lucide-react";
+import { Check, X, Calendar as CalendarIcon, StickyNote, CreditCard, Repeat } from "lucide-react";
 import { format } from "date-fns";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { categories } from "@/lib/nova-data";
-import { useNova } from "@/lib/nova-store";
+import { useNova, type Frequency } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/add")({
 
 function AddPage() {
   const navigate = useNavigate();
-  const { state, addTransaction } = useNova();
+  const { state, addTransaction, addRecurring } = useNova();
   const { symbol, format: formatMoney } = useCurrency();
   const [type, setType] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("0");
@@ -31,6 +31,7 @@ function AddPage() {
   const [accountId, setAccountId] = useState(state.accounts[0]?.id ?? "");
   const [date, setDate] = useState<Date>(new Date());
   const [note, setNote] = useState("");
+  const [recurring, setRecurring] = useState<false | Frequency>(false);
 
   const numericAmount = useMemo(() => Number.parseFloat(amount) || 0, [amount]);
   const canSave = numericAmount > 0 && accountId;
@@ -55,6 +56,20 @@ function AddPage() {
       accountId,
       note: note.trim() || undefined,
     });
+    if (recurring) {
+      const next = new Date(date);
+      if (recurring === "weekly") next.setDate(next.getDate() + 7);
+      else if (recurring === "monthly") next.setMonth(next.getMonth() + 1);
+      else next.setFullYear(next.getFullYear() + 1);
+      addRecurring({
+        title: note.trim() || cat.name,
+        category,
+        amount: signed,
+        accountId,
+        frequency: recurring,
+        nextDate: next.toISOString(),
+      });
+    }
     toast.success(`${type === "expense" ? "Expense" : "Income"} added`, {
       description: `${formatMoney(signed)} · ${cat.name}`,
     });
@@ -214,6 +229,25 @@ function AddPage() {
             className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
           />
         </label>
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-4 py-3 text-sm">
+          <Repeat className="h-4 w-4 text-muted-foreground" />
+          <span className="flex-1">Recurring</span>
+          <div className="inline-flex rounded-full border border-border bg-background/60 p-0.5 text-[11px]">
+            {([false, "weekly", "monthly", "yearly"] as const).map((k) => (
+              <button
+                key={String(k)}
+                onClick={() => setRecurring(k)}
+                className={cn(
+                  "rounded-full px-2.5 py-1 capitalize transition-colors",
+                  recurring === k ? "text-primary-foreground" : "text-muted-foreground",
+                )}
+                style={recurring === k ? { background: "var(--gradient-primary)" } : undefined}
+              >
+                {k === false ? "Off" : k}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="mt-6 px-5">
