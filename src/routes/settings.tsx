@@ -11,6 +11,11 @@ import {
   Sun,
   Moon,
   Laptop,
+  Lock,
+  Cloud,
+  Upload,
+  Languages,
+  Sparkles,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -19,6 +24,16 @@ import { useTheme } from "@/lib/theme";
 import { useNova } from "@/lib/nova-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useRef, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -32,8 +47,11 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { state, setSettings, exportData } = useNova();
+  const { state, setSettings, exportData, importData } = useNova();
   const s = state.settings;
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pinOpen, setPinOpen] = useState(false);
+  const [pin, setPin] = useState("");
 
   const handleExport = () => {
     try {
@@ -53,11 +71,35 @@ function SettingsPage() {
   const handleReset = () => {
     if (!confirm("Reset all NOVA data? This can't be undone.")) return;
     try {
+      localStorage.removeItem("nova.store.v3");
       localStorage.removeItem("nova.store.v2");
       localStorage.removeItem("nova.store.v1");
       location.reload();
     } catch {}
   };
+
+  const handleRestore = async (f: File | null) => {
+    if (!f) return;
+    const text = await f.text();
+    const ok = importData(text);
+    if (ok) toast.success("Backup restored");
+    else toast.error("Invalid backup file");
+  };
+
+  const ACCENTS: { key: string; label: string; grad: string }[] = [
+    { key: "default", label: "Aurora", grad: "var(--gradient-primary)" },
+    { key: "sunset", label: "Sunset", grad: "linear-gradient(135deg, oklch(0.72 0.19 30), oklch(0.6 0.22 350))" },
+    { key: "ocean", label: "Ocean", grad: "linear-gradient(135deg, oklch(0.68 0.15 220), oklch(0.5 0.16 260))" },
+    { key: "matcha", label: "Matcha", grad: "linear-gradient(135deg, oklch(0.78 0.16 155), oklch(0.5 0.14 175))" },
+  ];
+
+  const LANGS = [
+    { code: "en", label: "English" },
+    { code: "bg", label: "Български" },
+    { code: "de", label: "Deutsch" },
+    { code: "fr", label: "Français" },
+    { code: "es", label: "Español" },
+  ];
 
   return (
     <AppShell>
@@ -103,20 +145,83 @@ function SettingsPage() {
           <Row icon={<Coins className="h-4 w-4" />} label="Currency">
             <CurrencyPicker variant="chip" />
           </Row>
+          <Row icon={<Sparkles className="h-4 w-4" />} label="Accent">
+            <div className="flex gap-1.5">
+              {ACCENTS.map((a) => (
+                <button
+                  key={a.key}
+                  onClick={() => { setSettings({ accent: a.key }); toast.success(`Accent · ${a.label}`); }}
+                  className={cn(
+                    "h-7 w-7 rounded-full border-2 transition-transform",
+                    (s.accent ?? "default") === a.key ? "border-foreground scale-110" : "border-transparent",
+                  )}
+                  style={{ background: a.grad }}
+                  aria-label={a.label}
+                />
+              ))}
+            </div>
+          </Row>
+          <Row icon={<Languages className="h-4 w-4" />} label="Language">
+            <select
+              value={s.language ?? "en"}
+              onChange={(e) => setSettings({ language: e.target.value })}
+              className="rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs"
+            >
+              {LANGS.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </Row>
         </Group>
 
         <Group title="Security">
-          <Row icon={<Fingerprint className="h-4 w-4" />} label="Biometric lock" description="Face ID / Touch ID">
+          <Row icon={<Fingerprint className="h-4 w-4" />} label="Face ID" description="Unlock with your face">
             <Switch
-              checked={s.biometric}
-              onCheckedChange={(v) => {
-                setSettings({ biometric: v });
-                toast.message(v ? "Biometric lock on" : "Biometric lock off");
-              }}
+              checked={!!s.faceId}
+              onCheckedChange={(v) => { setSettings({ faceId: v }); toast.message(v ? "Face ID on" : "Face ID off"); }}
             />
           </Row>
-          <Row icon={<ShieldCheck className="h-4 w-4" />} label="Privacy" description="Hide balances in previews">
-            <Switch checked={false} disabled />
+          <Row icon={<Fingerprint className="h-4 w-4" />} label="Touch ID" description="Fingerprint unlock">
+            <Switch
+              checked={!!s.touchId}
+              onCheckedChange={(v) => setSettings({ touchId: v })}
+            />
+          </Row>
+          <Row icon={<Lock className="h-4 w-4" />} label="PIN code" description={s.pinEnabled ? "6-digit PIN active" : "Set a 6-digit PIN"}>
+            <button
+              onClick={() => setPinOpen(true)}
+              className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
+            >
+              {s.pinEnabled ? "Change" : "Set"}
+            </button>
+          </Row>
+          <Row icon={<Lock className="h-4 w-4" />} label="Auto-lock" description="Lock when inactive">
+            <select
+              value={s.autoLockMinutes ?? 5}
+              onChange={(e) => setSettings({ autoLockMinutes: parseInt(e.target.value, 10) })}
+              className="rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs"
+            >
+              <option value={1}>1 min</option>
+              <option value={5}>5 min</option>
+              <option value={15}>15 min</option>
+              <option value={60}>1 hour</option>
+              <option value={0}>Never</option>
+            </select>
+          </Row>
+          <Row icon={<ShieldCheck className="h-4 w-4" />} label="Hide balances" description="Blur amounts on the home screen">
+            <Switch
+              checked={!!s.hideBalances}
+              onCheckedChange={(v) => setSettings({ hideBalances: v })}
+            />
+          </Row>
+        </Group>
+
+        <Group title="Sync">
+          <Row icon={<Cloud className="h-4 w-4" />} label="Cloud sync" description="Sync across devices (preview)">
+            <Switch
+              checked={!!s.cloudSync}
+              onCheckedChange={(v) => { setSettings({ cloudSync: v }); toast.message(v ? "Cloud sync coming soon" : "Cloud sync off"); }}
+            />
           </Row>
         </Group>
 
@@ -144,11 +249,31 @@ function SettingsPage() {
               <Download className="h-4 w-4" />
             </span>
             <span className="flex-1">
-              <span className="block text-sm font-semibold">Export data</span>
+              <span className="block text-sm font-semibold">Export / backup</span>
               <span className="block text-xs text-muted-foreground">Download JSON backup</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Upload className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">Restore backup</span>
+              <span className="block text-xs text-muted-foreground">Import a NOVA JSON file</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => handleRestore(e.target.files?.[0] ?? null)}
+          />
           <button
             onClick={handleReset}
             className="flex w-full items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-left text-sm text-destructive"
@@ -163,8 +288,48 @@ function SettingsPage() {
           </button>
         </Group>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground">NOVA · v1.0.0</p>
+        <p className="mt-6 text-center text-[11px] text-muted-foreground">NOVA · v0.5 Pro</p>
       </section>
+
+      <Dialog open={pinOpen} onOpenChange={setPinOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{s.pinEnabled ? "Change PIN" : "Set PIN"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label>6-digit PIN</Label>
+            <Input
+              type="password"
+              inputMode="numeric"
+              maxLength={6}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="••••••"
+              className="text-center text-2xl tracking-[0.6em]"
+            />
+            <Button
+              onClick={() => {
+                if (pin.length !== 6) { toast.error("Enter 6 digits"); return; }
+                setSettings({ pin, pinEnabled: true });
+                setPin("");
+                setPinOpen(false);
+                toast.success("PIN set");
+              }}
+              className="w-full"
+            >
+              Save PIN
+            </Button>
+            {s.pinEnabled && (
+              <button
+                onClick={() => { setSettings({ pinEnabled: false, pin: undefined }); setPinOpen(false); toast.message("PIN disabled"); }}
+                className="w-full text-xs text-muted-foreground"
+              >
+                Disable PIN
+              </button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
