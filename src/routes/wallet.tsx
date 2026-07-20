@@ -24,6 +24,7 @@ import {
   type AccountType,
   type Account,
 } from "@/lib/nova-store";
+import { parseSearchQuery } from "@/lib/insights";
 import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
@@ -64,15 +65,10 @@ function WalletPage() {
   const [showSearch, setShowSearch] = useState(false);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const match = parseSearchQuery(query);
     return state.transactions.filter((t) => {
       if (filterCategory && t.category !== filterCategory) return false;
-      if (!q) return true;
-      return (
-        t.title.toLowerCase().includes(q) ||
-        t.category.toLowerCase().includes(q) ||
-        (t.note ?? "").toLowerCase().includes(q)
-      );
+      return match(t);
     });
   }, [state.transactions, query, filterCategory]);
   const groups = groupByBucket(filtered);
@@ -125,7 +121,7 @@ function WalletPage() {
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search transactions"
+              placeholder="Try coffee, over 100, last month"
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
             {query ? (
