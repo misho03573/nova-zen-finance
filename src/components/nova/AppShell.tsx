@@ -3,13 +3,20 @@ import { Home, Wallet, Plus, BarChart3, Target } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-const tabs = [
+type Tab = {
+  to: "/" | "/wallet" | "/add" | "/stats" | "/goals";
+  label: string;
+  icon: typeof Home;
+  primary?: boolean;
+};
+
+const tabs: Tab[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/wallet", label: "Wallet", icon: Wallet },
   { to: "/add", label: "Add", icon: Plus, primary: true },
   { to: "/stats", label: "Stats", icon: BarChart3 },
   { to: "/goals", label: "Goals", icon: Target },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
