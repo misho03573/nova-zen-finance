@@ -6,6 +6,7 @@ import {
   Sparkles,
   Settings as SettingsIcon,
   CalendarClock,
+  CalendarDays,
   PiggyBank,
   TrendingUp,
 } from "lucide-react";
@@ -50,6 +51,13 @@ function Home() {
           <div className="flex items-center gap-2">
             <CurrencyPicker variant="chip" />
             <Link
+              to="/calendar"
+              aria-label="Calendar"
+              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+            >
+              <CalendarDays className="h-4 w-4" />
+            </Link>
+            <Link
               to="/settings"
               className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
               aria-label="Settings"
@@ -80,7 +88,7 @@ function Home() {
           <QuickAction icon={<Plus className="h-4 w-4" />} label="Add" to="/add" primary />
           <QuickAction icon={<ArrowUpRight className="h-4 w-4" />} label="Send" to="/wallet" />
           <QuickAction icon={<ArrowDownRight className="h-4 w-4" />} label="Request" to="/wallet" />
-          <QuickAction icon={<Sparkles className="h-4 w-4" />} label="Invest" to="/stats" />
+          <QuickAction icon={<Sparkles className="h-4 w-4" />} label="Insights" to="/insights" />
         </div>
       </section>
 
