@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, Plus, CreditCard, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import { categoryOf, formatMoney } from "@/lib/nova-data";
+import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
+import { categoryOf } from "@/lib/nova-data";
 import { useNova, groupByBucket, formatTxDate } from "@/lib/nova-store";
+import { useCurrency } from "@/lib/currency";
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({
@@ -16,6 +18,7 @@ export const Route = createFileRoute("/wallet")({
 
 function WalletPage() {
   const { state, deleteTransaction } = useNova();
+  const { format } = useCurrency();
   const groups = groupByBucket(state.transactions);
   return (
     <AppShell>
@@ -23,12 +26,15 @@ function WalletPage() {
         subtitle="Your money"
         title="Wallet"
         right={
-          <button
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
-            aria-label="Search"
-          >
-            <Search className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <CurrencyPicker />
+            <button
+              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </div>
         }
       />
 
@@ -57,9 +63,7 @@ function WalletPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] uppercase tracking-widest text-white/60">Balance</p>
-                    <p className="text-sm font-semibold">
-                      ${c.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </p>
+                    <p className="text-sm font-semibold">{format(c.balance)}</p>
                   </div>
                 </div>
               </div>
@@ -130,7 +134,7 @@ function WalletPage() {
                           positive ? "text-primary" : "text-foreground"
                         }`}
                       >
-                        {formatMoney(t.amount)}
+                        {format(t.amount)}
                       </span>
                       <button
                         onClick={() => deleteTransaction(t.id)}

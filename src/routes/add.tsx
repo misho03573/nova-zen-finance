@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { categories } from "@/lib/nova-data";
 import { useNova } from "@/lib/nova-store";
+import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/add")({
 function AddPage() {
   const navigate = useNavigate();
   const { state, addTransaction } = useNova();
+  const { symbol, format: formatMoney } = useCurrency();
   const [type, setType] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("0");
   const [category, setCategory] = useState("food");
@@ -54,7 +56,7 @@ function AddPage() {
       note: note.trim() || undefined,
     });
     toast.success(`${type === "expense" ? "Expense" : "Income"} added`, {
-      description: `${type === "expense" ? "−" : "+"}$${numericAmount.toFixed(2)} · ${cat.name}`,
+      description: `${formatMoney(signed)} · ${cat.name}`,
     });
     navigate({ to: "/wallet" });
   };
@@ -113,7 +115,7 @@ function AddPage() {
           key={amount}
           className="mt-1 animate-scale-in text-5xl font-semibold tracking-tight"
         >
-          <span className="text-muted-foreground">$</span>
+          <span className="text-muted-foreground">{symbol}</span>
           {amount}
         </p>
       </section>

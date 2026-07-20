@@ -11,7 +11,9 @@ import {
 } from "recharts";
 import { TrendingUp } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
+import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { cashflow, spendingByCategory } from "@/lib/nova-data";
+import { useCurrency } from "@/lib/currency";
 
 export const Route = createFileRoute("/stats")({
   head: () => ({
@@ -24,10 +26,11 @@ export const Route = createFileRoute("/stats")({
 });
 
 function StatsPage() {
+  const { format, symbol } = useCurrency();
   const total = spendingByCategory.reduce((s, c) => s + c.value, 0);
   return (
     <AppShell>
-      <PageHeader subtitle="Insights" title="Statistics" />
+      <PageHeader subtitle="Insights" title="Statistics" right={<CurrencyPicker />} />
 
       <section className="px-5">
         <div className="inline-flex w-full rounded-full border border-border bg-card/60 p-1 text-xs">
@@ -53,7 +56,9 @@ function StatsPage() {
               <p className="text-xs uppercase tracking-widest text-muted-foreground">
                 Net cashflow
               </p>
-              <p className="mt-1 text-3xl font-semibold tracking-tight">+$3,325.65</p>
+              <p className="mt-1 text-3xl font-semibold tracking-tight">
+                {format(3325.65, { signed: true })}
+              </p>
             </div>
             <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
               <TrendingUp className="h-3 w-3" /> +8.2%
@@ -145,7 +150,7 @@ function StatsPage() {
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     Total
                   </p>
-                  <p className="text-lg font-semibold">${total.toLocaleString()}</p>
+                  <p className="text-lg font-semibold">{format(total)}</p>
                 </div>
               </div>
             </div>
@@ -157,7 +162,10 @@ function StatsPage() {
                     style={{ background: c.color }}
                   />
                   <span className="min-w-0 flex-1 truncate text-muted-foreground">{c.name}</span>
-                  <span className="font-medium">${c.value}</span>
+                  <span className="font-medium">
+                    {symbol}
+                    {c.value}
+                  </span>
                 </li>
               ))}
             </ul>
