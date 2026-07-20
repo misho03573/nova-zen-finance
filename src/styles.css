@@ -177,3 +177,30 @@
 @utility animate-float-slow {
   animation: float-slow 6s ease-in-out infinite;
 }
+
+@keyframes rise-in {
+  0% { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bar-grow {
+  0% { transform: scaleY(0); }
+  100% { transform: scaleY(1); }
+}
+
+@utility animate-rise-in {
+  animation: rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-bar-grow {
+  transform-origin: bottom;
+  animation: bar-grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility press {
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility press:active {
+  transform: scale(0.96);
+}
