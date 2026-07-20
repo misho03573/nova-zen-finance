@@ -162,3 +162,18 @@
     color: var(--color-foreground);
   }
 }
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@utility animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
