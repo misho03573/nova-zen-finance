@@ -6,6 +6,8 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  useNavigate,
+  useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -125,6 +127,7 @@ function RootComponent() {
       <ThemeProvider>
         <CurrencyProvider>
           <NovaProvider>
+            <OnboardingGate />
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
             <Toaster />
@@ -133,4 +136,17 @@ function RootComponent() {
       </ThemeProvider>
     </QueryClientProvider>
   );
+}
+
+function OnboardingGate() {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    if (pathname === "/onboarding") return;
+    try {
+      const done = window.localStorage.getItem("nova.onboarded.v1");
+      if (!done) navigate({ to: "/onboarding" });
+    } catch {}
+  }, [pathname, navigate]);
+  return null;
 }

@@ -13,6 +13,7 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScanRouteImport } from './routes/scan'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NetworthRouteImport } from './routes/networth'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ImportRouteImport } from './routes/import'
@@ -40,6 +41,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NetworthRoute = NetworthRouteImport.update({
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
   '/networth': typeof NetworthRoute
+  '/onboarding': typeof OnboardingRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
   '/networth': typeof NetworthRoute
+  '/onboarding': typeof OnboardingRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
   '/networth': typeof NetworthRoute
+  '/onboarding': typeof OnboardingRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/insights'
     | '/networth'
+    | '/onboarding'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/insights'
     | '/networth'
+    | '/onboarding'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/insights'
     | '/networth'
+    | '/onboarding'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -180,6 +192,7 @@ export interface RootRouteChildren {
   ImportRoute: typeof ImportRoute
   InsightsRoute: typeof InsightsRoute
   NetworthRoute: typeof NetworthRoute
+  OnboardingRoute: typeof OnboardingRoute
   ScanRoute: typeof ScanRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/scan'
       preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/networth': {
@@ -284,6 +304,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImportRoute: ImportRoute,
   InsightsRoute: InsightsRoute,
   NetworthRoute: NetworthRoute,
+  OnboardingRoute: OnboardingRoute,
   ScanRoute: ScanRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
@@ -292,13 +313,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
