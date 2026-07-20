@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const StatsRoute = StatsRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InsightsRoute = InsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsRoute = GoalsRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/goals': typeof GoalsRoute
+  '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/wallet': typeof WalletRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/goals': typeof GoalsRoute
+  '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/wallet': typeof WalletRoute
@@ -68,22 +76,39 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/goals': typeof GoalsRoute
+  '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/wallet': typeof WalletRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/add' | '/goals' | '/settings' | '/stats' | '/wallet'
+  fullPaths:
+    | '/'
+    | '/add'
+    | '/goals'
+    | '/insights'
+    | '/settings'
+    | '/stats'
+    | '/wallet'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add' | '/goals' | '/settings' | '/stats' | '/wallet'
-  id: '__root__' | '/' | '/add' | '/goals' | '/settings' | '/stats' | '/wallet'
+  to: '/' | '/add' | '/goals' | '/insights' | '/settings' | '/stats' | '/wallet'
+  id:
+    | '__root__'
+    | '/'
+    | '/add'
+    | '/goals'
+    | '/insights'
+    | '/settings'
+    | '/stats'
+    | '/wallet'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddRoute: typeof AddRoute
   GoalsRoute: typeof GoalsRoute
+  InsightsRoute: typeof InsightsRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
   WalletRoute: typeof WalletRoute
@@ -110,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/insights': {
+      id: '/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof InsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goals': {
@@ -140,6 +172,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddRoute: AddRoute,
   GoalsRoute: GoalsRoute,
+  InsightsRoute: InsightsRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
   WalletRoute: WalletRoute,
