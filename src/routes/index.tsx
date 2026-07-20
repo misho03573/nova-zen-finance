@@ -394,7 +394,7 @@ function QuickAction({
 }: {
   icon: React.ReactNode;
   label: string;
-  to: "/" | "/wallet" | "/add" | "/stats" | "/goals" | "/settings";
+  to: "/" | "/wallet" | "/add" | "/stats" | "/goals" | "/settings" | "/insights" | "/calendar";
   primary?: boolean;
 }) {
   return (
