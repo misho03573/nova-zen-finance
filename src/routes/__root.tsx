@@ -17,6 +17,8 @@ import { NovaProvider } from "@/lib/nova-store";
 import { CurrencyProvider } from "@/lib/currency";
 import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
+import { useNova } from "@/lib/nova-store";
+import { ACCENTS } from "@/lib/i18n";
 
 function NotFoundComponent() {
   return (
@@ -128,6 +130,7 @@ function RootComponent() {
         <CurrencyProvider>
           <NovaProvider>
             <OnboardingGate />
+            <PreferencesApplier />
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
             <Toaster />
@@ -148,5 +151,35 @@ function OnboardingGate() {
       if (!done) navigate({ to: "/onboarding" });
     } catch {}
   }, [pathname, navigate]);
+  return null;
+}
+
+function PreferencesApplier() {
+  const { state } = useNova();
+  const accent = state.settings.accent ?? "default";
+  const language = state.settings.language ?? "en";
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const preset = ACCENTS[accent];
+    if (preset) {
+      root.style.setProperty("--primary", preset.primary);
+      root.style.setProperty("--ring", preset.primary);
+      root.style.setProperty("--primary-glow", preset.primary);
+      root.style.setProperty("--gradient-primary", preset.gradient);
+      root.style.setProperty("--shadow-glow", preset.glow);
+    } else {
+      root.style.removeProperty("--primary");
+      root.style.removeProperty("--ring");
+      root.style.removeProperty("--primary-glow");
+      root.style.removeProperty("--gradient-primary");
+      root.style.removeProperty("--shadow-glow");
+    }
+  }, [accent]);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
   return null;
 }
