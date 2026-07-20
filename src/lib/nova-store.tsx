@@ -65,6 +65,15 @@ export type Settings = {
   notifications: boolean;
   biometric: boolean;
   budgetAlerts: boolean;
+  pinEnabled?: boolean;
+  pin?: string;
+  faceId?: boolean;
+  touchId?: boolean;
+  autoLockMinutes?: number;
+  hideBalances?: boolean;
+  cloudSync?: boolean;
+  accent?: string; // hex or oklch string, applied to --primary
+  language?: string; // "en" | "bg" | "de" | "fr" | "es"
 };
 
 export type NovaState = {
@@ -74,9 +83,41 @@ export type NovaState = {
   budgets: Budget[];
   recurring: Recurring[];
   settings: Settings;
+  liabilities: Liability[];
+  subscriptions: Subscription[];
+  automationRules: AutomationRule[];
 };
 
-const STORAGE_KEY = "nova.store.v2";
+export type LiabilityType = "loan" | "credit_card" | "mortgage";
+export type Liability = {
+  id: string;
+  name: string;
+  type: LiabilityType;
+  balance: number; // amount owed, positive number
+  apr?: number;
+  minPayment?: number;
+};
+
+export type Subscription = {
+  id: string;
+  name: string;
+  amount: number; // monthly cost, positive
+  category: string;
+  nextDate: string;
+  color: string;
+  emoji: string;
+};
+
+export type AutomationRule = {
+  id: string;
+  kind: "roundup" | "salary_percent" | "weekly_transfer" | "goal_auto";
+  enabled: boolean;
+  label: string;
+  amount?: number; // fixed amount or percent
+  goalId?: string;
+};
+
+const STORAGE_KEY = "nova.store.v3";
 
 function iso(daysAgo: number, hour = 9, minute = 0) {
   const d = new Date();
@@ -190,7 +231,33 @@ const seed: NovaState = {
     notifications: true,
     biometric: false,
     budgetAlerts: true,
+    pinEnabled: false,
+    faceId: true,
+    touchId: false,
+    autoLockMinutes: 5,
+    hideBalances: false,
+    cloudSync: false,
+    accent: "default",
+    language: "en",
   },
+  liabilities: [
+    { id: "l1", name: "Student Loan", type: "loan", balance: 12400, apr: 4.5, minPayment: 220 },
+    { id: "l2", name: "Amex Platinum", type: "credit_card", balance: 1840, apr: 21.9, minPayment: 60 },
+    { id: "l3", name: "Mortgage", type: "mortgage", balance: 184000, apr: 3.2, minPayment: 1250 },
+  ],
+  subscriptions: [
+    { id: "s1", name: "Netflix", amount: 15.99, category: "entertainment", nextDate: isoAhead(6), color: "#E50914", emoji: "🎬" },
+    { id: "s2", name: "Spotify", amount: 10.99, category: "entertainment", nextDate: isoAhead(11), color: "#1DB954", emoji: "🎧" },
+    { id: "s3", name: "ChatGPT Plus", amount: 20, category: "subscription", nextDate: isoAhead(3), color: "#10a37f", emoji: "✨" },
+    { id: "s4", name: "Phone Plan", amount: 35, category: "utilities", nextDate: isoAhead(14), color: "#3b82f6", emoji: "📱" },
+    { id: "s5", name: "Internet", amount: 49, category: "utilities", nextDate: isoAhead(20), color: "#8b5cf6", emoji: "🌐" },
+    { id: "s6", name: "iCloud+", amount: 2.99, category: "subscription", nextDate: isoAhead(2), color: "#94a3b8", emoji: "☁️" },
+  ],
+  automationRules: [
+    { id: "ar1", kind: "roundup", enabled: true, label: "Round up purchases", goalId: "g1" },
+    { id: "ar2", kind: "salary_percent", enabled: true, label: "Save 10% of salary", amount: 10, goalId: "g1" },
+    { id: "ar3", kind: "weekly_transfer", enabled: false, label: "Every Monday", amount: 50, goalId: "g2" },
+  ],
 };
 
 type Action =
@@ -209,12 +276,28 @@ type Action =
   | { type: "deleteBudget"; id: string }
   | { type: "addRecurring"; rec: Recurring }
   | { type: "deleteRecurring"; id: string }
-  | { type: "setSettings"; patch: Partial<Settings> };
+  | { type: "setSettings"; patch: Partial<Settings> }
+  | { type: "addLiability"; l: Liability }
+  | { type: "updateLiability"; l: Liability }
+  | { type: "deleteLiability"; id: string }
+  | { type: "addSubscription"; s: Subscription }
+  | { type: "deleteSubscription"; id: string }
+  | { type: "toggleAutomation"; id: string }
+  | { type: "addAutomation"; rule: AutomationRule }
+  | { type: "deleteAutomation"; id: string }
+  | { type: "importTransactions"; txs: Transaction[] };
 
 function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
     case "hydrate":
-      return { ...seed, ...action.state, settings: { ...seed.settings, ...action.state.settings } };
+      return {
+        ...seed,
+        ...action.state,
+        settings: { ...seed.settings, ...action.state.settings },
+        liabilities: action.state.liabilities ?? seed.liabilities,
+        subscriptions: action.state.subscriptions ?? seed.subscriptions,
+        automationRules: action.state.automationRules ?? seed.automationRules,
+      };
     case "addTransaction": {
       const accounts = state.accounts.map((a) =>
         a.id === action.tx.accountId ? { ...a, balance: a.balance + action.tx.amount } : a,
@@ -308,6 +391,45 @@ function reducer(state: NovaState, action: Action): NovaState {
       return { ...state, recurring: state.recurring.filter((r) => r.id !== action.id) };
     case "setSettings":
       return { ...state, settings: { ...state.settings, ...action.patch } };
+    case "addLiability":
+      return { ...state, liabilities: [...state.liabilities, action.l] };
+    case "updateLiability":
+      return {
+        ...state,
+        liabilities: state.liabilities.map((l) => (l.id === action.l.id ? action.l : l)),
+      };
+    case "deleteLiability":
+      return { ...state, liabilities: state.liabilities.filter((l) => l.id !== action.id) };
+    case "addSubscription":
+      return { ...state, subscriptions: [...state.subscriptions, action.s] };
+    case "deleteSubscription":
+      return { ...state, subscriptions: state.subscriptions.filter((s) => s.id !== action.id) };
+    case "toggleAutomation":
+      return {
+        ...state,
+        automationRules: state.automationRules.map((r) =>
+          r.id === action.id ? { ...r, enabled: !r.enabled } : r,
+        ),
+      };
+    case "addAutomation":
+      return { ...state, automationRules: [...state.automationRules, action.rule] };
+    case "deleteAutomation":
+      return {
+        ...state,
+        automationRules: state.automationRules.filter((r) => r.id !== action.id),
+      };
+    case "importTransactions": {
+      const accountsMap = new Map(state.accounts.map((a) => [a.id, { ...a }]));
+      for (const tx of action.txs) {
+        const a = accountsMap.get(tx.accountId);
+        if (a) a.balance += tx.amount;
+      }
+      return {
+        ...state,
+        accounts: Array.from(accountsMap.values()),
+        transactions: [...action.txs, ...state.transactions],
+      };
+    }
     default:
       return state;
   }
@@ -331,6 +453,16 @@ type Ctx = {
   deleteRecurring: (id: string) => void;
   setSettings: (patch: Partial<Settings>) => void;
   exportData: () => string;
+  importData: (json: string) => boolean;
+  addLiability: (l: Omit<Liability, "id">) => void;
+  updateLiability: (l: Liability) => void;
+  deleteLiability: (id: string) => void;
+  addSubscription: (s: Omit<Subscription, "id">) => void;
+  deleteSubscription: (id: string) => void;
+  toggleAutomation: (id: string) => void;
+  addAutomation: (r: Omit<AutomationRule, "id">) => void;
+  deleteAutomation: (id: string) => void;
+  importTransactions: (txs: Omit<Transaction, "id">[]) => void;
 };
 
 const NovaContext = createContext<Ctx | null>(null);
@@ -397,6 +529,37 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   const deleteRecurring = useCallback((id: string) => dispatch({ type: "deleteRecurring", id }), []);
   const setSettings = useCallback((patch: Partial<Settings>) => dispatch({ type: "setSettings", patch }), []);
   const exportData = useCallback(() => JSON.stringify(state, null, 2), [state]);
+  const importData = useCallback((json: string) => {
+    try {
+      const parsed = JSON.parse(json) as NovaState;
+      if (!parsed?.accounts || !parsed?.transactions) return false;
+      dispatch({ type: "hydrate", state: parsed });
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+  const addLiability = useCallback(
+    (l: Omit<Liability, "id">) => dispatch({ type: "addLiability", l: { ...l, id: rid("l") } }),
+    [],
+  );
+  const updateLiability = useCallback((l: Liability) => dispatch({ type: "updateLiability", l }), []);
+  const deleteLiability = useCallback((id: string) => dispatch({ type: "deleteLiability", id }), []);
+  const addSubscription = useCallback(
+    (s: Omit<Subscription, "id">) => dispatch({ type: "addSubscription", s: { ...s, id: rid("s") } }),
+    [],
+  );
+  const deleteSubscription = useCallback((id: string) => dispatch({ type: "deleteSubscription", id }), []);
+  const toggleAutomation = useCallback((id: string) => dispatch({ type: "toggleAutomation", id }), []);
+  const addAutomation = useCallback(
+    (r: Omit<AutomationRule, "id">) => dispatch({ type: "addAutomation", rule: { ...r, id: rid("ar") } }),
+    [],
+  );
+  const deleteAutomation = useCallback((id: string) => dispatch({ type: "deleteAutomation", id }), []);
+  const importTransactions = useCallback((txs: Omit<Transaction, "id">[]) => {
+    const withIds = txs.map((t) => ({ ...t, id: `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` }));
+    dispatch({ type: "importTransactions", txs: withIds });
+  }, []);
 
   const value = useMemo<Ctx>(
     () => ({
@@ -417,6 +580,16 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       deleteRecurring,
       setSettings,
       exportData,
+      importData,
+      addLiability,
+      updateLiability,
+      deleteLiability,
+      addSubscription,
+      deleteSubscription,
+      toggleAutomation,
+      addAutomation,
+      deleteAutomation,
+      importTransactions,
     }),
     [
       state,
@@ -436,6 +609,16 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       deleteRecurring,
       setSettings,
       exportData,
+      importData,
+      addLiability,
+      updateLiability,
+      deleteLiability,
+      addSubscription,
+      deleteSubscription,
+      toggleAutomation,
+      addAutomation,
+      deleteAutomation,
+      importTransactions,
     ],
   );
 
@@ -599,4 +782,25 @@ export function estimateGoalETA(goal: Goal): string {
 
 export function accountTypeLabel(t: AccountType): string {
   return { cash: "Cash", bank: "Bank", revolut: "Revolut", trading: "Trading", crypto: "Crypto" }[t];
+}
+
+export function totalLiabilities(ls: Liability[]) {
+  return ls.reduce((s, l) => s + l.balance, 0);
+}
+
+export function netWorthBreakdown(state: NovaState) {
+  const cash = state.accounts.filter((a) => a.type === "cash").reduce((s, a) => s + a.balance, 0);
+  const bank = state.accounts.filter((a) => a.type === "bank" || a.type === "revolut").reduce((s, a) => s + a.balance, 0);
+  const invest = state.accounts.filter((a) => a.type === "trading").reduce((s, a) => s + a.balance, 0);
+  const crypto = state.accounts.filter((a) => a.type === "crypto").reduce((s, a) => s + a.balance, 0);
+  const assets = cash + bank + invest + crypto;
+  const loans = state.liabilities.filter((l) => l.type === "loan").reduce((s, l) => s + l.balance, 0);
+  const cards = state.liabilities.filter((l) => l.type === "credit_card").reduce((s, l) => s + l.balance, 0);
+  const mortgage = state.liabilities.filter((l) => l.type === "mortgage").reduce((s, l) => s + l.balance, 0);
+  const liab = loans + cards + mortgage;
+  return { cash, bank, invest, crypto, assets, loans, cards, mortgage, liab, net: assets - liab };
+}
+
+export function subscriptionsMonthlyTotal(subs: Subscription[]) {
+  return subs.reduce((s, x) => s + x.amount, 0);
 }

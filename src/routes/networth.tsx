@@ -1,0 +1,240 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Landmark, Coins, TrendingUp, Bitcoin, Home, Car, CreditCard, Building2, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AppShell, PageHeader } from "@/components/nova/AppShell";
+import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
+import { useNova, netWorthBreakdown, type LiabilityType } from "@/lib/nova-store";
+import { useCurrency } from "@/lib/currency";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
+export const Route = createFileRoute("/networth")({
+  head: () => ({
+    meta: [
+      { title: "Net Worth · NOVA" },
+      { name: "description", content: "Track assets and liabilities in one beautiful view." },
+    ],
+  }),
+  component: NetWorthPage,
+});
+
+function NetWorthPage() {
+  const { state, addLiability, deleteLiability } = useNova();
+  const { format } = useCurrency();
+  const b = useMemo(() => netWorthBreakdown(state), [state]);
+
+  // Build a smooth 12-month animated line from cashflow monthly net movement
+  const points = useMemo(() => {
+    const now = new Date();
+    const start = b.net - Math.round(Math.abs(b.net) * 0.18);
+    const arr: number[] = [];
+    let v = start;
+    for (let i = 0; i < 12; i++) {
+      v += (b.net - start) / 11 + (Math.sin((i + now.getMonth()) * 0.9) * b.net) / 90;
+      arr.push(v);
+    }
+    arr[11] = b.net;
+    return arr;
+  }, [b.net]);
+
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const pad = (max - min) * 0.15 || 1;
+  const norm = (v: number) => 1 - (v - (min - pad)) / (max - min + pad * 2);
+  const path = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${(i / 11) * 300},${norm(p) * 120}`)
+    .join(" ");
+  const area = `${path} L300,120 L0,120 Z`;
+
+  return (
+    <AppShell>
+      <PageHeader
+        subtitle="Overview"
+        title="Net Worth"
+        right={<CurrencyPicker variant="chip" />}
+      />
+
+      <section className="px-5">
+        <div
+          className="relative overflow-hidden rounded-3xl border border-white/10 p-5 text-white shadow-[var(--shadow-elevated)]"
+          style={{ background: "var(--gradient-primary)" }}
+        >
+          <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+          <p className="text-xs font-medium uppercase tracking-widest text-white/70">Total net worth</p>
+          <p className="mt-2 text-4xl font-semibold tracking-tight">{format(b.net)}</p>
+          <p className="mt-1 text-[11px] uppercase tracking-widest text-white/60">
+            Assets {format(b.assets)} · Debt {format(-b.liab)}
+          </p>
+          <svg viewBox="0 0 300 120" className="mt-4 h-28 w-full">
+            <defs>
+              <linearGradient id="nwFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.35)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </linearGradient>
+            </defs>
+            <path d={area} fill="url(#nwFill)" />
+            <path
+              d={path}
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="animate-fade-in"
+            />
+          </svg>
+        </div>
+      </section>
+
+      <section className="mt-6 px-5">
+        <h2 className="mb-3 text-sm font-semibold">Assets</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <AssetTile icon={<Coins className="h-4 w-4" />} label="Cash" value={format(b.cash)} tint="#22c55e" />
+          <AssetTile icon={<Landmark className="h-4 w-4" />} label="Bank" value={format(b.bank)} tint="#3b82f6" />
+          <AssetTile icon={<TrendingUp className="h-4 w-4" />} label="Investments" value={format(b.invest)} tint="#a855f7" />
+          <AssetTile icon={<Bitcoin className="h-4 w-4" />} label="Crypto" value={format(b.crypto)} tint="#f59e0b" />
+          <AssetTile icon={<Home className="h-4 w-4" />} label="Property" value="—" tint="#14b8a6" muted />
+          <AssetTile icon={<Car className="h-4 w-4" />} label="Vehicles" value="—" tint="#eab308" muted />
+        </div>
+      </section>
+
+      <section className="mt-8 px-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Liabilities</h2>
+          <AddLiability onAdd={(l) => { addLiability(l); toast.success("Liability added"); }} />
+        </div>
+        <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
+          {state.liabilities.length === 0 ? (
+            <li className="p-6 text-center text-sm text-muted-foreground">No liabilities.</li>
+          ) : (
+            state.liabilities.map((l) => (
+              <li key={l.id} className="flex items-center gap-3 px-4 py-3">
+                <div className="grid h-10 w-10 place-items-center rounded-2xl bg-destructive/15 text-destructive">
+                  {l.type === "credit_card" ? <CreditCard className="h-4 w-4" /> : l.type === "mortgage" ? <Building2 className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{l.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {l.apr != null ? `${l.apr}% APR` : ""}
+                    {l.minPayment != null ? ` · Min ${format(l.minPayment)}/mo` : ""}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm font-semibold text-destructive">−{format(l.balance)}</span>
+                <button
+                  onClick={() => deleteLiability(l.id)}
+                  className="ml-2 grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-destructive"
+                  aria-label="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      </section>
+    </AppShell>
+  );
+}
+
+function AssetTile({
+  icon,
+  label,
+  value,
+  tint,
+  muted,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  tint: string;
+  muted?: boolean;
+}) {
+  return (
+    <div className="rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]">
+      <div
+        className="grid h-8 w-8 place-items-center rounded-xl"
+        style={{ background: `color-mix(in oklab, ${tint} 22%, transparent)`, color: tint }}
+      >
+        {icon}
+      </div>
+      <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className={`mt-0.5 text-lg font-semibold tracking-tight ${muted ? "text-muted-foreground" : ""}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityType; balance: number; apr?: number; minPayment?: number }) => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [type, setType] = useState<LiabilityType>("loan");
+  const [balance, setBalance] = useState("");
+  const [apr, setApr] = useState("");
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="flex items-center gap-1 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs font-medium">
+          <Plus className="h-3.5 w-3.5" /> Add
+        </button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>New liability</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Car loan" />
+          </div>
+          <div>
+            <Label>Type</Label>
+            <div className="mt-1 flex gap-2 text-xs">
+              {(["loan", "credit_card", "mortgage"] as LiabilityType[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setType(t)}
+                  className={`flex-1 rounded-full border px-3 py-1.5 capitalize ${
+                    type === t ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {t.replace("_", " ")}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <Label>Balance owed</Label>
+            <Input value={balance} onChange={(e) => setBalance(e.target.value)} inputMode="decimal" placeholder="0.00" />
+          </div>
+          <div>
+            <Label>APR %</Label>
+            <Input value={apr} onChange={(e) => setApr(e.target.value)} inputMode="decimal" placeholder="Optional" />
+          </div>
+          <Button
+            onClick={() => {
+              const bal = parseFloat(balance);
+              if (!name || !isFinite(bal)) return;
+              onAdd({ name, type, balance: bal, apr: parseFloat(apr) || undefined });
+              setOpen(false);
+              setName(""); setBalance(""); setApr("");
+            }}
+            className="w-full"
+          >
+            Save
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

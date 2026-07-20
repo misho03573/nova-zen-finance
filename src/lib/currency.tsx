@@ -18,7 +18,8 @@ export type CurrencyCode =
   | "CHF"
   | "CNY"
   | "INR"
-  | "BRL";
+  | "BRL"
+  | "BGN";
 
 export type CurrencyDef = {
   code: CurrencyCode;
@@ -32,6 +33,7 @@ export const CURRENCIES: CurrencyDef[] = [
   { code: "USD", symbol: "$", name: "US Dollar", locale: "en-US", flag: "🇺🇸" },
   { code: "EUR", symbol: "€", name: "Euro", locale: "de-DE", flag: "🇪🇺" },
   { code: "GBP", symbol: "£", name: "British Pound", locale: "en-GB", flag: "🇬🇧" },
+  { code: "BGN", symbol: "лв", name: "Bulgarian Lev", locale: "bg-BG", flag: "🇧🇬" },
   { code: "JPY", symbol: "¥", name: "Japanese Yen", locale: "ja-JP", flag: "🇯🇵" },
   { code: "CAD", symbol: "CA$", name: "Canadian Dollar", locale: "en-CA", flag: "🇨🇦" },
   { code: "AUD", symbol: "A$", name: "Australian Dollar", locale: "en-AU", flag: "🇦🇺" },
@@ -40,6 +42,22 @@ export const CURRENCIES: CurrencyDef[] = [
   { code: "INR", symbol: "₹", name: "Indian Rupee", locale: "en-IN", flag: "🇮🇳" },
   { code: "BRL", symbol: "R$", name: "Brazilian Real", locale: "pt-BR", flag: "🇧🇷" },
 ];
+
+// Placeholder exchange rates relative to USD. In production these would
+// stream from a live FX provider.
+export const EXCHANGE_RATES: Record<CurrencyCode, number> = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79,
+  BGN: 1.8,
+  JPY: 157,
+  CAD: 1.37,
+  AUD: 1.52,
+  CHF: 0.88,
+  CNY: 7.24,
+  INR: 83.4,
+  BRL: 5.15,
+};
 
 const STORAGE_KEY = "nova.currency.v1";
 const DEFAULT: CurrencyCode = "USD";

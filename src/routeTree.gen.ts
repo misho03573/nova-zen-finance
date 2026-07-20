@@ -12,9 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ScanRouteImport } from './routes/scan'
+import { Route as NetworthRouteImport } from './routes/networth'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as AiRouteImport } from './routes/ai'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -33,9 +37,24 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NetworthRoute = NetworthRouteImport.update({
+  id: '/networth',
+  path: '/networth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InsightsRoute = InsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportRoute = ImportRouteImport.update({
+  id: '/import',
+  path: '/import',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsRoute = GoalsRouteImport.update({
@@ -46,6 +65,11 @@ const GoalsRoute = GoalsRouteImport.update({
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiRoute = AiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AddRoute = AddRouteImport.update({
@@ -62,9 +86,13 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/ai': typeof AiRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/networth': typeof NetworthRoute
+  '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/wallet': typeof WalletRoute
@@ -72,9 +100,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/ai': typeof AiRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/networth': typeof NetworthRoute
+  '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/wallet': typeof WalletRoute
@@ -83,9 +115,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/ai': typeof AiRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/networth': typeof NetworthRoute
+  '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/wallet': typeof WalletRoute
@@ -95,9 +131,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/add'
+    | '/ai'
     | '/calendar'
     | '/goals'
+    | '/import'
     | '/insights'
+    | '/networth'
+    | '/scan'
     | '/settings'
     | '/stats'
     | '/wallet'
@@ -105,9 +145,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/add'
+    | '/ai'
     | '/calendar'
     | '/goals'
+    | '/import'
     | '/insights'
+    | '/networth'
+    | '/scan'
     | '/settings'
     | '/stats'
     | '/wallet'
@@ -115,9 +159,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/add'
+    | '/ai'
     | '/calendar'
     | '/goals'
+    | '/import'
     | '/insights'
+    | '/networth'
+    | '/scan'
     | '/settings'
     | '/stats'
     | '/wallet'
@@ -126,9 +174,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddRoute: typeof AddRoute
+  AiRoute: typeof AiRoute
   CalendarRoute: typeof CalendarRoute
   GoalsRoute: typeof GoalsRoute
+  ImportRoute: typeof ImportRoute
   InsightsRoute: typeof InsightsRoute
+  NetworthRoute: typeof NetworthRoute
+  ScanRoute: typeof ScanRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
   WalletRoute: typeof WalletRoute
@@ -157,11 +209,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/networth': {
+      id: '/networth'
+      path: '/networth'
+      fullPath: '/networth'
+      preLoaderRoute: typeof NetworthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/insights': {
       id: '/insights'
       path: '/insights'
       fullPath: '/insights'
       preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/import': {
+      id: '/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof ImportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goals': {
@@ -176,6 +249,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai': {
+      id: '/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/add': {
@@ -198,9 +278,13 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddRoute: AddRoute,
+  AiRoute: AiRoute,
   CalendarRoute: CalendarRoute,
   GoalsRoute: GoalsRoute,
+  ImportRoute: ImportRoute,
   InsightsRoute: InsightsRoute,
+  NetworthRoute: NetworthRoute,
+  ScanRoute: ScanRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
   WalletRoute: WalletRoute,

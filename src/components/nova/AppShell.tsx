@@ -4,7 +4,21 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
-  to: "/" | "/wallet" | "/add" | "/insights" | "/goals" | "/settings" | "/calendar" | "/stats";
+  to:
+    | "/"
+    | "/wallet"
+    | "/add"
+    | "/insights"
+    | "/goals"
+    | "/settings"
+    | "/calendar"
+    | "/stats"
+    | "/ai"
+    | "/scan"
+    | "/networth"
+    | "/import"
+    | "/automation"
+    | "/subscriptions";
   label: string;
   icon: typeof Home;
   primary?: boolean;
