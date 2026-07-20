@@ -22,6 +22,7 @@ import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/lib/theme";
 import { useNova } from "@/lib/nova-store";
+import { useT } from "@/lib/i18n";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/settings")({
 function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { state, setSettings, exportData, importData } = useNova();
+  const t = useT();
   const s = state.settings;
   const fileRef = useRef<HTMLInputElement>(null);
   const [pinOpen, setPinOpen] = useState(false);
@@ -104,21 +106,21 @@ function SettingsPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle="Preferences"
-        title="Settings"
+        subtitle={t("settings.subtitle")}
+        title={t("settings.title")}
         right={
           <Link
             to="/"
             className="rounded-full border border-border bg-card/60 px-3 py-2 text-xs font-medium backdrop-blur"
           >
-            Done
+            {t("settings.done")}
           </Link>
         }
       />
 
       <section className="px-5">
-        <Group title="Appearance">
-          <Row icon={<Palette className="h-4 w-4" />} label="Theme">
+        <Group title={t("settings.group.appearance")}>
+          <Row icon={<Palette className="h-4 w-4" />} label={t("settings.theme")}>
             <div className="inline-flex rounded-full border border-border bg-background/60 p-1 text-xs">
               {(
                 [
@@ -142,10 +144,10 @@ function SettingsPage() {
               ))}
             </div>
           </Row>
-          <Row icon={<Coins className="h-4 w-4" />} label="Currency">
+          <Row icon={<Coins className="h-4 w-4" />} label={t("settings.currency")}>
             <CurrencyPicker variant="chip" />
           </Row>
-          <Row icon={<Sparkles className="h-4 w-4" />} label="Accent">
+          <Row icon={<Sparkles className="h-4 w-4" />} label={t("settings.accent")}>
             <div className="flex gap-1.5">
               {ACCENTS.map((a) => (
                 <button
@@ -161,7 +163,7 @@ function SettingsPage() {
               ))}
             </div>
           </Row>
-          <Row icon={<Languages className="h-4 w-4" />} label="Language">
+          <Row icon={<Languages className="h-4 w-4" />} label={t("settings.language")}>
             <select
               value={s.language ?? "en"}
               onChange={(e) => setSettings({ language: e.target.value })}
@@ -174,7 +176,7 @@ function SettingsPage() {
           </Row>
         </Group>
 
-        <Group title="Security">
+        <Group title={t("settings.group.security")}>
           <Row icon={<Fingerprint className="h-4 w-4" />} label="Face ID" description="Unlock with your face">
             <Switch
               checked={!!s.faceId}
@@ -216,7 +218,7 @@ function SettingsPage() {
           </Row>
         </Group>
 
-        <Group title="Sync">
+        <Group title={t("settings.group.sync")}>
           <Row icon={<Cloud className="h-4 w-4" />} label="Cloud sync" description="Sync across devices (preview)">
             <Switch
               checked={!!s.cloudSync}
@@ -225,7 +227,7 @@ function SettingsPage() {
           </Row>
         </Group>
 
-        <Group title="Notifications">
+        <Group title={t("settings.group.notifications")}>
           <Row icon={<Bell className="h-4 w-4" />} label="Push" description="Transactions & summaries">
             <Switch
               checked={s.notifications}
@@ -240,7 +242,7 @@ function SettingsPage() {
           </Row>
         </Group>
 
-        <Group title="Data">
+        <Group title={t("settings.group.data")}>
           <button
             onClick={handleExport}
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
