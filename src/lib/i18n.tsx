@@ -111,21 +111,20 @@ export function useT() {
   return (key: string) => dict[key] ?? en[key] ?? key;
 }
 
-export const ACCENTS: Record<string, { primary: string; gradient: string }> = {
-  default: {
-    primary: "oklch(0.72 0.16 250)",
-    gradient: "linear-gradient(135deg, oklch(0.78 0.14 260), oklch(0.62 0.18 300))",
-  },
+export const ACCENTS: Record<string, { primary: string; gradient: string; glow: string }> = {
   sunset: {
     primary: "oklch(0.7 0.2 30)",
     gradient: "linear-gradient(135deg, oklch(0.72 0.19 30), oklch(0.6 0.22 350))",
+    glow: "0 10px 40px -10px oklch(0.7 0.2 30 / 45%)",
   },
   ocean: {
     primary: "oklch(0.64 0.16 235)",
     gradient: "linear-gradient(135deg, oklch(0.68 0.15 220), oklch(0.5 0.16 260))",
+    glow: "0 10px 40px -10px oklch(0.64 0.16 235 / 45%)",
   },
   matcha: {
     primary: "oklch(0.68 0.15 160)",
     gradient: "linear-gradient(135deg, oklch(0.78 0.16 155), oklch(0.5 0.14 175))",
+    glow: "0 10px 40px -10px oklch(0.68 0.15 160 / 45%)",
   },
 };
