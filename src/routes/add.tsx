@@ -24,7 +24,7 @@ export const Route = createFileRoute("/add")({
 function AddPage() {
   const navigate = useNavigate();
   const { state, addTransaction } = useNova();
-  const { symbol, format } = useCurrency();
+  const { symbol, format: formatMoney } = useCurrency();
   const [type, setType] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("0");
   const [category, setCategory] = useState("food");
@@ -56,7 +56,7 @@ function AddPage() {
       note: note.trim() || undefined,
     });
     toast.success(`${type === "expense" ? "Expense" : "Income"} added`, {
-      description: `${format(signed)} · ${cat.name}`,
+      description: `${formatMoney(signed)} · ${cat.name}`,
     });
     navigate({ to: "/wallet" });
   };
