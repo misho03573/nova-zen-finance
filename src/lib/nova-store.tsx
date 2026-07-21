@@ -265,6 +265,18 @@ const seed: NovaState = {
   ],
 };
 
+const emptyState: NovaState = {
+  accounts: [],
+  transactions: [],
+  goals: [],
+  budgets: [],
+  recurring: [],
+  settings: { ...seed.settings },
+  liabilities: [],
+  subscriptions: [],
+  automationRules: [],
+};
+
 type Action =
   | { type: "hydrate"; state: NovaState }
   | { type: "addTransaction"; tx: Transaction }
