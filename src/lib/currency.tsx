@@ -66,10 +66,37 @@ type Ctx = {
   currency: CurrencyDef;
   setCurrency: (code: CurrencyCode) => void;
   format: (n: number, opts?: { signed?: boolean }) => string;
+  formatIn: (n: number, code: CurrencyCode, opts?: { signed?: boolean }) => string;
+  formatFrom: (n: number, fromCode: CurrencyCode, opts?: { signed?: boolean }) => string;
+  convert: (n: number, fromCode: CurrencyCode, toCode?: CurrencyCode) => number;
   symbol: string;
 };
 
 const CurrencyContext = createContext<Ctx | null>(null);
+
+function formatAmount(n: number, code: CurrencyCode, opts?: { signed?: boolean }) {
+  const def = CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
+  const noDecimals = def.code === "JPY";
+  const abs = Math.abs(n);
+  const str = abs.toLocaleString(def.locale, {
+    minimumFractionDigits: noDecimals ? 0 : 2,
+    maximumFractionDigits: noDecimals ? 0 : 2,
+  });
+  const sign = n < 0 ? "−" : opts?.signed ? "+" : "";
+  return `${sign}${def.symbol}${str}`;
+}
+
+export function convertAmount(
+  n: number,
+  from: CurrencyCode,
+  to: CurrencyCode,
+): number {
+  if (from === to) return n;
+  const fromRate = EXCHANGE_RATES[from] ?? 1;
+  const toRate = EXCHANGE_RATES[to] ?? 1;
+  // Rates are relative to USD → convert via USD base.
+  return (n / fromRate) * toRate;
+}
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [code, setCode] = useState<CurrencyCode>(DEFAULT);
@@ -96,19 +123,32 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => {
     const currency = CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
-    const noDecimals = currency.code === "JPY";
-    const rate = EXCHANGE_RATES[currency.code] ?? 1;
-    const format = (n: number, opts?: { signed?: boolean }) => {
-      const converted = n * rate;
-      const abs = Math.abs(converted);
-      const str = abs.toLocaleString(currency.locale, {
-        minimumFractionDigits: noDecimals ? 0 : 2,
-        maximumFractionDigits: noDecimals ? 0 : 2,
-      });
-      const sign = converted < 0 ? "−" : opts?.signed ? "+" : "";
-      return `${sign}${currency.symbol}${str}`;
+    // NOTE: format() does NOT convert. It expects a value already in the
+    // display currency. Amounts stored in another native currency should be
+    // converted via convert()/formatFrom() before display.
+    const format = (n: number, opts?: { signed?: boolean }) =>
+      formatAmount(n, currency.code, opts);
+    const formatIn = (
+      n: number,
+      c: CurrencyCode,
+      opts?: { signed?: boolean },
+    ) => formatAmount(n, c, opts);
+    const convert = (n: number, from: CurrencyCode, to?: CurrencyCode) =>
+      convertAmount(n, from, to ?? currency.code);
+    const formatFrom = (
+      n: number,
+      from: CurrencyCode,
+      opts?: { signed?: boolean },
+    ) => formatAmount(convert(n, from), currency.code, opts);
+    return {
+      currency,
+      setCurrency,
+      format,
+      formatIn,
+      formatFrom,
+      convert,
+      symbol: currency.symbol,
     };
-    return { currency, setCurrency, format, symbol: currency.symbol };
   }, [code, setCurrency]);
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
