@@ -285,7 +285,8 @@ type Action =
   | { type: "toggleAutomation"; id: string }
   | { type: "addAutomation"; rule: AutomationRule }
   | { type: "deleteAutomation"; id: string }
-  | { type: "importTransactions"; txs: Transaction[] };
+  | { type: "importTransactions"; txs: Transaction[] }
+  | { type: "advanceRecurring" };
 
 function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
@@ -430,6 +431,45 @@ function reducer(state: NovaState, action: Action): NovaState {
         transactions: [...action.txs, ...state.transactions],
       };
     }
+    case "advanceRecurring": {
+      const now = Date.now();
+      const newTxs: Transaction[] = [];
+      const updatedRecurring = state.recurring.map((r) => {
+        let d = new Date(r.nextDate).getTime();
+        let guard = 0;
+        while (d <= now && guard < 60) {
+          newTxs.push({
+            id: `t_r_${r.id}_${d}_${guard}`,
+            title: r.title,
+            category: r.category,
+            amount: r.amount,
+            date: new Date(d).toISOString(),
+            accountId: r.accountId,
+            recurringId: r.id,
+            note: r.note,
+          });
+          const nd = new Date(d);
+          if (r.frequency === "weekly") nd.setDate(nd.getDate() + 7);
+          else if (r.frequency === "monthly") nd.setMonth(nd.getMonth() + 1);
+          else nd.setFullYear(nd.getFullYear() + 1);
+          d = nd.getTime();
+          guard += 1;
+        }
+        return { ...r, nextDate: new Date(d).toISOString() };
+      });
+      if (newTxs.length === 0) return state;
+      const accountsMap = new Map(state.accounts.map((a) => [a.id, { ...a }]));
+      for (const tx of newTxs) {
+        const a = accountsMap.get(tx.accountId);
+        if (a) a.balance += tx.amount;
+      }
+      return {
+        ...state,
+        recurring: updatedRecurring,
+        transactions: [...newTxs, ...state.transactions],
+        accounts: Array.from(accountsMap.values()),
+      };
+    }
     default:
       return state;
   }
@@ -463,6 +503,7 @@ type Ctx = {
   addAutomation: (r: Omit<AutomationRule, "id">) => void;
   deleteAutomation: (id: string) => void;
   importTransactions: (txs: Omit<Transaction, "id">[]) => void;
+  advanceRecurring: () => void;
 };
 
 const NovaContext = createContext<Ctx | null>(null);
@@ -560,6 +601,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     const withIds = txs.map((t) => ({ ...t, id: `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` }));
     dispatch({ type: "importTransactions", txs: withIds });
   }, []);
+  const advanceRecurring = useCallback(() => dispatch({ type: "advanceRecurring" }), []);
 
   const value = useMemo<Ctx>(
     () => ({
@@ -590,6 +632,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addAutomation,
       deleteAutomation,
       importTransactions,
+      advanceRecurring,
     }),
     [
       state,
@@ -619,6 +662,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addAutomation,
       deleteAutomation,
       importTransactions,
+      advanceRecurring,
     ],
   );
 

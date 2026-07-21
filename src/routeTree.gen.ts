@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScanRouteImport } from './routes/scan'
@@ -18,7 +19,9 @@ import { Route as NetworthRouteImport } from './routes/networth'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
 import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as AutomationRouteImport } from './routes/automation'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
@@ -26,6 +29,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubscriptionsRoute = SubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StatsRoute = StatsRouteImport.update({
@@ -68,9 +76,19 @@ const GoalsRoute = GoalsRouteImport.update({
   path: '/goals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiagnosticsRoute = DiagnosticsRouteImport.update({
+  id: '/diagnostics',
+  path: '/diagnostics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AutomationRoute = AutomationRouteImport.update({
+  id: '/automation',
+  path: '/automation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiRoute = AiRouteImport.update({
@@ -93,7 +111,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/ai': typeof AiRoute
+  '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
+  '/diagnostics': typeof DiagnosticsRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
@@ -102,13 +122,16 @@ export interface FileRoutesByFullPath {
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/subscriptions': typeof SubscriptionsRoute
   '/wallet': typeof WalletRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/ai': typeof AiRoute
+  '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
+  '/diagnostics': typeof DiagnosticsRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
@@ -117,6 +140,7 @@ export interface FileRoutesByTo {
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/subscriptions': typeof SubscriptionsRoute
   '/wallet': typeof WalletRoute
 }
 export interface FileRoutesById {
@@ -124,7 +148,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/ai': typeof AiRoute
+  '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
+  '/diagnostics': typeof DiagnosticsRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
@@ -133,6 +159,7 @@ export interface FileRoutesById {
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/subscriptions': typeof SubscriptionsRoute
   '/wallet': typeof WalletRoute
 }
 export interface FileRouteTypes {
@@ -141,7 +168,9 @@ export interface FileRouteTypes {
     | '/'
     | '/add'
     | '/ai'
+    | '/automation'
     | '/calendar'
+    | '/diagnostics'
     | '/goals'
     | '/import'
     | '/insights'
@@ -150,13 +179,16 @@ export interface FileRouteTypes {
     | '/scan'
     | '/settings'
     | '/stats'
+    | '/subscriptions'
     | '/wallet'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/add'
     | '/ai'
+    | '/automation'
     | '/calendar'
+    | '/diagnostics'
     | '/goals'
     | '/import'
     | '/insights'
@@ -165,13 +197,16 @@ export interface FileRouteTypes {
     | '/scan'
     | '/settings'
     | '/stats'
+    | '/subscriptions'
     | '/wallet'
   id:
     | '__root__'
     | '/'
     | '/add'
     | '/ai'
+    | '/automation'
     | '/calendar'
+    | '/diagnostics'
     | '/goals'
     | '/import'
     | '/insights'
@@ -180,6 +215,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/settings'
     | '/stats'
+    | '/subscriptions'
     | '/wallet'
   fileRoutesById: FileRoutesById
 }
@@ -187,7 +223,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddRoute: typeof AddRoute
   AiRoute: typeof AiRoute
+  AutomationRoute: typeof AutomationRoute
   CalendarRoute: typeof CalendarRoute
+  DiagnosticsRoute: typeof DiagnosticsRoute
   GoalsRoute: typeof GoalsRoute
   ImportRoute: typeof ImportRoute
   InsightsRoute: typeof InsightsRoute
@@ -196,6 +234,7 @@ export interface RootRouteChildren {
   ScanRoute: typeof ScanRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
+  SubscriptionsRoute: typeof SubscriptionsRoute
   WalletRoute: typeof WalletRoute
 }
 
@@ -206,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscriptions': {
+      id: '/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/subscriptions'
+      preLoaderRoute: typeof SubscriptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stats': {
@@ -264,11 +310,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GoalsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diagnostics': {
+      id: '/diagnostics'
+      path: '/diagnostics'
+      fullPath: '/diagnostics'
+      preLoaderRoute: typeof DiagnosticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calendar': {
       id: '/calendar'
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/automation': {
+      id: '/automation'
+      path: '/automation'
+      fullPath: '/automation'
+      preLoaderRoute: typeof AutomationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai': {
@@ -299,7 +359,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddRoute: AddRoute,
   AiRoute: AiRoute,
+  AutomationRoute: AutomationRoute,
   CalendarRoute: CalendarRoute,
+  DiagnosticsRoute: DiagnosticsRoute,
   GoalsRoute: GoalsRoute,
   ImportRoute: ImportRoute,
   InsightsRoute: InsightsRoute,
@@ -308,18 +370,9 @@ const rootRouteChildren: RootRouteChildren = {
   ScanRoute: ScanRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
+  SubscriptionsRoute: SubscriptionsRoute,
   WalletRoute: WalletRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

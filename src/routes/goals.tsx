@@ -16,6 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/nova/ConfirmDialog";
+import { useHideBalances, maskAmount } from "@/lib/hide-balance";
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -30,6 +32,8 @@ export const Route = createFileRoute("/goals")({
 function GoalsPage() {
   const { format } = useCurrency();
   const { state, deleteGoal, contributeGoal } = useNova();
+  const confirm = useConfirm();
+  const hide = useHideBalances();
   const goals = state.goals;
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target, 0) || 1;
@@ -68,8 +72,8 @@ function GoalsPage() {
               <p className="text-xs uppercase tracking-widest text-muted-foreground">
                 Total saved
               </p>
-              <p className="mt-1 text-3xl font-semibold tracking-tight">{format(totalSaved)}</p>
-              <p className="text-xs text-muted-foreground">of {format(totalTarget)} goal</p>
+              <p className="mt-1 text-3xl font-semibold tracking-tight">{maskAmount(hide, format(totalSaved), "lg")}</p>
+              <p className="text-xs text-muted-foreground">of {maskAmount(hide, format(totalTarget), "md")} goal</p>
             </div>
             <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
               <Sparkles className="h-3 w-3" /> On track
@@ -110,8 +114,8 @@ function GoalsPage() {
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-sm font-semibold">{format(g.saved)}</p>
-                  <p className="text-[11px] text-muted-foreground">of {format(g.target)}</p>
+                  <p className="text-sm font-semibold">{maskAmount(hide, format(g.saved), "md")}</p>
+                  <p className="text-[11px] text-muted-foreground">of {maskAmount(hide, format(g.target), "md")}</p>
                 </div>
               </div>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
@@ -135,8 +139,14 @@ function GoalsPage() {
                   }
                 />
                 <button
-                  onClick={() => {
-                    if (confirm(`Delete goal "${g.name}"?`)) {
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: `Delete "${g.name}"?`,
+                      description: "Your progress and monthly target will be lost.",
+                      confirmLabel: "Delete goal",
+                      destructive: true,
+                    });
+                    if (ok) {
                       deleteGoal(g.id);
                       toast.message("Goal deleted");
                     }

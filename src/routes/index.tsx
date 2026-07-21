@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, type LinkProps } from "@tanstack/react-router";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -25,6 +25,22 @@ import {
 import { useCurrency } from "@/lib/currency";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "NOVA — Your money, at a glance" },
+      {
+        name: "description",
+        content: "Track spending, forecast cash flow and hit your savings goals — all in a calm, beautifully designed dashboard.",
+      },
+      { property: "og:title", content: "NOVA — Your money, at a glance" },
+      {
+        property: "og:description",
+        content: "Track spending, forecast cash flow and hit your savings goals — all in a calm, beautifully designed dashboard.",
+      },
+      { property: "og:url", content: "https://nova-zen-finance.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://nova-zen-finance.lovable.app/" }],
+  }),
   component: Home,
 });
 
@@ -427,7 +443,7 @@ function QuickAction({
 }: {
   icon: React.ReactNode;
   label: string;
-  to: "/" | "/wallet" | "/add" | "/stats" | "/goals" | "/settings" | "/insights" | "/calendar";
+  to: LinkProps["to"];
   primary?: boolean;
 }) {
   return (

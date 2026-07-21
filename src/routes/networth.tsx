@@ -6,6 +6,8 @@ import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useNova, netWorthBreakdown, type LiabilityType } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/nova/ConfirmDialog";
+import { useHideBalances, maskAmount } from "@/lib/hide-balance";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +32,8 @@ export const Route = createFileRoute("/networth")({
 function NetWorthPage() {
   const { state, addLiability, deleteLiability } = useNova();
   const { format } = useCurrency();
+  const confirm = useConfirm();
+  const hide = useHideBalances();
   const b = useMemo(() => netWorthBreakdown(state), [state]);
 
   // Build a smooth 12-month animated line from cashflow monthly net movement
@@ -70,9 +74,9 @@ function NetWorthPage() {
         >
           <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
           <p className="text-xs font-medium uppercase tracking-widest text-white/70">Total net worth</p>
-          <p className="mt-2 text-4xl font-semibold tracking-tight">{format(b.net)}</p>
+          <p className="mt-2 text-4xl font-semibold tracking-tight">{maskAmount(hide, format(b.net), "lg")}</p>
           <p className="mt-1 text-[11px] uppercase tracking-widest text-white/60">
-            Assets {format(b.assets)} · Debt {format(-b.liab)}
+            Assets {maskAmount(hide, format(b.assets), "md")} · Debt {maskAmount(hide, format(-b.liab), "md")}
           </p>
           <svg viewBox="0 0 300 120" className="mt-4 h-28 w-full">
             <defs>
@@ -128,9 +132,20 @@ function NetWorthPage() {
                     {l.minPayment != null ? ` · Min ${format(l.minPayment)}/mo` : ""}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm font-semibold text-destructive">−{format(l.balance)}</span>
+                <span className="shrink-0 text-sm font-semibold text-destructive">−{maskAmount(hide, format(l.balance), "md")}</span>
                 <button
-                  onClick={() => deleteLiability(l.id)}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: `Delete "${l.name}"?`,
+                      description: "This liability will be removed from your net worth.",
+                      confirmLabel: "Delete",
+                      destructive: true,
+                    });
+                    if (ok) {
+                      deleteLiability(l.id);
+                      toast.message("Liability removed");
+                    }
+                  }}
                   className="ml-2 grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-destructive"
                   aria-label="Delete"
                 >

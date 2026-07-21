@@ -19,6 +19,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { useNova } from "@/lib/nova-store";
 import { ACCENTS } from "@/lib/i18n";
+import { ConfirmProvider } from "@/components/nova/ConfirmDialog";
 
 function NotFoundComponent() {
   return (
@@ -131,17 +132,20 @@ function RootComponent() {
       <ThemeProvider>
         <CurrencyProvider>
           <NovaProvider>
-            {hydrated ? (
-              <>
-                <OnboardingGate />
-                <PreferencesApplier />
-                {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-                <Outlet />
-                <Toaster position="top-center" />
-              </>
-            ) : (
-              <div className="min-h-screen bg-background" aria-hidden />
-            )}
+            <ConfirmProvider>
+              {hydrated ? (
+                <>
+                  <OnboardingGate />
+                  <PreferencesApplier />
+                  <RecurringAdvancer />
+                  {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                  <Outlet />
+                  <Toaster position="top-center" />
+                </>
+              ) : (
+                <div className="min-h-screen bg-background" aria-hidden />
+              )}
+            </ConfirmProvider>
           </NovaProvider>
         </CurrencyProvider>
       </ThemeProvider>
@@ -189,5 +193,15 @@ function PreferencesApplier() {
     document.documentElement.lang = language;
   }, [language]);
 
+  return null;
+}
+
+function RecurringAdvancer() {
+  const { advanceRecurring } = useNova();
+  useEffect(() => {
+    advanceRecurring();
+    // Only run once per session; store persistence handles the rest.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return null;
 }
