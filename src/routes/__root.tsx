@@ -20,6 +20,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useNova } from "@/lib/nova-store";
 import { ACCENTS } from "@/lib/i18n";
 import { ConfirmProvider } from "@/components/nova/ConfirmDialog";
+import { AuthProvider, useAuth } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -131,22 +132,25 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <CurrencyProvider>
-          <NovaProvider>
-            <ConfirmProvider>
-              {hydrated ? (
-                <>
-                  <OnboardingGate />
-                  <PreferencesApplier />
-                  <RecurringAdvancer />
-                  {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-                  <Outlet />
-                  <Toaster position="top-center" />
-                </>
-              ) : (
-                <div className="min-h-screen bg-background" aria-hidden />
-              )}
-            </ConfirmProvider>
-          </NovaProvider>
+          <AuthProvider>
+            <NovaProvider>
+              <ConfirmProvider>
+                {hydrated ? (
+                  <>
+                    <OnboardingGate />
+                    <AuthGate />
+                    <PreferencesApplier />
+                    <RecurringAdvancer />
+                    {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                    <Outlet />
+                    <Toaster position="top-center" />
+                  </>
+                ) : (
+                  <div className="min-h-screen bg-background" aria-hidden />
+                )}
+              </ConfirmProvider>
+            </NovaProvider>
+          </AuthProvider>
         </CurrencyProvider>
       </ThemeProvider>
     </QueryClientProvider>
@@ -157,12 +161,28 @@ function OnboardingGate() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
-    if (pathname === "/onboarding") return;
+    if (pathname === "/onboarding" || pathname === "/auth") return;
     try {
       const done = window.localStorage.getItem("nova.onboarded.v1");
       if (!done) navigate({ to: "/onboarding" });
     } catch {}
   }, [pathname, navigate]);
+  return null;
+}
+
+function AuthGate() {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, loading } = useAuth();
+  useEffect(() => {
+    if (loading) return;
+    if (pathname === "/auth" || pathname === "/onboarding") return;
+    try {
+      const onboarded = window.localStorage.getItem("nova.onboarded.v1");
+      if (!onboarded) return; // let OnboardingGate handle it
+    } catch {}
+    if (!user) navigate({ to: "/auth" });
+  }, [user, loading, pathname, navigate]);
   return null;
 }
 

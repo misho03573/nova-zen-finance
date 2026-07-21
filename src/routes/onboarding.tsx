@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import { useAuth } from "@/lib/auth";
 import {
   Wallet,
   Target,
@@ -74,6 +75,7 @@ const slides: Slide[] = [
 
 function Onboarding() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [i, setI] = useState(0);
   const s = slides[i];
   const last = i === slides.length - 1;
@@ -82,7 +84,7 @@ function Onboarding() {
     try {
       window.localStorage.setItem(ONBOARDED_KEY, "1");
     } catch {}
-    navigate({ to: "/" });
+    navigate({ to: user ? "/" : "/auth" });
   };
 
   return (

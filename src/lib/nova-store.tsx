@@ -5,8 +5,10 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   type ReactNode,
 } from "react";
+import { useAuth } from "@/lib/auth";
 
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
@@ -117,7 +119,10 @@ export type AutomationRule = {
   goalId?: string;
 };
 
-const STORAGE_KEY = "nova.store.v3";
+const GUEST_KEY = "nova.store.v3";
+function keyFor(userId: string | null) {
+  return userId ? `nova.store.v3.${userId}` : GUEST_KEY;
+}
 
 function iso(daysAgo: number, hour = 9, minute = 0) {
   const d = new Date();
@@ -510,26 +515,47 @@ const NovaContext = createContext<Ctx | null>(null);
 
 export function NovaProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, seed);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const activeKeyRef = useRef<string>(keyFor(null));
+  const hydratedRef = useRef<boolean>(false);
 
+  // Load state for the active user (or guest). On first sign-in, migrate guest data.
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = keyFor(userId);
     try {
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+      let raw = window.localStorage.getItem(key);
+      // Migration: signing in for the first time with local guest data.
+      if (userId && !raw) {
+        const guest = window.localStorage.getItem(GUEST_KEY);
+        if (guest) {
+          window.localStorage.setItem(key, guest);
+          raw = guest;
+        }
+      }
       if (raw) {
         const parsed = JSON.parse(raw) as NovaState;
         if (parsed && parsed.accounts && parsed.transactions) {
           dispatch({ type: "hydrate", state: parsed });
+        } else {
+          dispatch({ type: "hydrate", state: seed });
         }
+      } else {
+        // New account, no data → start from seed.
+        dispatch({ type: "hydrate", state: seed });
       }
     } catch {
       /* ignore */
     }
-  }, []);
+    activeKeyRef.current = key;
+    hydratedRef.current = true;
+  }, [userId]);
 
   useEffect(() => {
+    if (!hydratedRef.current || typeof window === "undefined") return;
     try {
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      }
+      window.localStorage.setItem(activeKeyRef.current, JSON.stringify(state));
     } catch {
       /* ignore */
     }
