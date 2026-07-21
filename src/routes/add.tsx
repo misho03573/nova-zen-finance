@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { categories } from "@/lib/nova-data";
 import { useNova, type Frequency } from "@/lib/nova-store";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/add")({
 function AddPage() {
   const navigate = useNavigate();
   const { state, addTransaction, addRecurring } = useNova();
-  const { symbol, format: formatMoney } = useCurrency();
+  const { formatIn } = useCurrency();
   const [type, setType] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("0");
   const [category, setCategory] = useState("food");
@@ -35,6 +35,11 @@ function AddPage() {
 
   const numericAmount = useMemo(() => Number.parseFloat(amount) || 0, [amount]);
   const canSave = numericAmount > 0 && accountId;
+
+  const selectedAccount = state.accounts.find((a) => a.id === accountId);
+  const accountCur: CurrencyCode = (selectedAccount?.currency ?? "USD") as CurrencyCode;
+  const accountSymbol =
+    CURRENCIES.find((c) => c.code === accountCur)?.symbol ?? "$";
 
   const filteredCategories = useMemo(
     () =>
@@ -55,6 +60,7 @@ function AddPage() {
       date: date.toISOString(),
       accountId,
       note: note.trim() || undefined,
+      currency: accountCur,
     });
     if (recurring) {
       const next = new Date(date);
@@ -68,10 +74,11 @@ function AddPage() {
         accountId,
         frequency: recurring,
         nextDate: next.toISOString(),
+        currency: accountCur,
       });
     }
     toast.success(`${type === "expense" ? "Expense" : "Income"} added`, {
-      description: `${formatMoney(signed)} · ${cat.name}`,
+      description: `${formatIn(signed, accountCur)} · ${cat.name}`,
     });
     navigate({ to: "/wallet" });
   };
@@ -130,9 +137,14 @@ function AddPage() {
           key={amount}
           className="mt-1 animate-scale-in text-5xl font-semibold tracking-tight"
         >
-          <span className="text-muted-foreground">{symbol}</span>
+          <span className="text-muted-foreground">{accountSymbol}</span>
           {amount}
         </p>
+        {selectedAccount ? (
+          <p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+            Stored in {accountCur} · {selectedAccount.name}
+          </p>
+        ) : null}
       </section>
 
       <section className="mt-6 px-5">
