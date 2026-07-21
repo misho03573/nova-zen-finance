@@ -5,8 +5,10 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   type ReactNode,
 } from "react";
+import { useAuth } from "@/lib/auth";
 
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
@@ -117,7 +119,10 @@ export type AutomationRule = {
   goalId?: string;
 };
 
-const STORAGE_KEY = "nova.store.v3";
+const GUEST_KEY = "nova.store.v3";
+function keyFor(userId: string | null) {
+  return userId ? `nova.store.v3.${userId}` : GUEST_KEY;
+}
 
 function iso(daysAgo: number, hour = 9, minute = 0) {
   const d = new Date();
