@@ -532,30 +532,24 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   const activeKeyRef = useRef<string>(keyFor(null));
   const hydratedRef = useRef<boolean>(false);
 
-  // Load state for the active user (or guest). On first sign-in, migrate guest data.
+  // Load state for the active user (or guest).
+  // Authenticated users always start with a clean empty state (no seed, no guest migration).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const key = keyFor(userId);
     try {
-      let raw = window.localStorage.getItem(key);
-      // Migration: signing in for the first time with local guest data.
-      if (userId && !raw) {
-        const guest = window.localStorage.getItem(GUEST_KEY);
-        if (guest) {
-          window.localStorage.setItem(key, guest);
-          raw = guest;
-        }
-      }
+      const raw = window.localStorage.getItem(key);
+      const fallback = userId ? emptyState : seed;
       if (raw) {
         const parsed = JSON.parse(raw) as NovaState;
         if (parsed && parsed.accounts && parsed.transactions) {
           dispatch({ type: "hydrate", state: parsed });
         } else {
-          dispatch({ type: "hydrate", state: seed });
+          dispatch({ type: "hydrate", state: fallback });
         }
       } else {
-        // New account, no data → start from seed.
-        dispatch({ type: "hydrate", state: seed });
+        // New authenticated account → clean slate. Guest → demo seed.
+        dispatch({ type: "hydrate", state: fallback });
       }
     } catch {
       /* ignore */
