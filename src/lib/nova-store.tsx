@@ -11,7 +11,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { CurrencyCode } from "@/lib/currency";
-import { convertAmount } from "@/lib/currency";
+import { convertAmount, useCurrency } from "@/lib/currency";
 
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
@@ -811,9 +811,6 @@ export function txCurrency(t: Transaction, accounts: Account[]): CurrencyCode {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useDisplayState() {
   const { state } = useNova();
-  // Local import to avoid circular type reference at module load.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useCurrency } = require("@/lib/currency") as typeof import("@/lib/currency");
   const { currency } = useCurrency();
   return useMemo(() => {
     const to = currency.code as CurrencyCode;
