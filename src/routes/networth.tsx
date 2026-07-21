@@ -116,11 +116,14 @@ function NetWorthPage() {
           <h2 className="text-sm font-semibold">Liabilities</h2>
           <AddLiability onAdd={(l) => { addLiability(l); toast.success("Liability added"); }} />
         </div>
-        <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
-          {state.liabilities.length === 0 ? (
-            <li className="p-6 text-center text-sm text-muted-foreground">No liabilities.</li>
-          ) : (
-            state.liabilities.map((l) => (
+        {state.liabilities.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-border bg-card/40 p-6 text-center">
+            <p className="text-sm font-semibold">Debt-free — nice.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Add a card, loan or mortgage to track it against your net worth.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
+            {state.liabilities.map((l) => (
               <li key={l.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="grid h-10 w-10 place-items-center rounded-2xl bg-destructive/15 text-destructive">
                   {l.type === "credit_card" ? <CreditCard className="h-4 w-4" /> : l.type === "mortgage" ? <Building2 className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
@@ -152,9 +155,9 @@ function NetWorthPage() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </li>
-            ))
-          )}
-        </ul>
+            ))}
+          </ul>
+        )}
       </section>
     </AppShell>
   );
