@@ -786,6 +786,58 @@ export function useNova() {
   return ctx;
 }
 
+/**
+ * Returns the account's native currency (falls back to USD for legacy rows).
+ */
+export function accountCurrency(a: Account | undefined): CurrencyCode {
+  return (a?.currency ?? "USD") as CurrencyCode;
+}
+
+/**
+ * Returns a transaction's native currency (mirrors its account if unset).
+ */
+export function txCurrency(t: Transaction, accounts: Account[]): CurrencyCode {
+  if (t.currency) return t.currency;
+  const a = accounts.find((x) => x.id === t.accountId);
+  return accountCurrency(a);
+}
+
+/**
+ * View of the store where every monetary field has been converted to the
+ * active display currency. Use for cross-account aggregates (Home totals,
+ * Net Worth, Stats). Per-item native rendering should still use raw state
+ * from `useNova()` + `formatIn(amount, nativeCurrency)`.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useDisplayState() {
+  const { state } = useNova();
+  // Local import to avoid circular type reference at module load.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useCurrency } = require("@/lib/currency") as typeof import("@/lib/currency");
+  const { currency } = useCurrency();
+  return useMemo(() => {
+    const to = currency.code as CurrencyCode;
+    const conv = (n: number, from: CurrencyCode) => convertAmount(n, from, to);
+    const accCur = new Map<string, CurrencyCode>();
+    for (const a of state.accounts) accCur.set(a.id, accountCurrency(a));
+    return {
+      ...state,
+      accounts: state.accounts.map((a) => ({
+        ...a,
+        balance: conv(a.balance, accountCurrency(a)),
+      })),
+      transactions: state.transactions.map((t) => ({
+        ...t,
+        amount: conv(t.amount, t.currency ?? accCur.get(t.accountId) ?? "USD"),
+      })),
+      recurring: state.recurring.map((r) => ({
+        ...r,
+        amount: conv(r.amount, r.currency ?? accCur.get(r.accountId) ?? "USD"),
+      })),
+    };
+  }, [state, currency.code]);
+}
+
 export type Bucket = "Today" | "Yesterday" | "Earlier";
 
 export function bucketOf(iso: string): Bucket {
