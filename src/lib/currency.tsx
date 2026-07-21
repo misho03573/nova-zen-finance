@@ -97,13 +97,15 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Ctx>(() => {
     const currency = CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
     const noDecimals = currency.code === "JPY";
+    const rate = EXCHANGE_RATES[currency.code] ?? 1;
     const format = (n: number, opts?: { signed?: boolean }) => {
-      const abs = Math.abs(n);
+      const converted = n * rate;
+      const abs = Math.abs(converted);
       const str = abs.toLocaleString(currency.locale, {
         minimumFractionDigits: noDecimals ? 0 : 2,
         maximumFractionDigits: noDecimals ? 0 : 2,
       });
-      const sign = n < 0 ? "−" : opts?.signed ? "+" : "";
+      const sign = converted < 0 ? "−" : opts?.signed ? "+" : "";
       return `${sign}${currency.symbol}${str}`;
     };
     return { currency, setCurrency, format, symbol: currency.symbol };
