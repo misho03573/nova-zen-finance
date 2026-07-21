@@ -21,6 +21,8 @@ import {
   formatTxDate,
   savingsRate,
   cashflowByRange,
+  useDisplayState,
+  txCurrency,
 } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 
@@ -46,12 +48,15 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { state } = useNova();
+  const display = useDisplayState();
   const { format } = useCurrency();
   const hide = !!state.settings.hideBalances;
-  const netWorth = totalBalance(state.accounts);
-  const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(state.transactions);
+  const netWorth = totalBalance(display.accounts);
+  const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(
+    display.transactions,
+  );
   const rate = savingsRate(monthlyIncome, monthlyExpenses);
-  const week = cashflowByRange(state.transactions, "week");
+  const week = cashflowByRange(display.transactions, "week");
   const spentWeek = week.reduce((s, d) => s + d.expense, 0);
   const upcoming = [...state.recurring]
     .sort((a, b) => +new Date(a.nextDate) - +new Date(b.nextDate))
@@ -252,7 +257,7 @@ function Home() {
                     positive ? "text-primary" : "text-foreground"
                   }`}
                 >
-                  {format(t.amount)}
+                  {useCurrencyFormatIn(t, state.accounts)}
                 </span>
               </li>
             );
@@ -261,6 +266,16 @@ function Home() {
       </section>
     </AppShell>
   );
+}
+
+// Small helper (used inline above) to avoid destructuring in list bodies.
+// eslint-disable-next-line react-refresh/only-export-components
+function useCurrencyFormatIn(
+  t: { amount: number; currency?: import("@/lib/currency").CurrencyCode; accountId: string },
+  accounts: Parameters<typeof txCurrency>[1],
+) {
+  const { formatIn } = useCurrency();
+  return formatIn(t.amount, txCurrency(t as never, accounts));
 }
 
 function MiniCard({
