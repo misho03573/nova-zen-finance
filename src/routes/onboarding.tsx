@@ -107,7 +107,7 @@ function Onboarding() {
         <div className="mt-10 grid place-items-center">
           <div
             key={i}
-            className="animate-float-slow grid h-32 w-32 place-items-center rounded-[2rem] border border-white/10 text-white shadow-[var(--shadow-elevated)]"
+            className="animate-float-slow grid h-32 w-32 place-items-center rounded-4xl border border-white/10 text-white shadow-[var(--shadow-elevated)]"
             style={{ background: s.accent }}
           >
             <div className="animate-scale-in">{s.icon}</div>

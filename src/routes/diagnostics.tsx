@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Database, Package, Activity, HardDrive, AlertTriangle, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, Database, Package, Activity, HardDrive, AlertTriangle, CheckCircle2, Circle, Copy, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova } from "@/lib/nova-store";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/nova/ConfirmDialog";
 
 export const APP_VERSION = "1.0.0-rc.1";
 // Baked at file evaluation time. For a real build stamp, wire `define` in vite.config.ts.
@@ -62,6 +64,7 @@ function statusLabel(s: ModuleStatus) {
 
 function Diagnostics() {
   const { state } = useNova();
+  const confirm = useConfirm();
   const [errors, setErrors] = useState<{ msg: string; at: number }[]>([]);
   const [storage, setStorage] = useState<{ key: string; bytes: number }[]>([]);
   const [perf, setPerf] = useState<{ nav: number; dom: number; load: number } | null>(null);
@@ -117,19 +120,81 @@ function Diagnostics() {
 
   const totalBytes = storage.reduce((s, r) => s + r.bytes, 0);
 
+  const copyReport = async () => {
+    const report = {
+      version: APP_VERSION,
+      built: BUILD_TIMESTAMP,
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "n/a",
+      language: typeof navigator !== "undefined" ? navigator.language : "n/a",
+      viewport:
+        typeof window !== "undefined"
+          ? `${window.innerWidth}x${window.innerHeight} @${window.devicePixelRatio}x`
+          : "n/a",
+      store: {
+        accounts: state.accounts.length,
+        transactions: state.transactions.length,
+        goals: state.goals.length,
+        budgets: state.budgets.length,
+        subscriptions: state.subscriptions.length,
+        recurring: state.recurring.length,
+        liabilities: state.liabilities.length,
+      },
+      modules: MODULES,
+      performance: perf,
+      localStorage: storage,
+      errors,
+    };
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(report, null, 2));
+      toast.success("Diagnostics report copied");
+    } catch {
+      toast.error("Clipboard blocked");
+    }
+  };
+
+  const clearErrors = () => {
+    setErrors([]);
+    toast.message("Error log cleared");
+  };
+
+  const wipeStorage = async () => {
+    const ok = await confirm({
+      title: "Wipe all local data?",
+      description: "Every NOVA key in localStorage is deleted and the app reloads. Cannot be undone.",
+      confirmLabel: "Wipe & reload",
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      localStorage.clear();
+      location.reload();
+    } catch {
+      toast.error("Storage not available");
+    }
+  };
+
   return (
     <AppShell>
       <PageHeader
         subtitle="Internal · not linked from the app"
         title="Diagnostics"
         right={
-          <Link
-            to="/settings"
-            aria-label="Back"
-            className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={copyReport}
+              aria-label="Copy diagnostics report"
+              className="press inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-card/60 px-3 text-xs font-medium backdrop-blur"
+            >
+              <Copy className="h-3.5 w-3.5" /> Copy
+            </button>
+            <Link
+              to="/settings"
+              aria-label="Back"
+              className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </div>
         }
       />
 
@@ -215,7 +280,17 @@ function Diagnostics() {
       </section>
 
       <section className="mt-6 px-5">
-        <SectionHeader>Runtime errors (session)</SectionHeader>
+        <div className="flex items-baseline justify-between">
+          <SectionHeader>Runtime errors (session)</SectionHeader>
+          {errors.length > 0 ? (
+            <button
+              onClick={clearErrors}
+              className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
         <ul className="mt-2 divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card/70">
           {errors.length === 0 ? (
             <li className="px-4 py-3 text-xs text-muted-foreground">No errors captured this session.</li>
@@ -230,6 +305,16 @@ function Diagnostics() {
             ))
           )}
         </ul>
+      </section>
+
+      <section className="mt-6 px-5">
+        <SectionHeader>Danger zone</SectionHeader>
+        <button
+          onClick={wipeStorage}
+          className="press mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
+        >
+          <Trash2 className="h-4 w-4" /> Wipe all local data
+        </button>
       </section>
 
       <p className="mt-6 px-5 pb-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
