@@ -601,7 +601,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "hydrate", state: emptyState });
         await supabase
           .from("user_data")
-          .insert({ user_id: userId, data: emptyState as unknown as Record<string, unknown> });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert({ user_id: userId, data: emptyState as any });
       }
       hydratedRef.current = true;
       remoteSyncRef.current = true;
@@ -628,7 +629,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       supabase
         .from("user_data")
         .upsert(
-          { user_id: uid, data: snapshot as unknown as Record<string, unknown> },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          { user_id: uid, data: snapshot as any },
           { onConflict: "user_id" },
         )
         .then(({ error }) => {
