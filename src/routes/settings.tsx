@@ -16,6 +16,8 @@ import {
   Upload,
   Languages,
   Sparkles,
+  LogOut,
+  UserCircle,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -37,6 +39,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PreviewBadge } from "@/components/nova/PreviewBadge";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
+import { useAuth } from "@/lib/auth";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -57,6 +61,19 @@ function SettingsPage() {
   const [pinOpen, setPinOpen] = useState(false);
   const [pin, setPin] = useState("");
   const confirm = useConfirm();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const ok = await confirm({
+      title: "Sign out?",
+      description: "You'll need to sign in again to access your synced data.",
+      confirmLabel: "Sign out",
+    });
+    if (!ok) return;
+    await signOut();
+    navigate({ to: "/auth" });
+  };
 
   const handleExport = () => {
     try {
@@ -128,6 +145,31 @@ function SettingsPage() {
       />
 
       <section className="px-5">
+        <Group title="Account">
+          <Row
+            icon={<UserCircle className="h-4 w-4" />}
+            label={user?.email ?? "Guest"}
+            description={user ? "Signed in" : "Not signed in"}
+          >
+            {user ? (
+              <button
+                onClick={handleSignOut}
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
+              >
+                <LogOut className="h-3 w-3" />
+                Sign out
+              </button>
+            ) : (
+              <Link
+                to="/auth"
+                className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
+              >
+                Sign in
+              </Link>
+            )}
+          </Row>
+        </Group>
+
         <Group title={t("settings.group.appearance")}>
           <Row icon={<Palette className="h-4 w-4" />} label={t("settings.theme")}>
             <div className="inline-flex rounded-full border border-border bg-background/60 p-1 text-xs">
