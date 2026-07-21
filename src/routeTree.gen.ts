@@ -22,6 +22,7 @@ import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AutomationRouteImport } from './routes/automation'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
@@ -91,6 +92,11 @@ const AutomationRoute = AutomationRouteImport.update({
   path: '/automation',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AiRoute = AiRouteImport.update({
   id: '/ai',
   path: '/ai',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/ai': typeof AiRoute
+  '/auth': typeof AuthRoute
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
   '/diagnostics': typeof DiagnosticsRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/ai': typeof AiRoute
+  '/auth': typeof AuthRoute
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
   '/diagnostics': typeof DiagnosticsRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
   '/ai': typeof AiRoute
+  '/auth': typeof AuthRoute
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
   '/diagnostics': typeof DiagnosticsRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/add'
     | '/ai'
+    | '/auth'
     | '/automation'
     | '/calendar'
     | '/diagnostics'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/add'
     | '/ai'
+    | '/auth'
     | '/automation'
     | '/calendar'
     | '/diagnostics'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/'
     | '/add'
     | '/ai'
+    | '/auth'
     | '/automation'
     | '/calendar'
     | '/diagnostics'
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddRoute: typeof AddRoute
   AiRoute: typeof AiRoute
+  AuthRoute: typeof AuthRoute
   AutomationRoute: typeof AutomationRoute
   CalendarRoute: typeof CalendarRoute
   DiagnosticsRoute: typeof DiagnosticsRoute
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AutomationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ai': {
       id: '/ai'
       path: '/ai'
@@ -359,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddRoute: AddRoute,
   AiRoute: AiRoute,
+  AuthRoute: AuthRoute,
   AutomationRoute: AutomationRoute,
   CalendarRoute: CalendarRoute,
   DiagnosticsRoute: DiagnosticsRoute,
