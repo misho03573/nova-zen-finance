@@ -19,6 +19,7 @@ import {
   cashflowByRange,
   filterTxsByRange,
   monthlySpendByCategory,
+  useDisplayState,
 } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -38,15 +39,25 @@ export const Route = createFileRoute("/stats")({
 function StatsPage() {
   const { format } = useCurrency();
   const { state } = useNova();
+  const display = useDisplayState();
   const [range, setRange] = useState<Range>("month");
 
-  const rangeTx = useMemo(() => filterTxsByRange(state.transactions, range), [state.transactions, range]);
-  const cashflow = useMemo(() => cashflowByRange(state.transactions, range), [state.transactions, range]);
+  const rangeTx = useMemo(
+    () => filterTxsByRange(display.transactions, range),
+    [display.transactions, range],
+  );
+  const cashflow = useMemo(
+    () => cashflowByRange(display.transactions, range),
+    [display.transactions, range],
+  );
   const income = rangeTx.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
   const expenses = rangeTx.filter((t) => t.amount < 0).reduce((s, t) => s - t.amount, 0);
   const net = income - expenses;
 
-  const catSpend = useMemo(() => monthlySpendByCategory(state.transactions), [state.transactions]);
+  const catSpend = useMemo(
+    () => monthlySpendByCategory(display.transactions),
+    [display.transactions],
+  );
   const catData = categories
     .map((c) => ({ name: c.name, id: c.id, color: c.color, value: catSpend[c.id] ?? 0 }))
     .filter((c) => c.value > 0)

@@ -21,6 +21,8 @@ import {
   formatTxDate,
   savingsRate,
   cashflowByRange,
+  useDisplayState,
+  txCurrency,
 } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 
@@ -46,12 +48,15 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { state } = useNova();
-  const { format } = useCurrency();
+  const display = useDisplayState();
+  const { format, formatIn } = useCurrency();
   const hide = !!state.settings.hideBalances;
-  const netWorth = totalBalance(state.accounts);
-  const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(state.transactions);
+  const netWorth = totalBalance(display.accounts);
+  const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(
+    display.transactions,
+  );
   const rate = savingsRate(monthlyIncome, monthlyExpenses);
-  const week = cashflowByRange(state.transactions, "week");
+  const week = cashflowByRange(display.transactions, "week");
   const spentWeek = week.reduce((s, d) => s + d.expense, 0);
   const upcoming = [...state.recurring]
     .sort((a, b) => +new Date(a.nextDate) - +new Date(b.nextDate))
@@ -209,7 +214,13 @@ function Home() {
                       In {days} day{days === 1 ? "" : "s"} · {r.frequency}
                     </p>
                   </div>
-                  <span className="shrink-0 text-sm font-semibold">{format(r.amount)}</span>
+                  <span className="shrink-0 text-sm font-semibold">
+                    {formatIn(
+                      r.amount,
+                      r.currency ??
+                        (state.accounts.find((a) => a.id === r.accountId)?.currency ?? "USD"),
+                    )}
+                  </span>
                 </li>
               );
             })}
@@ -252,7 +263,7 @@ function Home() {
                     positive ? "text-primary" : "text-foreground"
                   }`}
                 >
-                  {format(t.amount)}
+                  {formatIn(t.amount, txCurrency(t, state.accounts))}
                 </span>
               </li>
             );

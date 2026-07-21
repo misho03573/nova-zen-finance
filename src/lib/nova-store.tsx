@@ -10,6 +10,8 @@ import {
 } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import type { CurrencyCode } from "@/lib/currency";
+import { convertAmount, useCurrency } from "@/lib/currency";
 
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
@@ -22,6 +24,8 @@ export type Account = {
   gradient: string;
   brand: string;
   type: AccountType;
+  /** Native currency of this account. Balance & transactions are stored in this currency. */
+  currency?: CurrencyCode;
 };
 
 export type Transaction = {
@@ -33,6 +37,8 @@ export type Transaction = {
   accountId: string;
   note?: string;
   recurringId?: string;
+  /** Currency in which `amount` is stored. Inherits the account's native currency. */
+  currency?: CurrencyCode;
 };
 
 export type Goal = {
@@ -62,6 +68,7 @@ export type Recurring = {
   frequency: Frequency;
   nextDate: string; // ISO
   note?: string;
+  currency?: CurrencyCode;
 };
 
 export type Settings = {
@@ -777,6 +784,55 @@ export function useNova() {
   const ctx = useContext(NovaContext);
   if (!ctx) throw new Error("useNova must be used inside NovaProvider");
   return ctx;
+}
+
+/**
+ * Returns the account's native currency (falls back to USD for legacy rows).
+ */
+export function accountCurrency(a: Account | undefined): CurrencyCode {
+  return (a?.currency ?? "USD") as CurrencyCode;
+}
+
+/**
+ * Returns a transaction's native currency (mirrors its account if unset).
+ */
+export function txCurrency(t: Transaction, accounts: Account[]): CurrencyCode {
+  if (t.currency) return t.currency;
+  const a = accounts.find((x) => x.id === t.accountId);
+  return accountCurrency(a);
+}
+
+/**
+ * View of the store where every monetary field has been converted to the
+ * active display currency. Use for cross-account aggregates (Home totals,
+ * Net Worth, Stats). Per-item native rendering should still use raw state
+ * from `useNova()` + `formatIn(amount, nativeCurrency)`.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useDisplayState() {
+  const { state } = useNova();
+  const { currency } = useCurrency();
+  return useMemo(() => {
+    const to = currency.code as CurrencyCode;
+    const conv = (n: number, from: CurrencyCode) => convertAmount(n, from, to);
+    const accCur = new Map<string, CurrencyCode>();
+    for (const a of state.accounts) accCur.set(a.id, accountCurrency(a));
+    return {
+      ...state,
+      accounts: state.accounts.map((a) => ({
+        ...a,
+        balance: conv(a.balance, accountCurrency(a)),
+      })),
+      transactions: state.transactions.map((t) => ({
+        ...t,
+        amount: conv(t.amount, t.currency ?? accCur.get(t.accountId) ?? "USD"),
+      })),
+      recurring: state.recurring.map((r) => ({
+        ...r,
+        amount: conv(r.amount, r.currency ?? accCur.get(r.accountId) ?? "USD"),
+      })),
+    };
+  }, [state, currency.code]);
 }
 
 export type Bucket = "Today" | "Yesterday" | "Earlier";

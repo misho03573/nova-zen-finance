@@ -3,7 +3,7 @@ import { Landmark, Coins, TrendingUp, Bitcoin, Home, Car, CreditCard, Building2,
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
-import { useNova, netWorthBreakdown, type LiabilityType } from "@/lib/nova-store";
+import { useNova, netWorthBreakdown, useDisplayState, type LiabilityType } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
@@ -31,10 +31,14 @@ export const Route = createFileRoute("/networth")({
 
 function NetWorthPage() {
   const { state, addLiability, deleteLiability } = useNova();
+  const display = useDisplayState();
   const { format } = useCurrency();
   const confirm = useConfirm();
   const hide = useHideBalances();
-  const b = useMemo(() => netWorthBreakdown(state), [state]);
+  const b = useMemo(
+    () => netWorthBreakdown({ ...state, accounts: display.accounts }),
+    [state, display.accounts],
+  );
 
   // Build a smooth 12-month animated line from cashflow monthly net movement
   const points = useMemo(() => {

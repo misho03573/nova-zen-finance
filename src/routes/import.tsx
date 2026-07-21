@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Upload, FileText, Check, AlertTriangle } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova, type Transaction } from "@/lib/nova-store";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { toast } from "sonner";
 import { categoryOf } from "@/lib/nova-data";
 
@@ -45,10 +45,13 @@ function guessCategory(desc: string): string {
 
 function ImportPage() {
   const { state, importTransactions } = useNova();
-  const { format } = useCurrency();
+  const { formatIn } = useCurrency();
   const [csv, setCsv] = useState<string>("");
   const [account, setAccount] = useState<string>(state.accounts[0]?.id ?? "");
   const navigate = useNavigate();
+
+  const accountCur: CurrencyCode =
+    (state.accounts.find((a) => a.id === account)?.currency ?? "USD") as CurrencyCode;
 
   const drafts: Draft[] = useMemo(() => {
     if (!csv.trim()) return [];
@@ -76,11 +79,12 @@ function ImportPage() {
           amount,
           date: iso,
           accountId: account,
+          currency: accountCur,
           dupe: existing.has(key),
         };
       })
       .filter((x): x is Draft => x !== null);
-  }, [csv, account, state.transactions]);
+  }, [csv, account, accountCur, state.transactions]);
 
   const toImport = drafts.filter((d) => !d.dupe);
 
@@ -184,7 +188,7 @@ function ImportPage() {
                     </span>
                   ) : null}
                   <span className={`shrink-0 text-sm font-semibold ${d.amount > 0 ? "text-primary" : ""}`}>
-                    {format(d.amount)}
+                    {formatIn(d.amount, d.currency ?? accountCur)}
                   </span>
                 </li>
               );

@@ -23,9 +23,11 @@ import {
   accountTypeLabel,
   type AccountType,
   type Account,
+  accountCurrency,
+  txCurrency,
 } from "@/lib/nova-store";
 import { parseSearchQuery } from "@/lib/insights";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -62,7 +64,7 @@ const TYPE_META: Record<AccountType, { icon: typeof Banknote; gradient: string }
 
 function WalletPage() {
   const { state, deleteTransaction } = useNova();
-  const { format } = useCurrency();
+  const { formatIn } = useCurrency();
   const confirm = useConfirm();
   const hide = useHideBalances();
   const [query, setQuery] = useState("");
@@ -224,13 +226,13 @@ function WalletPage() {
                           positive ? "text-primary" : "text-foreground"
                         }`}
                       >
-                        {maskAmount(hide, format(t.amount), "md")}
+                        {maskAmount(hide, formatIn(t.amount, txCurrency(t, state.accounts)), "md")}
                       </span>
                       <button
                         onClick={async () => {
                           const ok = await confirm({
                             title: "Delete this transaction?",
-                            description: `${t.title} · ${format(t.amount)} will be removed and the account balance updated.`,
+                            description: `${t.title} · ${formatIn(t.amount, txCurrency(t, state.accounts))} will be removed and the account balance updated.`,
                             confirmLabel: "Delete",
                             destructive: true,
                           });
@@ -281,7 +283,7 @@ function Chip({
 }
 
 function AccountCard({ account }: { account: Account }) {
-  const { format } = useCurrency();
+  const { formatIn } = useCurrency();
   const { deleteAccount } = useNova();
   const confirm = useConfirm();
   const hide = useHideBalances();
@@ -341,7 +343,9 @@ function AccountCard({ account }: { account: Account }) {
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-widest text-white/60">Balance</p>
-            <p className="text-sm font-semibold">{maskAmount(hide, format(account.balance), "md")}</p>
+            <p className="text-sm font-semibold">
+              {maskAmount(hide, formatIn(account.balance, accountCurrency(account)), "md")}
+            </p>
           </div>
         </div>
       </div>
@@ -362,6 +366,9 @@ function AccountDialog({
   const [type, setType] = useState<AccountType>(account?.type ?? "bank");
   const [balance, setBalance] = useState(String(account?.balance ?? 0));
   const [number, setNumber] = useState(account?.number ?? "•••• 0000");
+  const [currency, setCurrencyCode] = useState<CurrencyCode>(
+    (account?.currency ?? "USD") as CurrencyCode,
+  );
 
   const save = () => {
     const bal = Number.parseFloat(balance) || 0;
@@ -373,6 +380,7 @@ function AccountDialog({
         type,
         balance: bal,
         number,
+        currency,
         gradient: TYPE_META[type].gradient,
       });
       toast.success("Account updated");
@@ -382,6 +390,7 @@ function AccountDialog({
         type,
         balance: bal,
         number,
+        currency,
         holder: "A. MORGAN",
         brand: type === "crypto" ? "Wallet" : "Visa",
         gradient: TYPE_META[type].gradient,
@@ -436,6 +445,23 @@ function AccountDialog({
               <Label className="text-xs">Identifier</Label>
               <Input value={number} onChange={(e) => setNumber(e.target.value)} />
             </div>
+          </div>
+          <div>
+            <Label className="text-xs">Currency</Label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrencyCode(e.target.value as CurrencyCode)}
+              className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.flag} {c.code} — {c.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              All transactions on this account are stored in {currency}. Cross-account totals convert to your display currency automatically.
+            </p>
           </div>
         </div>
         <DialogFooter>
