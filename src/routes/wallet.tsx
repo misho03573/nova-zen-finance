@@ -40,6 +40,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
+import { EmptyState } from "@/components/nova/EmptyState";
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({
@@ -168,9 +169,21 @@ function WalletPage() {
           </span>
         </div>
         {groups.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-            No matching transactions.
-          </div>
+          state.transactions.length === 0 ? (
+            <EmptyState
+              icon={<Plus className="h-6 w-6" />}
+              title="No transactions yet"
+              description="Add your first income or expense to see it grouped here."
+              ctaLabel="Add transaction"
+              ctaTo="/add"
+            />
+          ) : (
+            <EmptyState
+              icon={<Search className="h-6 w-6" />}
+              title="No matches"
+              description="Try a different search or clear the category filter."
+            />
+          )
         ) : (
           groups.map((group) => (
             <div key={group.bucket} className="animate-fade-in">
