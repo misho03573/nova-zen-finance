@@ -5,10 +5,12 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova } from "@/lib/nova-store";
 
 export const APP_VERSION = "1.0.0-rc.1";
-export const BUILD_TIMESTAMP =
-  typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : new Date().toISOString();
-
-declare const __BUILD_TIME__: string | undefined;
+// Baked at file evaluation time. For a real build stamp, wire `define` in vite.config.ts.
+export const BUILD_TIMESTAMP: string =
+  typeof import.meta !== "undefined" &&
+  (import.meta as { env?: Record<string, string> }).env?.VITE_BUILD_TIME
+    ? ((import.meta as { env: Record<string, string> }).env.VITE_BUILD_TIME as string)
+    : new Date().toISOString();
 
 export const Route = createFileRoute("/diagnostics")({
   head: () => ({
