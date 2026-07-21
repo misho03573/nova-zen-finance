@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
@@ -531,31 +532,84 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   const userId = user?.id ?? null;
   const activeKeyRef = useRef<string>(keyFor(null));
   const hydratedRef = useRef<boolean>(false);
+  const remoteSyncRef = useRef<boolean>(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load state for the active user (or guest).
-  // Authenticated users always start with a clean empty state (no seed, no guest migration).
+  // - Guest: local demo seed.
+  // - Authenticated: load from Supabase (`user_data.data`). If no row exists yet
+  //   this is the user's first sign-in → create an empty row. Never wipe an
+  //   existing row.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    let cancelled = false;
     const key = keyFor(userId);
+    activeKeyRef.current = key;
+    hydratedRef.current = false;
+    remoteSyncRef.current = false;
+
+    if (!userId) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw) as NovaState;
+          if (parsed?.accounts && parsed?.transactions) {
+            dispatch({ type: "hydrate", state: parsed });
+          } else {
+            dispatch({ type: "hydrate", state: seed });
+          }
+        } else {
+          dispatch({ type: "hydrate", state: seed });
+        }
+      } catch {
+        dispatch({ type: "hydrate", state: seed });
+      }
+      hydratedRef.current = true;
+      return;
+    }
+
+    // Optimistic hydrate from local cache to avoid flicker.
     try {
       const raw = window.localStorage.getItem(key);
-      const fallback = userId ? emptyState : seed;
       if (raw) {
         const parsed = JSON.parse(raw) as NovaState;
-        if (parsed && parsed.accounts && parsed.transactions) {
+        if (parsed?.accounts && parsed?.transactions) {
           dispatch({ type: "hydrate", state: parsed });
-        } else {
-          dispatch({ type: "hydrate", state: fallback });
         }
-      } else {
-        // New authenticated account → clean slate. Guest → demo seed.
-        dispatch({ type: "hydrate", state: fallback });
       }
     } catch {
       /* ignore */
     }
-    activeKeyRef.current = key;
-    hydratedRef.current = true;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("user_data")
+        .select("data")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        console.error("[nova] load failed", error);
+        hydratedRef.current = true;
+        remoteSyncRef.current = true;
+        return;
+      }
+      if (data?.data && typeof data.data === "object" && (data.data as NovaState).accounts) {
+        dispatch({ type: "hydrate", state: data.data as NovaState });
+      } else {
+        // First-time registration: create empty row.
+        dispatch({ type: "hydrate", state: emptyState });
+        await supabase
+          .from("user_data")
+          .insert({ user_id: userId, data: emptyState as unknown as Record<string, unknown> });
+      }
+      hydratedRef.current = true;
+      remoteSyncRef.current = true;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   useEffect(() => {
@@ -565,7 +619,23 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-  }, [state]);
+    // Debounced remote persist for signed-in users.
+    if (!remoteSyncRef.current || !userId) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    const snapshot = state;
+    const uid = userId;
+    saveTimerRef.current = setTimeout(() => {
+      supabase
+        .from("user_data")
+        .upsert(
+          { user_id: uid, data: snapshot as unknown as Record<string, unknown> },
+          { onConflict: "user_id" },
+        )
+        .then(({ error }) => {
+          if (error) console.error("[nova] save failed", error);
+        });
+    }, 600);
+  }, [state, userId]);
 
   const rid = (p: string) => `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
