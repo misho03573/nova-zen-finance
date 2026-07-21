@@ -49,7 +49,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { state } = useNova();
   const display = useDisplayState();
-  const { format } = useCurrency();
+  const { format, formatIn } = useCurrency();
   const hide = !!state.settings.hideBalances;
   const netWorth = totalBalance(display.accounts);
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(
@@ -257,7 +257,7 @@ function Home() {
                     positive ? "text-primary" : "text-foreground"
                   }`}
                 >
-                  {useCurrencyFormatIn(t, state.accounts)}
+                  {formatIn(t.amount, txCurrency(t, state.accounts))}
                 </span>
               </li>
             );
@@ -266,16 +266,6 @@ function Home() {
       </section>
     </AppShell>
   );
-}
-
-// Small helper (used inline above) to avoid destructuring in list bodies.
-// eslint-disable-next-line react-refresh/only-export-components
-function useCurrencyFormatIn(
-  t: { amount: number; currency?: import("@/lib/currency").CurrencyCode; accountId: string },
-  accounts: Parameters<typeof txCurrency>[1],
-) {
-  const { formatIn } = useCurrency();
-  return formatIn(t.amount, txCurrency(t as never, accounts));
 }
 
 function MiniCard({
