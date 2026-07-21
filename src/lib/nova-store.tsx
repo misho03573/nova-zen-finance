@@ -297,12 +297,12 @@ function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
     case "hydrate":
       return {
-        ...seed,
+        ...emptyState,
         ...action.state,
-        settings: { ...seed.settings, ...action.state.settings },
-        liabilities: action.state.liabilities ?? seed.liabilities,
-        subscriptions: action.state.subscriptions ?? seed.subscriptions,
-        automationRules: action.state.automationRules ?? seed.automationRules,
+        settings: { ...emptyState.settings, ...action.state.settings },
+        liabilities: action.state.liabilities ?? [],
+        subscriptions: action.state.subscriptions ?? [],
+        automationRules: action.state.automationRules ?? [],
       };
     case "addTransaction": {
       const accounts = state.accounts.map((a) =>
