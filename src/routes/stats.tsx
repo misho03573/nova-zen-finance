@@ -165,7 +165,10 @@ function StatsPage() {
       <section className="mt-6 px-5">
         <h2 className="mb-3 text-sm font-semibold">Monthly budgets</h2>
         {state.budgets.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No budgets yet.</p>
+          <div className="rounded-3xl border border-dashed border-border bg-card/40 p-5 text-center">
+            <p className="text-sm font-semibold">No budgets set</p>
+            <p className="mt-1 text-xs text-muted-foreground">Cap a category to get gentle warnings as you spend.</p>
+          </div>
         ) : (
           <div className="space-y-2">
             {state.budgets.map((b) => {
