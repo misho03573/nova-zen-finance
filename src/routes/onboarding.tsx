@@ -11,6 +11,16 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding")({
+  head: () => ({
+    meta: [
+      { title: "Welcome to NOVA" },
+      {
+        name: "description",
+        content: "A calm, beautiful way to see and shape your money — meet NOVA.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: Onboarding,
 });
 
