@@ -10,6 +10,8 @@ import {
 } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import type { CurrencyCode } from "@/lib/currency";
+import { convertAmount } from "@/lib/currency";
 
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
@@ -22,6 +24,8 @@ export type Account = {
   gradient: string;
   brand: string;
   type: AccountType;
+  /** Native currency of this account. Balance & transactions are stored in this currency. */
+  currency?: CurrencyCode;
 };
 
 export type Transaction = {
@@ -33,6 +37,8 @@ export type Transaction = {
   accountId: string;
   note?: string;
   recurringId?: string;
+  /** Currency in which `amount` is stored. Inherits the account's native currency. */
+  currency?: CurrencyCode;
 };
 
 export type Goal = {
@@ -62,6 +68,7 @@ export type Recurring = {
   frequency: Frequency;
   nextDate: string; // ISO
   note?: string;
+  currency?: CurrencyCode;
 };
 
 export type Settings = {
