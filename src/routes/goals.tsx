@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
+import { EmptyState } from "@/components/nova/EmptyState";
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -90,9 +91,11 @@ function GoalsPage() {
 
       <section className="mt-6 space-y-3 px-5">
         {goals.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-            No goals yet. Tap + to create your first.
-          </div>
+          <EmptyState
+            icon={<PiggyBank className="h-6 w-6" />}
+            title="No goals yet"
+            description="Set a target — a trip, an emergency fund, a new laptop — and watch progress grow."
+          />
         ) : null}
         {goals.map((g) => {
           const pct = Math.min(1, g.saved / g.target);
