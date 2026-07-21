@@ -214,7 +214,13 @@ function Home() {
                       In {days} day{days === 1 ? "" : "s"} · {r.frequency}
                     </p>
                   </div>
-                  <span className="shrink-0 text-sm font-semibold">{format(r.amount)}</span>
+                  <span className="shrink-0 text-sm font-semibold">
+                    {formatIn(
+                      r.amount,
+                      r.currency ??
+                        (state.accounts.find((a) => a.id === r.accountId)?.currency ?? "USD"),
+                    )}
+                  </span>
                 </li>
               );
             })}
