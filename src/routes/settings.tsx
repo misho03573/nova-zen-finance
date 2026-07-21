@@ -35,6 +35,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { PreviewBadge } from "@/components/nova/PreviewBadge";
+import { useConfirm } from "@/components/nova/ConfirmDialog";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -54,6 +56,7 @@ function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [pinOpen, setPinOpen] = useState(false);
   const [pin, setPin] = useState("");
+  const confirm = useConfirm();
 
   const handleExport = () => {
     try {
@@ -70,8 +73,14 @@ function SettingsPage() {
     }
   };
 
-  const handleReset = () => {
-    if (!confirm("Reset all NOVA data? This can't be undone.")) return;
+  const handleReset = async () => {
+    const ok = await confirm({
+      title: "Reset all NOVA data?",
+      description: "This deletes every account, transaction, goal, budget and setting. This can't be undone.",
+      confirmLabel: "Reset everything",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       localStorage.removeItem("nova.store.v3");
       localStorage.removeItem("nova.store.v2");
@@ -177,19 +186,19 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.security")}>
-          <Row icon={<Fingerprint className="h-4 w-4" />} label="Face ID" description="Unlock with your face">
+          <Row icon={<Fingerprint className="h-4 w-4" />} label="Face ID" description="Unlock with your face" preview>
             <Switch
               checked={!!s.faceId}
               onCheckedChange={(v) => { setSettings({ faceId: v }); toast.message(v ? "Face ID on" : "Face ID off"); }}
             />
           </Row>
-          <Row icon={<Fingerprint className="h-4 w-4" />} label="Touch ID" description="Fingerprint unlock">
+          <Row icon={<Fingerprint className="h-4 w-4" />} label="Touch ID" description="Fingerprint unlock" preview>
             <Switch
               checked={!!s.touchId}
               onCheckedChange={(v) => setSettings({ touchId: v })}
             />
           </Row>
-          <Row icon={<Lock className="h-4 w-4" />} label="PIN code" description={s.pinEnabled ? "6-digit PIN active" : "Set a 6-digit PIN"}>
+          <Row icon={<Lock className="h-4 w-4" />} label="PIN code" description={s.pinEnabled ? "6-digit PIN active" : "Set a 6-digit PIN"} preview>
             <button
               onClick={() => setPinOpen(true)}
               className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
@@ -197,7 +206,7 @@ function SettingsPage() {
               {s.pinEnabled ? "Change" : "Set"}
             </button>
           </Row>
-          <Row icon={<Lock className="h-4 w-4" />} label="Auto-lock" description="Lock when inactive">
+          <Row icon={<Lock className="h-4 w-4" />} label="Auto-lock" description="Lock when inactive" preview>
             <select
               value={s.autoLockMinutes ?? 5}
               onChange={(e) => setSettings({ autoLockMinutes: parseInt(e.target.value, 10) })}
@@ -219,7 +228,7 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.sync")}>
-          <Row icon={<Cloud className="h-4 w-4" />} label="Cloud sync" description="Sync across devices (preview)">
+          <Row icon={<Cloud className="h-4 w-4" />} label="Cloud sync" description="Sync across devices" preview>
             <Switch
               checked={!!s.cloudSync}
               onCheckedChange={(v) => { setSettings({ cloudSync: v }); toast.message(v ? "Cloud sync coming soon" : "Cloud sync off"); }}
@@ -228,7 +237,7 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.notifications")}>
-          <Row icon={<Bell className="h-4 w-4" />} label="Push" description="Transactions & summaries">
+          <Row icon={<Bell className="h-4 w-4" />} label="Push" description="Transactions & summaries" preview>
             <Switch
               checked={s.notifications}
               onCheckedChange={(v) => setSettings({ notifications: v })}
@@ -290,7 +299,12 @@ function SettingsPage() {
           </button>
         </Group>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground">NOVA · v0.5 Pro</p>
+        <p className="mt-6 text-center text-[11px] text-muted-foreground">
+          NOVA · v1.0 RC ·{" "}
+          <Link to="/diagnostics" className="underline decoration-dotted underline-offset-4 hover:text-foreground">
+            Diagnostics
+          </Link>
+        </p>
       </section>
 
       <Dialog open={pinOpen} onOpenChange={setPinOpen}>
@@ -352,11 +366,13 @@ function Row({
   label,
   description,
   children,
+  preview,
 }: {
   icon: React.ReactNode;
   label: string;
   description?: string;
   children?: React.ReactNode;
+  preview?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 shadow-[var(--shadow-card)]">
@@ -364,7 +380,10 @@ function Row({
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">{label}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-sm font-semibold">{label}</p>
+          {preview ? <PreviewBadge /> : null}
+        </div>
         {description ? (
           <p className="truncate text-xs text-muted-foreground">{description}</p>
         ) : null}

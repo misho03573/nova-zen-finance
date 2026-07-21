@@ -38,6 +38,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/nova/ConfirmDialog";
+import { useHideBalances, maskAmount } from "@/lib/hide-balance";
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({
@@ -60,6 +62,8 @@ const TYPE_META: Record<AccountType, { icon: typeof Banknote; gradient: string }
 function WalletPage() {
   const { state, deleteTransaction } = useNova();
   const { format } = useCurrency();
+  const confirm = useConfirm();
+  const hide = useHideBalances();
   const [query, setQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -207,12 +211,20 @@ function WalletPage() {
                           positive ? "text-primary" : "text-foreground"
                         }`}
                       >
-                        {format(t.amount)}
+                        {maskAmount(hide, format(t.amount), "md")}
                       </span>
                       <button
-                        onClick={() => {
-                          deleteTransaction(t.id);
-                          toast.message("Transaction deleted");
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "Delete this transaction?",
+                            description: `${t.title} · ${format(t.amount)} will be removed and the account balance updated.`,
+                            confirmLabel: "Delete",
+                            destructive: true,
+                          });
+                          if (ok) {
+                            deleteTransaction(t.id);
+                            toast.message("Transaction deleted");
+                          }
                         }}
                         aria-label="Delete transaction"
                         className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
@@ -258,6 +270,8 @@ function Chip({
 function AccountCard({ account }: { account: Account }) {
   const { format } = useCurrency();
   const { deleteAccount } = useNova();
+  const confirm = useConfirm();
+  const hide = useHideBalances();
   const Icon = TYPE_META[account.type].icon;
   return (
     <article
@@ -286,8 +300,14 @@ function AccountCard({ account }: { account: Account }) {
           />
           <button
             aria-label="Delete account"
-            onClick={() => {
-              if (confirm(`Delete ${account.name}?`)) {
+            onClick={async () => {
+              const ok = await confirm({
+                title: `Delete ${account.name}?`,
+                description: "All transactions and recurring items on this account will also be removed.",
+                confirmLabel: "Delete account",
+                destructive: true,
+              });
+              if (ok) {
                 deleteAccount(account.id);
                 toast.message(`${account.name} deleted`);
               }
@@ -308,7 +328,7 @@ function AccountCard({ account }: { account: Account }) {
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-widest text-white/60">Balance</p>
-            <p className="text-sm font-semibold">{format(account.balance)}</p>
+            <p className="text-sm font-semibold">{maskAmount(hide, format(account.balance), "md")}</p>
           </div>
         </div>
       </div>
