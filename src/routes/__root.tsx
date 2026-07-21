@@ -9,7 +9,7 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -123,17 +123,25 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <CurrencyProvider>
           <NovaProvider>
-            <OnboardingGate />
-            <PreferencesApplier />
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-            <Toaster />
+            {hydrated ? (
+              <>
+                <OnboardingGate />
+                <PreferencesApplier />
+                {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                <Outlet />
+                <Toaster position="top-center" />
+              </>
+            ) : (
+              <div className="min-h-screen bg-background" aria-hidden />
+            )}
           </NovaProvider>
         </CurrencyProvider>
       </ThemeProvider>

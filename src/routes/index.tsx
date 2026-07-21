@@ -31,6 +31,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { state } = useNova();
   const { format } = useCurrency();
+  const hide = !!state.settings.hideBalances;
   const netWorth = totalBalance(state.accounts);
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(state.transactions);
   const rate = savingsRate(monthlyIncome, monthlyExpenses);
@@ -81,6 +82,7 @@ function Home() {
           rate={rate}
           brand={primaryAccount?.brand ?? "Visa"}
           gradient={primaryAccount?.gradient ?? "var(--gradient-wallet)"}
+          hide={hide}
         />
       </section>
 
@@ -349,6 +351,7 @@ function NetWorthCard({
   rate,
   brand,
   gradient,
+  hide,
 }: {
   netWorth: number;
   income: number;
@@ -356,6 +359,7 @@ function NetWorthCard({
   rate: number;
   brand: string;
   gradient: string;
+  hide?: boolean;
 }) {
   const { format } = useCurrency();
   return (
@@ -370,24 +374,28 @@ function NetWorthCard({
           {brand}
         </span>
       </div>
-      <AnimatedNumber
-        value={netWorth}
-        format={(n) => format(n)}
-        duration={900}
-        className="mt-2 block text-4xl font-semibold tracking-tight"
-      />
+      {hide ? (
+        <span className="mt-2 block select-none text-4xl font-semibold tracking-tight">••••••</span>
+      ) : (
+        <AnimatedNumber
+          value={netWorth}
+          format={(n) => format(n)}
+          duration={900}
+          className="mt-2 block text-4xl font-semibold tracking-tight"
+        />
+      )}
       <p className="mt-1 text-[11px] uppercase tracking-widest text-white/60">
         Savings rate · {Math.round(rate * 100)}%
       </p>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <MiniStat
           label="Income"
-          value={format(income, { signed: true })}
+          value={hide ? "••••" : format(income, { signed: true })}
           tone="up"
         />
         <MiniStat
           label="Expenses"
-          value={format(-expenses)}
+          value={hide ? "••••" : format(-expenses)}
           tone="down"
         />
       </div>
