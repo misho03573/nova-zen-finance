@@ -13,6 +13,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
 
+/** Round a monetary value to the currency's smallest unit (JPY = whole, else 2dp). */
+function round(n: number, cur?: CurrencyCode): number {
+  const d = cur === "JPY" ? 1 : 100;
+  return Math.round((n + Number.EPSILON) * d) / d;
+}
+
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
 export type Account = {
@@ -39,6 +45,8 @@ export type Transaction = {
   recurringId?: string;
   /** Currency in which `amount` is stored. Inherits the account's native currency. */
   currency?: CurrencyCode;
+  /** Links the two legs of a transfer together. */
+  transferId?: string;
 };
 
 export type Goal = {
@@ -311,7 +319,8 @@ type Action =
   | { type: "addAutomation"; rule: AutomationRule }
   | { type: "deleteAutomation"; id: string }
   | { type: "importTransactions"; txs: Transaction[] }
-  | { type: "advanceRecurring" };
+  | { type: "advanceRecurring" }
+  | { type: "transfer"; fromId: string; toId: string; amount: number; date: string; note?: string };
 
 function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
@@ -325,35 +334,53 @@ function reducer(state: NovaState, action: Action): NovaState {
         automationRules: action.state.automationRules ?? [],
       };
     case "addTransaction": {
+      const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
+      const tx: Transaction = {
+        ...action.tx,
+        amount: round(action.tx.amount, action.tx.currency ?? accCur),
+      };
       const accounts = state.accounts.map((a) =>
-        a.id === action.tx.accountId ? { ...a, balance: a.balance + action.tx.amount } : a,
+        a.id === tx.accountId ? { ...a, balance: round(a.balance + tx.amount, a.currency) } : a,
       );
       return {
         ...state,
         accounts,
-        transactions: [action.tx, ...state.transactions],
+        transactions: [tx, ...state.transactions],
       };
     }
     case "updateTransaction": {
       const prev = state.transactions.find((t) => t.id === action.tx.id);
       if (!prev) return state;
+      const nextAcc = state.accounts.find((a) => a.id === action.tx.accountId);
+      // Re-denominate amount into the new account's currency if the account
+      // changed. Amount is preserved in value terms via FX conversion.
+      let nextAmount = action.tx.amount;
+      let nextCurrency = action.tx.currency ?? nextAcc?.currency;
+      if (prev.accountId !== action.tx.accountId && nextAcc?.currency) {
+        const prevCur = prev.currency ??
+          state.accounts.find((a) => a.id === prev.accountId)?.currency ?? "USD";
+        nextAmount = convertAmount(action.tx.amount, prevCur, nextAcc.currency);
+        nextCurrency = nextAcc.currency;
+      }
+      nextAmount = round(nextAmount, nextCurrency);
+      const tx: Transaction = { ...action.tx, amount: nextAmount, currency: nextCurrency };
       const accounts = state.accounts.map((a) => {
         let b = a.balance;
         if (a.id === prev.accountId) b -= prev.amount;
-        if (a.id === action.tx.accountId) b += action.tx.amount;
-        return { ...a, balance: b };
+        if (a.id === tx.accountId) b += tx.amount;
+        return { ...a, balance: round(b, a.currency) };
       });
       return {
         ...state,
         accounts,
-        transactions: state.transactions.map((t) => (t.id === action.tx.id ? action.tx : t)),
+        transactions: state.transactions.map((t) => (t.id === tx.id ? tx : t)),
       };
     }
     case "deleteTransaction": {
       const tx = state.transactions.find((t) => t.id === action.id);
       if (!tx) return state;
       const accounts = state.accounts.map((a) =>
-        a.id === tx.accountId ? { ...a, balance: a.balance - tx.amount } : a,
+        a.id === tx.accountId ? { ...a, balance: round(a.balance - tx.amount, a.currency) } : a,
       );
       return {
         ...state,
@@ -362,12 +389,60 @@ function reducer(state: NovaState, action: Action): NovaState {
       };
     }
     case "addAccount":
-      return { ...state, accounts: [...state.accounts, action.account] };
-    case "updateAccount":
       return {
         ...state,
-        accounts: state.accounts.map((a) => (a.id === action.account.id ? action.account : a)),
+        accounts: [
+          ...state.accounts,
+          { ...action.account, balance: round(action.account.balance, action.account.currency) },
+        ],
       };
+    case "updateAccount": {
+      const prev = state.accounts.find((a) => a.id === action.account.id);
+      if (!prev) return state;
+      const next = { ...action.account };
+      const prevCur = (prev.currency ?? "USD") as CurrencyCode;
+      const nextCur = (next.currency ?? "USD") as CurrencyCode;
+      // Currency changed → re-denominate stored balance and all transactions
+      // on this account into the new currency so aggregates stay correct.
+      if (prevCur !== nextCur) {
+        next.balance = round(convertAmount(next.balance, prevCur, nextCur), nextCur);
+        const transactions = state.transactions.map((t) =>
+          t.accountId === next.id
+            ? {
+                ...t,
+                amount: round(
+                  convertAmount(t.amount, (t.currency ?? prevCur) as CurrencyCode, nextCur),
+                  nextCur,
+                ),
+                currency: nextCur,
+              }
+            : t,
+        );
+        const recurring = state.recurring.map((r) =>
+          r.accountId === next.id
+            ? {
+                ...r,
+                amount: round(
+                  convertAmount(r.amount, (r.currency ?? prevCur) as CurrencyCode, nextCur),
+                  nextCur,
+                ),
+                currency: nextCur,
+              }
+            : r,
+        );
+        return {
+          ...state,
+          accounts: state.accounts.map((a) => (a.id === next.id ? next : a)),
+          transactions,
+          recurring,
+        };
+      }
+      next.balance = round(next.balance, nextCur);
+      return {
+        ...state,
+        accounts: state.accounts.map((a) => (a.id === next.id ? next : a)),
+      };
+    }
     case "deleteAccount":
       return {
         ...state,
@@ -446,14 +521,19 @@ function reducer(state: NovaState, action: Action): NovaState {
       };
     case "importTransactions": {
       const accountsMap = new Map(state.accounts.map((a) => [a.id, { ...a }]));
+      const stamped: Transaction[] = [];
       for (const tx of action.txs) {
         const a = accountsMap.get(tx.accountId);
-        if (a) a.balance += tx.amount;
+        if (!a) continue;
+        const cur = (tx.currency ?? a.currency) as CurrencyCode | undefined;
+        const amt = round(tx.amount, cur);
+        stamped.push({ ...tx, amount: amt, currency: cur ?? tx.currency });
+        a.balance = round(a.balance + amt, a.currency);
       }
       return {
         ...state,
         accounts: Array.from(accountsMap.values()),
-        transactions: [...action.txs, ...state.transactions],
+        transactions: [...stamped, ...state.transactions],
       };
     }
     case "advanceRecurring": {
@@ -462,16 +542,19 @@ function reducer(state: NovaState, action: Action): NovaState {
       const updatedRecurring = state.recurring.map((r) => {
         let d = new Date(r.nextDate).getTime();
         let guard = 0;
+        const accCur = state.accounts.find((a) => a.id === r.accountId)?.currency;
+        const cur = r.currency ?? accCur;
         while (d <= now && guard < 60) {
           newTxs.push({
             id: `t_r_${r.id}_${d}_${guard}`,
             title: r.title,
             category: r.category,
-            amount: r.amount,
+            amount: round(r.amount, cur),
             date: new Date(d).toISOString(),
             accountId: r.accountId,
             recurringId: r.id,
             note: r.note,
+            currency: cur,
           });
           const nd = new Date(d);
           if (r.frequency === "weekly") nd.setDate(nd.getDate() + 7);
@@ -486,13 +569,58 @@ function reducer(state: NovaState, action: Action): NovaState {
       const accountsMap = new Map(state.accounts.map((a) => [a.id, { ...a }]));
       for (const tx of newTxs) {
         const a = accountsMap.get(tx.accountId);
-        if (a) a.balance += tx.amount;
+        if (a) a.balance = round(a.balance + tx.amount, a.currency);
       }
       return {
         ...state,
         recurring: updatedRecurring,
         transactions: [...newTxs, ...state.transactions],
         accounts: Array.from(accountsMap.values()),
+      };
+    }
+    case "transfer": {
+      const from = state.accounts.find((a) => a.id === action.fromId);
+      const to = state.accounts.find((a) => a.id === action.toId);
+      if (!from || !to || from.id === to.id) return state;
+      const fromCur = (from.currency ?? "USD") as CurrencyCode;
+      const toCur = (to.currency ?? "USD") as CurrencyCode;
+      const outAmt = round(Math.abs(action.amount), fromCur);
+      if (outAmt <= 0) return state;
+      // Convert exactly once, at transfer time.
+      const inAmt = round(convertAmount(outAmt, fromCur, toCur), toCur);
+      const transferId = `xfer_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const date = action.date;
+      const outTx: Transaction = {
+        id: `t_${transferId}_o`,
+        title: `Transfer to ${to.name}`,
+        category: "transfer",
+        amount: -outAmt,
+        date,
+        accountId: from.id,
+        currency: fromCur,
+        transferId,
+        note: action.note,
+      };
+      const inTx: Transaction = {
+        id: `t_${transferId}_i`,
+        title: `Transfer from ${from.name}`,
+        category: "transfer",
+        amount: inAmt,
+        date,
+        accountId: to.id,
+        currency: toCur,
+        transferId,
+        note: action.note,
+      };
+      const accounts = state.accounts.map((a) => {
+        if (a.id === from.id) return { ...a, balance: round(a.balance - outAmt, fromCur) };
+        if (a.id === to.id) return { ...a, balance: round(a.balance + inAmt, toCur) };
+        return a;
+      });
+      return {
+        ...state,
+        accounts,
+        transactions: [outTx, inTx, ...state.transactions],
       };
     }
     default:
@@ -529,6 +657,7 @@ type Ctx = {
   deleteAutomation: (id: string) => void;
   importTransactions: (txs: Omit<Transaction, "id">[]) => void;
   advanceRecurring: () => void;
+  transfer: (args: { fromId: string; toId: string; amount: number; date?: string; note?: string }) => void;
 };
 
 const NovaContext = createContext<Ctx | null>(null);
@@ -713,6 +842,18 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "importTransactions", txs: withIds });
   }, []);
   const advanceRecurring = useCallback(() => dispatch({ type: "advanceRecurring" }), []);
+  const transfer = useCallback(
+    (args: { fromId: string; toId: string; amount: number; date?: string; note?: string }) =>
+      dispatch({
+        type: "transfer",
+        fromId: args.fromId,
+        toId: args.toId,
+        amount: args.amount,
+        date: args.date ?? new Date().toISOString(),
+        note: args.note,
+      }),
+    [],
+  );
 
   const value = useMemo<Ctx>(
     () => ({
@@ -744,6 +885,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       deleteAutomation,
       importTransactions,
       advanceRecurring,
+      transfer,
     }),
     [
       state,
@@ -774,6 +916,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       deleteAutomation,
       importTransactions,
       advanceRecurring,
+      transfer,
     ],
   );
 

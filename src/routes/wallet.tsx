@@ -12,6 +12,7 @@ import {
   Filter,
   X,
   Pencil,
+  ArrowLeftRight,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -27,7 +28,7 @@ import {
   txCurrency,
 } from "@/lib/nova-store";
 import { parseSearchQuery } from "@/lib/insights";
-import { useCurrency, CURRENCIES, type CurrencyCode } from "@/lib/currency";
+import { useCurrency, CURRENCIES, convertAmount, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -88,6 +89,7 @@ function WalletPage() {
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker />
+            <TransferDialog />
             <button
               onClick={() => setShowSearch((v) => !v)}
               className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
@@ -471,6 +473,121 @@ function AccountDialog({
             style={{ background: "var(--gradient-primary)" }}
           >
             {account ? "Save changes" : "Add account"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function TransferDialog() {
+  const { state, transfer } = useNova();
+  const { formatIn } = useCurrency();
+  const [open, setOpen] = useState(false);
+  const [fromId, setFromId] = useState(state.accounts[0]?.id ?? "");
+  const [toId, setToId] = useState(state.accounts[1]?.id ?? "");
+  const [amountStr, setAmountStr] = useState("");
+  const [note, setNote] = useState("");
+
+  const from = state.accounts.find((a) => a.id === fromId);
+  const to = state.accounts.find((a) => a.id === toId);
+  const fromCur = (from?.currency ?? "USD") as CurrencyCode;
+  const toCur = (to?.currency ?? "USD") as CurrencyCode;
+  const amount = Number.parseFloat(amountStr) || 0;
+  const converted = amount > 0 && from && to ? convertAmount(amount, fromCur, toCur) : 0;
+  const canSave =
+    !!from && !!to && from.id !== to.id && amount > 0 && amount <= from.balance + 1e-9;
+
+  const submit = () => {
+    if (!canSave || !from || !to) return;
+    transfer({ fromId: from.id, toId: to.id, amount, note: note.trim() || undefined });
+    toast.success("Transfer complete", {
+      description: `${formatIn(amount, fromCur)} → ${formatIn(converted, toCur)}`,
+    });
+    setOpen(false);
+    setAmountStr("");
+    setNote("");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          aria-label="Transfer"
+          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+        >
+          <ArrowLeftRight className="h-4 w-4" />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Transfer between accounts</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">From</Label>
+            <select
+              value={fromId}
+              onChange={(e) => setFromId(e.target.value)}
+              className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {state.accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name} — {formatIn(a.balance, accountCurrency(a))}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">To</Label>
+            <select
+              value={toId}
+              onChange={(e) => setToId(e.target.value)}
+              className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {state.accounts
+                .filter((a) => a.id !== fromId)
+                .map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({accountCurrency(a)})
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Amount ({fromCur})</Label>
+            <Input
+              type="number"
+              step="0.01"
+              inputMode="decimal"
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
+              placeholder="0.00"
+            />
+            {amount > 0 && from && to && fromCur !== toCur ? (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                ≈ {formatIn(converted, toCur)} at current FX. Converted exactly once.
+              </p>
+            ) : null}
+            {from && amount > from.balance ? (
+              <p className="mt-1 text-[11px] text-destructive">
+                Exceeds {from.name} balance ({formatIn(from.balance, fromCur)}).
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <Label className="text-xs">Note</Label>
+            <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional" />
+          </div>
+        </div>
+        <DialogFooter>
+          <button
+            onClick={submit}
+            disabled={!canSave}
+            className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] disabled:opacity-40"
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            Transfer
           </button>
         </DialogFooter>
       </DialogContent>
