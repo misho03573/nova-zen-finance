@@ -13,6 +13,7 @@ import {
   Repeat,
   Shield,
   Droplet,
+  ArrowLeftRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -38,6 +39,7 @@ export const categories: Category[] = [
   { id: "subscription", name: "Subs", icon: Repeat, color: "oklch(0.7 0.16 280)" },
   { id: "insurance", name: "Insurance", icon: Shield, color: "oklch(0.72 0.14 140)" },
   { id: "utilities", name: "Utilities", icon: Droplet, color: "oklch(0.72 0.15 210)" },
+  { id: "transfer", name: "Transfer", icon: ArrowLeftRight, color: "oklch(0.72 0.05 260)" },
 ];
 
 export type Transaction = {
