@@ -12,6 +12,7 @@ import {
   Filter,
   X,
   Pencil,
+  ArrowLeftRight,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -27,7 +28,7 @@ import {
   txCurrency,
 } from "@/lib/nova-store";
 import { parseSearchQuery } from "@/lib/insights";
-import { useCurrency, CURRENCIES, type CurrencyCode } from "@/lib/currency";
+import { useCurrency, CURRENCIES, convertAmount, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -88,6 +89,7 @@ function WalletPage() {
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker />
+            <TransferDialog />
             <button
               onClick={() => setShowSearch((v) => !v)}
               className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
