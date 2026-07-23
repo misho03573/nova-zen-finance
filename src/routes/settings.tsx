@@ -61,8 +61,32 @@ function SettingsPage() {
   const [pinOpen, setPinOpen] = useState(false);
   const [pin, setPin] = useState("");
   const confirm = useConfirm();
-  const { user, signOut } = useAuth();
+  const { user, fullName, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const [nameOpen, setNameOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const openNameEditor = () => {
+    setNameDraft(fullName);
+    setNameOpen(true);
+  };
+  const saveName = async () => {
+    const name = nameDraft.trim();
+    if (name.length < 2) {
+      toast.error("Enter your full name");
+      return;
+    }
+    setSavingName(true);
+    const res = await updateProfile({ fullName: name });
+    setSavingName(false);
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success("Name updated");
+    setNameOpen(false);
+  };
 
   const handleSignOut = async () => {
     const ok = await confirm({
@@ -146,6 +170,20 @@ function SettingsPage() {
 
       <section className="px-5">
         <Group title="Account">
+          {user ? (
+            <Row
+              icon={<UserCircle className="h-4 w-4" />}
+              label={fullName || "Add your name"}
+              description="Displayed on your dashboard"
+            >
+              <button
+                onClick={openNameEditor}
+                className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
+              >
+                Edit
+              </button>
+            </Row>
+          ) : null}
           <Row
             icon={<UserCircle className="h-4 w-4" />}
             label={user?.email ?? "Guest"}
@@ -385,6 +423,27 @@ function SettingsPage() {
                 Disable PIN
               </button>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={nameOpen} onOpenChange={setNameOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Your name</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label htmlFor="fullNameField">Full name</Label>
+            <Input
+              id="fullNameField"
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              placeholder="Your name"
+              autoFocus
+            />
+            <Button onClick={saveName} disabled={savingName} className="w-full">
+              {savingName ? "Saving…" : "Save"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
