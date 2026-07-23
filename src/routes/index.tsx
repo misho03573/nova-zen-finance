@@ -308,9 +308,11 @@ function MiniCard({
   );
 }
 
-function ScoreCard({ score }: { score: number }) {
+function ScoreCard({ health }: { health: ScoreBreakdown }) {
+  const { score, status, explanation, chips } = health;
   const max = 900;
-  const pct = Math.min(1, score / max);
+  const pct = Math.min(1, score / 1000);
+  void max;
   const r = 44;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
@@ -361,13 +363,12 @@ function ScoreCard({ score }: { score: number }) {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             Financial health
           </p>
-          <p className="mt-1 text-lg font-semibold leading-tight text-foreground">Excellent</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            You're saving 22% of income and spending is on track.
-          </p>
+          <p className="mt-1 text-lg font-semibold leading-tight text-foreground">{status}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{explanation}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <Chip>Low spend</Chip>
-            <Chip>On budget</Chip>
+            {chips.map((c) => (
+              <Chip key={c}>{c}</Chip>
+            ))}
           </div>
         </div>
       </div>
