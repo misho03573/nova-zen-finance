@@ -13,18 +13,21 @@ import {
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
-import { financialScore, categoryOf } from "@/lib/nova-data";
+import { categoryOf } from "@/lib/nova-data";
 import {
   useNova,
   monthlyTotals,
-  totalBalance,
   formatTxDate,
   savingsRate,
   cashflowByRange,
   useDisplayState,
   txCurrency,
+  netWorthBreakdown,
+  computeFinancialScore,
+  type ScoreBreakdown,
 } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -50,12 +53,14 @@ function Home() {
   const { state } = useNova();
   const display = useDisplayState();
   const { format, formatIn } = useCurrency();
+  const { fullName, user } = useAuth();
   const hide = !!state.settings.hideBalances;
-  const netWorth = totalBalance(display.accounts);
+  const netWorth = netWorthBreakdown(display).net;
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(
     display.transactions,
   );
   const rate = savingsRate(monthlyIncome, monthlyExpenses);
+  const health = computeFinancialScore(display);
   const week = cashflowByRange(display.transactions, "week");
   const spentWeek = week.reduce((s, d) => s + d.expense, 0);
   const upcoming = [...state.recurring]
@@ -65,11 +70,18 @@ function Home() {
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
     .slice(0, 4);
   const primaryAccount = state.accounts[0];
+  const displayName = fullName || (user ? "You" : "Guest");
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 18) return "Good afternoon";
+    return "Good evening";
+  })();
   return (
     <AppShell>
       <PageHeader
-        subtitle="Good morning"
-        title="Alex Morgan"
+        subtitle={greeting}
+        title={displayName}
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker variant="chip" />
@@ -92,7 +104,7 @@ function Home() {
       />
 
       <section className="animate-rise-in px-5" style={{ animationDelay: "40ms" }}>
-        <ScoreCard score={financialScore} />
+        <ScoreCard health={health} />
       </section>
 
       <section className="animate-rise-in mt-6 px-5" style={{ animationDelay: "120ms" }}>
