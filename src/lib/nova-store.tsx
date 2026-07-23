@@ -974,6 +974,13 @@ export function useDisplayState() {
         ...r,
         amount: conv(r.amount, r.currency ?? accCur.get(r.accountId) ?? "USD"),
       })),
+      // Liabilities have no per-row currency; treat their stored balance as
+      // USD (the app's neutral base) and convert to the display currency so
+      // Net Worth math (Assets − Liabilities) stays consistent across FX.
+      liabilities: state.liabilities.map((l) => ({
+        ...l,
+        balance: conv(l.balance, "USD"),
+      })),
     };
   }, [state, currency.code]);
 }
