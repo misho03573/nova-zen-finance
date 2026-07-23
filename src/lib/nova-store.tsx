@@ -1151,3 +1151,95 @@ export function netWorthBreakdown(state: NovaState) {
 export function subscriptionsMonthlyTotal(subs: Subscription[]) {
   return subs.reduce((s, x) => s + x.amount, 0);
 }
+
+/**
+ * Dynamic Financial Health Score (0–1000).
+ * Recomputes from live state — savings rate, debt ratio, emergency fund,
+ * goal progress, budget performance, and positive net worth trend.
+ */
+export type ScoreBreakdown = {
+  score: number;
+  status: "Excellent" | "Good" | "Fair" | "Needs work" | "Getting started";
+  explanation: string;
+  chips: string[];
+};
+
+export function computeFinancialScore(display: NovaState): ScoreBreakdown {
+  const { income, expenses } = monthlyTotals(display.transactions);
+  const nb = netWorthBreakdown(display);
+
+  const hasActivity =
+    display.accounts.length > 0 || display.transactions.length > 0 || display.goals.length > 0;
+  if (!hasActivity) {
+    return {
+      score: 0,
+      status: "Getting started",
+      explanation: "Add an account or a transaction to start tracking your score.",
+      chips: ["No data yet"],
+    };
+  }
+
+  // 1. Savings rate — 30%
+  const sr = savingsRate(income, expenses); // 0..1
+  const srPts = Math.min(1, sr / 0.3) * 300;
+
+  // 2. Debt ratio (liab vs assets) — 20% (lower is better)
+  const debtRatio = nb.assets > 0 ? nb.liab / nb.assets : nb.liab > 0 ? 1 : 0;
+  const debtPts = Math.max(0, 1 - Math.min(1, debtRatio)) * 200;
+
+  // 3. Emergency fund (cash+bank vs 3 months expenses) — 15%
+  const target = Math.max(1, expenses * 3);
+  const liquid = nb.cash + nb.bank;
+  const efPts = Math.max(0, Math.min(1, liquid / target)) * 150;
+
+  // 4. Goal progress — 15%
+  const goalPct = display.goals.length
+    ? display.goals.reduce(
+        (s, g) => s + Math.max(0, Math.min(1, g.target > 0 ? g.saved / g.target : 0)),
+        0,
+      ) / display.goals.length
+    : 0;
+  const goalPts = goalPct * 150;
+
+  // 5. Budget performance — 15%
+  const spendByCat = monthlySpendByCategory(display.transactions);
+  let budgetPts = 150;
+  if (display.budgets.length) {
+    const ratios = display.budgets.map((b) => {
+      const spent = spendByCat[b.category] ?? 0;
+      return b.limit > 0 ? spent / b.limit : 0;
+    });
+    const avgUsage = ratios.reduce((s, x) => s + x, 0) / ratios.length;
+    // 0-80% used = full points; 100% = half; >150% = 0.
+    budgetPts = Math.max(0, 1 - Math.max(0, avgUsage - 0.8) / 0.7) * 150;
+  }
+
+  // 6. Positive net worth — 5%
+  const nwPts = nb.net > 0 ? 50 : nb.net === 0 ? 25 : 0;
+
+  const score = Math.round(srPts + debtPts + efPts + goalPts + budgetPts + nwPts);
+
+  const status: ScoreBreakdown["status"] =
+    score >= 800 ? "Excellent" : score >= 650 ? "Good" : score >= 450 ? "Fair" : "Needs work";
+
+  const chips: string[] = [];
+  if (sr >= 0.2) chips.push(`Saves ${Math.round(sr * 100)}%`);
+  if (debtRatio < 0.35 && nb.liab > 0) chips.push("Low debt");
+  if (liquid >= target) chips.push("Emergency fund");
+  if (goalPct >= 0.5) chips.push("Goals on track");
+  if (budgetPts >= 120 && display.budgets.length) chips.push("On budget");
+  if (chips.length === 0) chips.push(status);
+
+  const explanation =
+    score >= 800
+      ? `You're saving ${Math.round(sr * 100)}% of income and staying on budget.`
+      : score >= 650
+        ? `Solid progress — savings rate ${Math.round(sr * 100)}%.`
+        : score >= 450
+          ? "You're building momentum. Trim discretionary spend to lift your score."
+          : income === 0
+            ? "Log this month's income and expenses to see your health score."
+            : "Push savings above 10% and pay down debt to raise your score.";
+
+  return { score, status, explanation, chips };
+}
