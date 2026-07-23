@@ -24,6 +24,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -36,10 +37,14 @@ function AuthPage() {
       toast.error("Enter an email and a password (min 6 chars).");
       return;
     }
+    if (mode === "signup" && fullName.trim().length < 2) {
+      toast.error("Please enter your full name.");
+      return;
+    }
     setBusy(true);
     const res = mode === "signin"
       ? await signInEmail(email, password)
-      : await signUpEmail(email, password);
+      : await signUpEmail(email, password, fullName.trim());
     setBusy(false);
     if (res.error) {
       toast.error(res.error);
@@ -91,6 +96,20 @@ function AuthPage() {
         </p>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
+          {mode === "signup" ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="fullName">Full name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                autoComplete="name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Your name"
+                required
+              />
+            </div>
+          ) : null}
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input
