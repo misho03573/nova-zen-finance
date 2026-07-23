@@ -13,18 +13,21 @@ import {
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
-import { financialScore, categoryOf } from "@/lib/nova-data";
+import { categoryOf } from "@/lib/nova-data";
 import {
   useNova,
   monthlyTotals,
-  totalBalance,
   formatTxDate,
   savingsRate,
   cashflowByRange,
   useDisplayState,
   txCurrency,
+  netWorthBreakdown,
+  computeFinancialScore,
+  type ScoreBreakdown,
 } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -50,12 +53,14 @@ function Home() {
   const { state } = useNova();
   const display = useDisplayState();
   const { format, formatIn } = useCurrency();
+  const { fullName, user } = useAuth();
   const hide = !!state.settings.hideBalances;
-  const netWorth = totalBalance(display.accounts);
+  const netWorth = netWorthBreakdown(display).net;
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(
     display.transactions,
   );
   const rate = savingsRate(monthlyIncome, monthlyExpenses);
+  const health = computeFinancialScore(display);
   const week = cashflowByRange(display.transactions, "week");
   const spentWeek = week.reduce((s, d) => s + d.expense, 0);
   const upcoming = [...state.recurring]
@@ -65,11 +70,18 @@ function Home() {
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
     .slice(0, 4);
   const primaryAccount = state.accounts[0];
+  const displayName = fullName || (user ? "You" : "Guest");
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 18) return "Good afternoon";
+    return "Good evening";
+  })();
   return (
     <AppShell>
       <PageHeader
-        subtitle="Good morning"
-        title="Alex Morgan"
+        subtitle={greeting}
+        title={displayName}
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker variant="chip" />
@@ -92,7 +104,7 @@ function Home() {
       />
 
       <section className="animate-rise-in px-5" style={{ animationDelay: "40ms" }}>
-        <ScoreCard score={financialScore} />
+        <ScoreCard health={health} />
       </section>
 
       <section className="animate-rise-in mt-6 px-5" style={{ animationDelay: "120ms" }}>
@@ -296,9 +308,11 @@ function MiniCard({
   );
 }
 
-function ScoreCard({ score }: { score: number }) {
+function ScoreCard({ health }: { health: ScoreBreakdown }) {
+  const { score, status, explanation, chips } = health;
   const max = 900;
-  const pct = Math.min(1, score / max);
+  const pct = Math.min(1, score / 1000);
+  void max;
   const r = 44;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
@@ -349,13 +363,12 @@ function ScoreCard({ score }: { score: number }) {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             Financial health
           </p>
-          <p className="mt-1 text-lg font-semibold leading-tight text-foreground">Excellent</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            You're saving 22% of income and spending is on track.
-          </p>
+          <p className="mt-1 text-lg font-semibold leading-tight text-foreground">{status}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{explanation}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <Chip>Low spend</Chip>
-            <Chip>On budget</Chip>
+            {chips.map((c) => (
+              <Chip key={c}>{c}</Chip>
+            ))}
           </div>
         </div>
       </div>

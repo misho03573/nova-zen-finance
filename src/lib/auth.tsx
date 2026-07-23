@@ -6,8 +6,10 @@ type AuthCtx = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  fullName: string;
   signInEmail: (email: string, password: string) => Promise<{ error?: string }>;
-  signUpEmail: (email: string, password: string) => Promise<{ error?: string }>;
+  signUpEmail: (email: string, password: string, fullName?: string) => Promise<{ error?: string }>;
+  updateProfile: (patch: { fullName?: string }) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 };
 
@@ -32,15 +34,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     session,
     loading,
+    fullName:
+      (session?.user?.user_metadata?.full_name as string | undefined)?.trim() ||
+      session?.user?.email?.split("@")[0] ||
+      "",
     async signInEmail(email, password) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error: error?.message };
     },
-    async signUpEmail(email, password) {
+    async signUpEmail(email, password, fullName) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/` },
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: fullName ? { full_name: fullName } : undefined,
+        },
+      });
+      return { error: error?.message };
+    },
+    async updateProfile(patch) {
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: patch.fullName },
       });
       return { error: error?.message };
     },
