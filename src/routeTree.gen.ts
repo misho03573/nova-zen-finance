@@ -20,6 +20,7 @@ import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
+import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AutomationRouteImport } from './routes/automation'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -82,6 +83,11 @@ const DiagnosticsRoute = DiagnosticsRouteImport.update({
   path: '/diagnostics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategoriesRoute = CategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
+  '/categories': typeof CategoriesRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
+  '/categories': typeof CategoriesRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
+  '/categories': typeof CategoriesRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/automation'
     | '/calendar'
+    | '/categories'
     | '/diagnostics'
     | '/goals'
     | '/import'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/automation'
     | '/calendar'
+    | '/categories'
     | '/diagnostics'
     | '/goals'
     | '/import'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/automation'
     | '/calendar'
+    | '/categories'
     | '/diagnostics'
     | '/goals'
     | '/import'
@@ -238,6 +250,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   AutomationRoute: typeof AutomationRoute
   CalendarRoute: typeof CalendarRoute
+  CategoriesRoute: typeof CategoriesRoute
   DiagnosticsRoute: typeof DiagnosticsRoute
   GoalsRoute: typeof GoalsRoute
   ImportRoute: typeof ImportRoute
@@ -330,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagnosticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/categories': {
+      id: '/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof CategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calendar': {
       id: '/calendar'
       path: '/calendar'
@@ -382,6 +402,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   AutomationRoute: AutomationRoute,
   CalendarRoute: CalendarRoute,
+  CategoriesRoute: CategoriesRoute,
   DiagnosticsRoute: DiagnosticsRoute,
   GoalsRoute: GoalsRoute,
   ImportRoute: ImportRoute,
