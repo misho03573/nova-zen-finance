@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
+import { defaultCategories, type UserCategory } from "@/lib/categories";
 
 /** Round a monetary value to the currency's smallest unit (JPY = whole, else 2dp). */
 function round(n: number, cur?: CurrencyCode): number {
@@ -104,6 +105,7 @@ export type NovaState = {
   liabilities: Liability[];
   subscriptions: Subscription[];
   automationRules: AutomationRule[];
+  categories: UserCategory[];
 };
 
 export type LiabilityType = "loan" | "credit_card" | "mortgage";
@@ -279,6 +281,7 @@ const seed: NovaState = {
     { id: "ar2", kind: "salary_percent", enabled: true, label: "Save 10% of salary", amount: 10, goalId: "g1" },
     { id: "ar3", kind: "weekly_transfer", enabled: false, label: "Every Monday", amount: 50, goalId: "g2" },
   ],
+  categories: defaultCategories,
 };
 
 const emptyState: NovaState = {
@@ -291,6 +294,7 @@ const emptyState: NovaState = {
   liabilities: [],
   subscriptions: [],
   automationRules: [],
+  categories: defaultCategories,
 };
 
 type Action =
@@ -320,7 +324,10 @@ type Action =
   | { type: "deleteAutomation"; id: string }
   | { type: "importTransactions"; txs: Transaction[] }
   | { type: "advanceRecurring" }
-  | { type: "transfer"; fromId: string; toId: string; amount: number; date: string; note?: string };
+  | { type: "transfer"; fromId: string; toId: string; amount: number; date: string; note?: string }
+  | { type: "addCategory"; c: UserCategory }
+  | { type: "updateCategory"; c: UserCategory }
+  | { type: "deleteCategory"; id: string };
 
 function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
@@ -332,6 +339,7 @@ function reducer(state: NovaState, action: Action): NovaState {
         liabilities: action.state.liabilities ?? [],
         subscriptions: action.state.subscriptions ?? [],
         automationRules: action.state.automationRules ?? [],
+        categories: mergeCategories(action.state.categories),
       };
     case "addTransaction": {
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
@@ -623,9 +631,35 @@ function reducer(state: NovaState, action: Action): NovaState {
         transactions: [outTx, inTx, ...state.transactions],
       };
     }
+    case "addCategory":
+      return { ...state, categories: [...state.categories, action.c] };
+    case "updateCategory":
+      return {
+        ...state,
+        categories: state.categories.map((c) => (c.id === action.c.id ? { ...c, ...action.c } : c)),
+      };
+    case "deleteCategory": {
+      const cat = state.categories.find((c) => c.id === action.id);
+      if (!cat || cat.builtin) return state;
+      const inUse =
+        state.transactions.some((t) => t.category === action.id) ||
+        state.recurring.some((r) => r.category === action.id) ||
+        state.subscriptions.some((s) => s.category === action.id) ||
+        state.budgets.some((b) => b.category === action.id);
+      if (inUse) return state;
+      return { ...state, categories: state.categories.filter((c) => c.id !== action.id) };
+    }
     default:
       return state;
   }
+}
+
+/** Merge persisted user categories with any newly-added built-in defaults. */
+function mergeCategories(persisted?: UserCategory[]): UserCategory[] {
+  if (!persisted || persisted.length === 0) return defaultCategories;
+  const byId = new Map(persisted.map((c) => [c.id, c]));
+  for (const d of defaultCategories) if (!byId.has(d.id)) byId.set(d.id, d);
+  return Array.from(byId.values());
 }
 
 type Ctx = {
@@ -658,6 +692,9 @@ type Ctx = {
   importTransactions: (txs: Omit<Transaction, "id">[]) => void;
   advanceRecurring: () => void;
   transfer: (args: { fromId: string; toId: string; amount: number; date?: string; note?: string }) => void;
+  addCategory: (c: Omit<UserCategory, "id">) => void;
+  updateCategory: (c: UserCategory) => void;
+  deleteCategory: (id: string) => { ok: boolean; reason?: "builtin" | "in-use" };
 };
 
 const NovaContext = createContext<Ctx | null>(null);
@@ -854,6 +891,28 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       }),
     [],
   );
+  const addCategory = useCallback(
+    (c: Omit<UserCategory, "id">) => dispatch({ type: "addCategory", c: { ...c, id: rid("cat") } }),
+    [],
+  );
+  const updateCategory = useCallback((c: UserCategory) => dispatch({ type: "updateCategory", c }), []);
+  const deleteCategoryImpl = useCallback(
+    (id: string): { ok: boolean; reason?: "builtin" | "in-use" } => {
+      const cur = state;
+      const cat = cur.categories.find((c) => c.id === id);
+      if (!cat) return { ok: false };
+      if (cat.builtin) return { ok: false, reason: "builtin" };
+      const inUse =
+        cur.transactions.some((t) => t.category === id) ||
+        cur.recurring.some((r) => r.category === id) ||
+        cur.subscriptions.some((s) => s.category === id) ||
+        cur.budgets.some((b) => b.category === id);
+      if (inUse) return { ok: false, reason: "in-use" };
+      dispatch({ type: "deleteCategory", id });
+      return { ok: true };
+    },
+    [state],
+  );
 
   const value = useMemo<Ctx>(
     () => ({
@@ -886,6 +945,9 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       importTransactions,
       advanceRecurring,
       transfer,
+      addCategory,
+      updateCategory,
+      deleteCategory: deleteCategoryImpl,
     }),
     [
       state,
@@ -917,6 +979,9 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       importTransactions,
       advanceRecurring,
       transfer,
+      addCategory,
+      updateCategory,
+      deleteCategoryImpl,
     ],
   );
 
