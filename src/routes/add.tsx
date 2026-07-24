@@ -1,10 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Check, X, Calendar as CalendarIcon, StickyNote, CreditCard, Repeat } from "lucide-react";
+import { Check, X, Calendar as CalendarIcon, StickyNote, CreditCard, Repeat, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import { categories } from "@/lib/nova-data";
 import { useNova, type Frequency } from "@/lib/nova-store";
+import { useCategories, iconRegistry } from "@/lib/categories";
+import { useT, useCategoryName } from "@/lib/i18n";
 import { useCurrency, CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -25,9 +26,14 @@ function AddPage() {
   const navigate = useNavigate();
   const { state, addTransaction, addRecurring } = useNova();
   const { formatIn } = useCurrency();
+  const t = useT();
+  const catName = useCategoryName();
   const [type, setType] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("0");
-  const [category, setCategory] = useState("food");
+  const allCats = useCategories();
+  const expenseCats = useCategories("expense");
+  const incomeCats = useCategories("income");
+  const [category, setCategory] = useState<string>(expenseCats[0]?.id ?? "food");
   const [accountId, setAccountId] = useState(state.accounts[0]?.id ?? "");
   const [date, setDate] = useState<Date>(new Date());
   const [note, setNote] = useState("");
@@ -42,19 +48,21 @@ function AddPage() {
     CURRENCIES.find((c) => c.code === accountCur)?.symbol ?? "$";
 
   const filteredCategories = useMemo(
-    () =>
-      type === "income"
-        ? categories.filter((c) => ["salary", "gift"].includes(c.id))
-        : categories.filter((c) => !["salary"].includes(c.id)),
-    [type],
+    () => (type === "income" ? incomeCats : expenseCats),
+    [type, incomeCats, expenseCats],
   );
 
   const handleSave = () => {
-    if (!canSave) return;
+    if (!canSave) {
+      if (numericAmount <= 0) toast.error(t("err.enterAmount"));
+      else if (!accountId) toast.error(t("err.selectAccount"));
+      return;
+    }
     const signed = type === "expense" ? -numericAmount : numericAmount;
-    const cat = categories.find((c) => c.id === category) ?? categories[0];
+    const cat = allCats.find((c) => c.id === category) ?? filteredCategories[0];
+    const catLabel = catName(cat.id, cat.name, cat.builtin);
     addTransaction({
-      title: note.trim() || cat.name,
+      title: note.trim() || catLabel,
       category,
       amount: signed,
       date: date.toISOString(),
@@ -68,7 +76,7 @@ function AddPage() {
       else if (recurring === "monthly") next.setMonth(next.getMonth() + 1);
       else next.setFullYear(next.getFullYear() + 1);
       addRecurring({
-        title: note.trim() || cat.name,
+        title: note.trim() || catLabel,
         category,
         amount: signed,
         accountId,
@@ -77,8 +85,8 @@ function AddPage() {
         currency: accountCur,
       });
     }
-    toast.success(`${type === "expense" ? "Expense" : "Income"} added`, {
-      description: `${formatIn(signed, accountCur)} · ${cat.name}`,
+    toast.success(type === "expense" ? t("add.saved.expense") : t("add.saved.income"), {
+      description: `${formatIn(signed, accountCur)} · ${catLabel}`,
     });
     navigate({ to: "/wallet" });
   };
@@ -97,13 +105,13 @@ function AddPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle="New"
-        title="Add transaction"
+        subtitle={t("add.subtitle")}
+        title={t("add.title")}
         right={
           <button
             onClick={() => navigate({ to: "/" })}
             className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
-            aria-label="Close"
+            aria-label={t("action.close")}
           >
             <X className="h-4 w-4" />
           </button>
@@ -117,7 +125,8 @@ function AddPage() {
               key={k}
               onClick={() => {
                 setType(k);
-                setCategory(k === "income" ? "salary" : "food");
+                const next = (k === "income" ? incomeCats[0] : expenseCats[0])?.id;
+                if (next) setCategory(next);
               }}
               className={cn(
                 "flex-1 rounded-full px-4 py-2 text-sm font-medium capitalize transition-colors",
@@ -125,14 +134,14 @@ function AddPage() {
               )}
               style={type === k ? { background: "var(--gradient-primary)" } : undefined}
             >
-              {k}
+              {t(`add.type.${k}`)}
             </button>
           ))}
         </div>
       </section>
 
       <section className="mt-6 px-5 text-center">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">Amount</p>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("add.amount")}</p>
         <p
           key={amount}
           className="mt-1 animate-scale-in text-5xl font-semibold tracking-tight"
@@ -142,13 +151,13 @@ function AddPage() {
         </p>
         {selectedAccount ? (
           <p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-            Stored in {accountCur} · {selectedAccount.name}
+            {t("add.storedIn")} {accountCur} · {selectedAccount.name}
           </p>
         ) : null}
       </section>
 
       <section className="mt-6 px-5">
-        <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Account</p>
+        <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">{t("label.account")}</p>
         <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {state.accounts.map((a) => {
             const active = accountId === a.id;
@@ -182,11 +191,12 @@ function AddPage() {
       </section>
 
       <section className="mt-6 px-5">
-        <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Category</p>
+        <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">{t("label.category")}</p>
         <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {filteredCategories.map((c) => {
-            const Icon = c.icon;
+            const Icon = iconRegistry[c.icon] ?? iconRegistry.Tag;
             const active = category === c.id;
+            const label = catName(c.id, c.name, c.builtin);
             return (
               <button
                 key={c.id}
@@ -204,10 +214,19 @@ function AddPage() {
                 >
                   <Icon className="h-4 w-4" style={{ color: c.color }} />
                 </span>
-                <span className="text-[11px] font-medium">{c.name}</span>
+                <span className="text-[11px] font-medium">{label}</span>
               </button>
             );
           })}
+          <Link
+            to="/categories"
+            className="flex shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border bg-card/40 px-3 py-2.5 text-muted-foreground hover:text-foreground"
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-xl border border-border">
+              <Plus className="h-4 w-4" />
+            </span>
+            <span className="text-[11px] font-medium">{t("cat.new")}</span>
+          </Link>
         </div>
       </section>
 
@@ -217,7 +236,7 @@ function AddPage() {
             <button className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/60 px-4 py-3 text-left text-sm">
               <CalendarIcon className="h-4 w-4 text-muted-foreground" />
               <span className="flex-1">
-                {isToday(date) ? "Today" : format(date, "EEEE")}
+                {isToday(date) ? t("label.today") : format(date, "EEEE")}
               </span>
               <span className="text-muted-foreground">{format(date, "MMM d, yyyy")}</span>
             </button>
@@ -237,13 +256,13 @@ function AddPage() {
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Add a note"
+            placeholder={t("add.note.placeholder")}
             className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
           />
         </label>
         <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-4 py-3 text-sm">
           <Repeat className="h-4 w-4 text-muted-foreground" />
-          <span className="flex-1">Recurring</span>
+          <span className="flex-1">{t("add.recurring")}</span>
           <div className="inline-flex rounded-full border border-border bg-background/60 p-0.5 text-[11px]">
             {([false, "weekly", "monthly", "yearly"] as const).map((k) => (
               <button
@@ -255,7 +274,7 @@ function AddPage() {
                 )}
                 style={recurring === k ? { background: "var(--gradient-primary)" } : undefined}
               >
-                {k === false ? "Off" : k}
+                {t(`add.recurring.${k === false ? "off" : k}`)}
               </button>
             ))}
           </div>
@@ -280,7 +299,7 @@ function AddPage() {
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-full py-4 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-opacity disabled:opacity-40"
           style={{ background: "var(--gradient-primary)" }}
         >
-          <Check className="h-4 w-4" /> Save transaction
+          <Check className="h-4 w-4" /> {t("add.save")}
         </button>
       </section>
     </AppShell>
