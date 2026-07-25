@@ -5,7 +5,9 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
-import { categoryOf, categories } from "@/lib/nova-data";
+import { useCategoryLookup, useCategories } from "@/lib/categories";
+import { iconRegistry } from "@/lib/categories";
+import { useCategoryName } from "@/lib/i18n";
 
 export const Route = createFileRoute("/scan")({
   head: () => ({
@@ -40,6 +42,9 @@ function ScanPage() {
   const { state, addTransaction } = useNova();
   const { format, currency } = useCurrency();
   const navigate = useNavigate();
+  const categoryOf = useCategoryLookup();
+  const categories = useCategories("expense");
+  const catName = useCategoryName();
 
   const start = () => {
     setPhase("scanning");
@@ -117,7 +122,7 @@ function ScanPage() {
                   <RowKV label="Total" value={format(receipt.total)} />
                   <RowKV label="VAT" value={format(receipt.vat)} />
                   <RowKV label="Currency" value={receipt.currency} />
-                  <RowKV label="Category" value={categoryOf(receipt.category).name} />
+                  <RowKV label="Category" value={(() => { const c = categoryOf(receipt.category); return catName(c.id, c.name, c.builtin); })()} />
                   <RowKV label="Payment" value={receipt.paymentMethod} />
                 </div>
               </div>
@@ -135,8 +140,8 @@ function ScanPage() {
                   receipt.category === c.id ? "border-primary bg-primary/10 text-primary" : "border-border"
                 }`}
               >
-                <c.icon className="h-3 w-3" style={{ color: c.color }} />
-                <span className="truncate">{c.name}</span>
+                {(() => { const I = iconRegistry[c.icon] ?? iconRegistry.Tag; return <I className="h-3 w-3" style={{ color: c.color }} />; })()}
+                <span className="truncate">{catName(c.id, c.name, c.builtin)}</span>
               </button>
             ))}
           </div>

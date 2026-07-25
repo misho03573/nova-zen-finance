@@ -19,7 +19,8 @@ import {
   formatTxDate,
 } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
-import { categoryOf } from "@/lib/nova-data";
+import { useCategoryLookup } from "@/lib/categories";
+import { useCategoryName } from "@/lib/i18n";
 import {
   generateInsights,
   cashflowForecast,
@@ -47,6 +48,8 @@ export const Route = createFileRoute("/insights")({
 function InsightsPage() {
   const { state, setBudget } = useNova();
   const { format } = useCurrency();
+  const categoryOf = useCategoryLookup();
+  const catName = useCategoryName();
   const [query, setQuery] = useState("");
 
   const insights = useMemo(
@@ -239,7 +242,7 @@ function InsightsPage() {
                   <Icon className="h-4 w-4" style={{ color: cat.color }} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{cat.name}</p>
+                  <p className="truncate text-sm font-medium">{catName(cat.id, cat.name, cat.builtin)}</p>
                   <p className="truncate text-[11px] text-muted-foreground">
                     Current {format(b.limit)} · Suggested {rec ? format(rec) : "—"}
                   </p>

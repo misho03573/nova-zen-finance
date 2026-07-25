@@ -5,6 +5,8 @@ import { Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova, totalBalance, monthlyTotals, savingsRate, monthlySpendByCategory, netWorthBreakdown } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
+import { useT, fmt } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/ai")({
   head: () => ({
@@ -21,11 +23,14 @@ type Msg = { id: string; role: "user" | "assistant"; content: string };
 function AIChat() {
   const { state } = useNova();
   const { format, currency } = useCurrency();
+  const tr = useT();
+  const { fullName } = useAuth();
+  const firstName = fullName?.split(" ")[0] || "there";
   const [messages, setMessages] = useState<Msg[]>([
     {
       id: "welcome",
       role: "assistant",
-      content: `Hi Alex — I'm NOVA AI. Ask me anything about your money. Try "Can I afford a new monitor?" or "Where am I wasting money?"`,
+      content: fmt(tr("ai.welcome"), { name: firstName }),
     },
   ]);
   const [input, setInput] = useState("");
@@ -36,7 +41,7 @@ function AIChat() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
-  const answer = useMemo(() => makeAnswer(state, format, currency.code), [state, format, currency.code]);
+  const answer = useMemo(() => makeAnswer(state, format, currency.code, tr), [state, format, currency.code, tr]);
 
   const send = (text: string) => {
     if (!text.trim()) return;
@@ -52,17 +57,17 @@ function AIChat() {
   };
 
   const suggestions = [
-    "Can I afford a new monitor?",
-    "How much did I spend on fuel this year?",
-    "Where am I wasting money?",
-    "What if I save 300 every month?",
+    tr("ai.sug.afford"),
+    tr("ai.sug.fuel"),
+    tr("ai.sug.waste"),
+    tr("ai.sug.save"),
   ];
 
   return (
     <AppShell>
       <PageHeader
-        subtitle="Beta"
-        title="NOVA AI"
+        subtitle={tr("ai.subtitle")}
+        title={tr("ai.title")}
         right={
           <Link
             to="/"
@@ -118,14 +123,14 @@ function AIChat() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask NOVA AI…"
+            placeholder={tr("ai.placeholder")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <button
             type="submit"
             className="grid h-9 w-9 place-items-center rounded-full text-primary-foreground"
             style={{ background: "var(--gradient-primary)" }}
-            aria-label="Send"
+            aria-label={tr("ai.send")}
           >
             <Send className="h-4 w-4" />
           </button>
@@ -174,6 +179,7 @@ function makeAnswer(
   state: ReturnType<typeof useNova>["state"],
   format: (n: number) => string,
   code: string,
+  tr: (k: string) => string,
 ) {
   return (q: string) => {
     const query = q.toLowerCase();
@@ -184,28 +190,24 @@ function makeAnswer(
     const byCat = monthlySpendByCategory(state.transactions);
     const top = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
 
-    // "afford X for $Y"
     const amountMatch = query.match(/(\d+[\d,.]*)/);
     if (query.includes("afford")) {
       const cost = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, "")) : 400;
       const safe = balance * 0.15;
+      const pct = Math.round((cost / (balance || 1)) * 100);
       if (cost <= safe) {
-        return `Yes — a ${format(cost)} purchase is comfortable. Your liquid balance is ${format(balance)} and this uses only ${Math.round(
-          (cost / balance) * 100,
-        )}% of it. Your emergency fund stays untouched.`;
+        return fmt(tr("ai.reply.afford.yes"), { cost: format(cost), balance: format(balance), pct });
       }
-      return `Technically yes, but it's tight. ${format(cost)} is about ${Math.round(
-        (cost / balance) * 100,
-      )}% of your liquid balance. I'd wait ${Math.max(1, Math.ceil(cost / (income - expenses || 500)))} weeks or use a savings goal.`;
+      const weeks = Math.max(1, Math.ceil(cost / (income - expenses || 500)));
+      return fmt(tr("ai.reply.afford.tight"), { cost: format(cost), pct, weeks });
     }
 
     if (query.includes("waste") || query.includes("wasting")) {
       const wasteCats = ["coffee", "subscription", "entertainment", "shopping"];
       const waste = top.filter(([c]) => wasteCats.includes(c)).slice(0, 3);
       const total = waste.reduce((s, [, v]) => s + v, 0);
-      return `You've spent ${format(total)} this month on lifestyle categories. Biggest leaks:\n${waste
-        .map(([c, v]) => `• ${c} — ${format(v)}`)
-        .join("\n")}\n\nTrimming these by 30% would free ${format(total * 0.3)} for goals.`;
+      const list = waste.map(([c, v]) => `• ${c} — ${format(v)}`).join("\n");
+      return fmt(tr("ai.reply.waste"), { total: format(total), list, saved: format(total * 0.3) });
     }
 
     if (query.match(/\b(fuel|gas|transport|uber)\b/)) {
@@ -213,36 +215,49 @@ function makeAnswer(
       const total = state.transactions
         .filter((t) => new Date(t.date).getFullYear() === y && (t.category === "transport" || /fuel|gas|uber/i.test(t.title)))
         .reduce((s, t) => s + (t.amount < 0 ? -t.amount : 0), 0);
-      return `You've spent ${format(total)} on transport / fuel so far in ${y}. That's about ${format(total / 12)} per month.`;
+      return fmt(tr("ai.reply.fuel"), { total: format(total), year: y, monthly: format(total / 12) });
     }
 
     if (query.includes("save") && amountMatch) {
       const amt = parseFloat(amountMatch[1].replace(/,/g, ""));
-      return `Saving ${format(amt)} monthly compounds fast:\n• 1 year: ${format(amt * 12)}\n• 3 years: ${format(amt * 36)}\n• 5 years: ${format(
-        amt * 60,
-      )}\nAt a 5% return, in 5 years you'd have about ${format(amt * 68)}.`;
+      return fmt(tr("ai.reply.save"), {
+        amt: format(amt),
+        y1: format(amt * 12),
+        y3: format(amt * 36),
+        y5: format(amt * 60),
+        y5r: format(amt * 68),
+      });
     }
 
     if (query.includes("net worth")) {
-      return `Your net worth is ${format(nb.net)} — assets ${format(nb.assets)} minus liabilities ${format(nb.liab)}. Investments make up ${Math.round(
-        (nb.invest / (nb.assets || 1)) * 100,
-      )}% of your assets.`;
+      return fmt(tr("ai.reply.networth"), {
+        net: format(nb.net),
+        assets: format(nb.assets),
+        liab: format(nb.liab),
+        pct: Math.round((nb.invest / (nb.assets || 1)) * 100),
+      });
     }
 
     if (query.includes("savings rate") || query.includes("saving rate")) {
-      return `This month your savings rate is ${Math.round(rate * 100)}%. Income ${format(income)}, expenses ${format(expenses)}. Anything above 20% is excellent.`;
+      return fmt(tr("ai.reply.savingsRate"), {
+        pct: Math.round(rate * 100),
+        income: format(income),
+        expenses: format(expenses),
+      });
     }
 
     if (query.includes("top") || query.includes("biggest") || query.includes("category")) {
-      return `Your top categories this month:\n${top
-        .slice(0, 3)
-        .map(([c, v], i) => `${i + 1}. ${c} — ${format(v)}`)
-        .join("\n")}`;
+      const list = top.slice(0, 3).map(([c, v], i) => `${i + 1}. ${c} — ${format(v)}`).join("\n");
+      return fmt(tr("ai.reply.top"), { list });
     }
 
-    // Default: financial summary
-    return `Snapshot in ${code}:\n• Net worth: ${format(nb.net)}\n• Liquid: ${format(balance)}\n• This month income: ${format(income)}\n• This month spend: ${format(
-      expenses,
-    )}\n• Savings rate: ${Math.round(rate * 100)}%\n\nAsk about a category, a goal, or a purchase you're considering.`;
+    return fmt(tr("ai.reply.snapshot"), {
+      code,
+      net: format(nb.net),
+      liquid: format(balance),
+      income: format(income),
+      expenses: format(expenses),
+      rate: Math.round(rate * 100),
+    });
   };
 }

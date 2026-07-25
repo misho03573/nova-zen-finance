@@ -5,7 +5,7 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useNova, type Transaction, type Recurring } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
-import { categoryOf } from "@/lib/nova-data";
+import { useCategoryLookup } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/calendar")({
@@ -34,6 +34,7 @@ function keyFor(d: Date) {
 function CalendarPage() {
   const { state } = useNova();
   const { format } = useCurrency();
+  const categoryOf = useCategoryLookup();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     d.setDate(1);

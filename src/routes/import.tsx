@@ -5,7 +5,8 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova, type Transaction } from "@/lib/nova-store";
 import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { toast } from "sonner";
-import { categoryOf } from "@/lib/nova-data";
+import { useCategoryLookup } from "@/lib/categories";
+import { useCategoryName } from "@/lib/i18n";
 
 export const Route = createFileRoute("/import")({
   head: () => ({
@@ -49,6 +50,8 @@ function ImportPage() {
   const [csv, setCsv] = useState<string>("");
   const [account, setAccount] = useState<string>(state.accounts[0]?.id ?? "");
   const navigate = useNavigate();
+  const categoryOf = useCategoryLookup();
+  const catName = useCategoryName();
 
   const accountCur: CurrencyCode =
     (state.accounts.find((a) => a.id === account)?.currency ?? "USD") as CurrencyCode;
@@ -179,7 +182,7 @@ function ImportPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{d.title}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {new Date(d.date).toLocaleDateString()} · {cat.name}
+                      {new Date(d.date).toLocaleDateString()} · {catName(cat.id, cat.name, cat.builtin)}
                     </p>
                   </div>
                   {d.dupe ? (

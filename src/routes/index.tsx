@@ -13,7 +13,8 @@ import {
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
-import { categoryOf } from "@/lib/nova-data";
+import { useCategoryLookup } from "@/lib/categories";
+import { useCategoryName } from "@/lib/i18n";
 import {
   useNova,
   monthlyTotals,
@@ -54,6 +55,9 @@ function Home() {
   const display = useDisplayState();
   const { format, formatIn } = useCurrency();
   const { fullName, user } = useAuth();
+  const categoryOf = useCategoryLookup();
+  const catName = useCategoryName();
+  void catName;
   const hide = !!state.settings.hideBalances;
   const netWorth = netWorthBreakdown(display).net;
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(

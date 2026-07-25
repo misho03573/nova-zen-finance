@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
-import { categoryOf, categories } from "@/lib/nova-data";
+import { useCategoryLookup, useCategories } from "@/lib/categories";
+import { useCategoryName } from "@/lib/i18n";
 import {
   useNova,
   groupByBucket,
@@ -68,6 +69,9 @@ function WalletPage() {
   const { formatIn } = useCurrency();
   const confirm = useConfirm();
   const hide = useHideBalances();
+  const categoryOf = useCategoryLookup();
+  const categories = useCategories();
+  const catName = useCategoryName();
   const [query, setQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -159,7 +163,7 @@ function WalletPage() {
               active={filterCategory === c.id}
               onClick={() => setFilterCategory(filterCategory === c.id ? null : c.id)}
             >
-              {c.name}
+              {catName(c.id, c.name, c.builtin)}
             </Chip>
           ))}
         </div>
@@ -220,7 +224,7 @@ function WalletPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{t.title}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {cat.name} · {formatTxDate(t.date)}
+                          {catName(cat.id, cat.name, cat.builtin)} · {formatTxDate(t.date)}
                         </p>
                       </div>
                       <span

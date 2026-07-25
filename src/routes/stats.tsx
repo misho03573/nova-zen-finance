@@ -13,7 +13,8 @@ import {
 import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
-import { categories, categoryOf } from "@/lib/nova-data";
+import { useCategories, useCategoryLookup } from "@/lib/categories";
+import { useCategoryName } from "@/lib/i18n";
 import {
   useNova,
   cashflowByRange,
@@ -41,6 +42,9 @@ function StatsPage() {
   const { state } = useNova();
   const display = useDisplayState();
   const [range, setRange] = useState<Range>("month");
+  const categoryOf = useCategoryLookup();
+  const categories = useCategories();
+  const catName = useCategoryName();
 
   const rangeTx = useMemo(
     () => filterTxsByRange(display.transactions, range),
@@ -59,7 +63,7 @@ function StatsPage() {
     [display.transactions],
   );
   const catData = categories
-    .map((c) => ({ name: c.name, id: c.id, color: c.color, value: catSpend[c.id] ?? 0 }))
+    .map((c) => ({ name: catName(c.id, c.name, c.builtin), id: c.id, color: c.color, value: catSpend[c.id] ?? 0 }))
     .filter((c) => c.value > 0)
     .sort((a, b) => b.value - a.value);
   const totalCats = catData.reduce((s, c) => s + c.value, 0);
@@ -202,7 +206,7 @@ function StatsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between">
-                        <p className="truncate text-sm font-semibold">{cat.name}</p>
+                        <p className="truncate text-sm font-semibold">{catName(cat.id, cat.name, cat.builtin)}</p>
                         <p className="text-xs text-muted-foreground">
                           {format(spent)} <span className="opacity-60">/ {format(b.limit)}</span>
                         </p>
