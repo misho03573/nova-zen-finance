@@ -31,10 +31,11 @@ export const Route = createFileRoute("/categories")({
 function CategoriesPage() {
   const t = useT();
   const catName = useCategoryName();
-  const { state, addCategory, updateCategory, deleteCategory } = useNova();
+  const { state, addCategory, updateCategory, deleteCategory, deleteCategoryWithReassign } = useNova();
   const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<UserCategory | null>(null);
+  const [reassignFor, setReassignFor] = useState<UserCategory | null>(null);
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (c: UserCategory) => { setEditing(c); setOpen(true); };
@@ -50,7 +51,12 @@ function CategoriesPage() {
     if (!ok) return;
     const res = deleteCategory(c.id);
     if (!res.ok) {
-      toast.error(res.reason === "in-use" ? t("cat.cannotDeleteInUse") : t("cat.cannotDeleteBuiltin"));
+      if (res.reason === "in-use") {
+        // Open reassignment flow instead of erroring.
+        setReassignFor(c);
+        return;
+      }
+      toast.error(t("cat.cannotDeleteBuiltin"));
       return;
     }
     toast.success(t("cat.deleted"));
@@ -167,7 +173,74 @@ function CategoriesPage() {
           setOpen(false);
         }}
       />
+
+      <ReassignDialog
+        source={reassignFor}
+        candidates={state.categories.filter((x) => x.id !== reassignFor?.id && x.type === reassignFor?.type)}
+        onOpenChange={(v) => { if (!v) setReassignFor(null); }}
+        onConfirm={(targetId) => {
+          if (!reassignFor) return;
+          const res = deleteCategoryWithReassign(reassignFor.id, targetId);
+          if (res.ok) toast.success(t("cat.reassigned"));
+          setReassignFor(null);
+        }}
+      />
     </AppShell>
+  );
+}
+
+function ReassignDialog({
+  source, candidates, onOpenChange, onConfirm,
+}: {
+  source: UserCategory | null;
+  candidates: UserCategory[];
+  onOpenChange: (v: boolean) => void;
+  onConfirm: (targetId: string) => void;
+}) {
+  const t = useT();
+  const catName = useCategoryName();
+  const [target, setTarget] = useState<string>("");
+  // Sync default target when opened
+  const key = source?.id ?? "";
+  const [k, setK] = useState(key);
+  if (source && k !== key) { setK(key); setTarget(candidates[0]?.id ?? ""); }
+  return (
+    <Dialog open={!!source} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("cat.delete.inUseTitle")}</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">{t("cat.delete.inUseDesc")}</p>
+        {candidates.length === 0 ? (
+          <p className="text-xs text-destructive">{t("cat.noReassign")}</p>
+        ) : (
+          <div>
+            <Label className="text-xs">{t("cat.reassignTo")}</Label>
+            <select
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {candidates.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {catName(c.id, c.name, c.builtin)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <DialogFooter>
+          <Button
+            disabled={!target}
+            onClick={() => onConfirm(target)}
+            className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            {t("cat.reassignAndDelete")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
