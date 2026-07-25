@@ -327,7 +327,7 @@ type Action =
   | { type: "transfer"; fromId: string; toId: string; amount: number; date: string; note?: string }
   | { type: "addCategory"; c: UserCategory }
   | { type: "updateCategory"; c: UserCategory }
-  | { type: "deleteCategory"; id: string };
+  | { type: "deleteCategory"; id: string; reassignTo?: string };
 
 function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
@@ -646,7 +646,26 @@ function reducer(state: NovaState, action: Action): NovaState {
         state.recurring.some((r) => r.category === action.id) ||
         state.subscriptions.some((s) => s.category === action.id) ||
         state.budgets.some((b) => b.category === action.id);
-      if (inUse) return state;
+      if (inUse && !action.reassignTo) return state;
+      const to = action.reassignTo;
+      if (to && to !== action.id) {
+        return {
+          ...state,
+          transactions: state.transactions.map((t) =>
+            t.category === action.id ? { ...t, category: to } : t,
+          ),
+          recurring: state.recurring.map((r) =>
+            r.category === action.id ? { ...r, category: to } : r,
+          ),
+          subscriptions: state.subscriptions.map((s) =>
+            s.category === action.id ? { ...s, category: to } : s,
+          ),
+          budgets: state.budgets.map((b) =>
+            b.category === action.id ? { ...b, category: to } : b,
+          ),
+          categories: state.categories.filter((c) => c.id !== action.id),
+        };
+      }
       return { ...state, categories: state.categories.filter((c) => c.id !== action.id) };
     }
     default:
@@ -695,6 +714,7 @@ type Ctx = {
   addCategory: (c: Omit<UserCategory, "id">) => void;
   updateCategory: (c: UserCategory) => void;
   deleteCategory: (id: string) => { ok: boolean; reason?: "builtin" | "in-use" };
+  deleteCategoryWithReassign: (id: string, reassignTo: string) => { ok: boolean };
 };
 
 const NovaContext = createContext<Ctx | null>(null);
@@ -913,6 +933,15 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     },
     [state],
   );
+  const deleteCategoryWithReassign = useCallback(
+    (id: string, reassignTo: string): { ok: boolean } => {
+      const cat = state.categories.find((c) => c.id === id);
+      if (!cat || cat.builtin) return { ok: false };
+      dispatch({ type: "deleteCategory", id, reassignTo });
+      return { ok: true };
+    },
+    [state.categories],
+  );
 
   const value = useMemo<Ctx>(
     () => ({
@@ -948,6 +977,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addCategory,
       updateCategory,
       deleteCategory: deleteCategoryImpl,
+      deleteCategoryWithReassign,
     }),
     [
       state,
@@ -982,6 +1012,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addCategory,
       updateCategory,
       deleteCategoryImpl,
+      deleteCategoryWithReassign,
     ],
   );
 
