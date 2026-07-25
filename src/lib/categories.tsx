@@ -116,3 +116,18 @@ export function useCategoryOf() {
   const { state } = useNova();
   return (id: string) => resolveCategory(state.categories, id);
 }
+
+/**
+ * Legacy-shape lookup: returns a category with `icon` resolved to a
+ * Lucide component, matching the old `categoryOf()` API. Use this
+ * everywhere transaction/budget/etc lists render an icon+color chip.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useCategoryLookup() {
+  const { state } = useNova();
+  return (id: string) => {
+    const c = resolveCategory(state.categories, id);
+    const Icon = iconRegistry[c.icon] ?? iconRegistry.Tag;
+    return { id: c.id, name: c.name, color: c.color, builtin: c.builtin, icon: Icon };
+  };
+}
