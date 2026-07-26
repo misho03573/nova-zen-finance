@@ -8,6 +8,7 @@ import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
+import { useT } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ function NetWorthPage() {
   const { format } = useCurrency();
   const confirm = useConfirm();
   const hide = useHideBalances();
+  const t = useT();
   const b = useMemo(
     () => netWorthBreakdown({ ...state, accounts: display.accounts }),
     [state, display.accounts],
