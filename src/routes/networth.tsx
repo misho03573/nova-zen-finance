@@ -197,6 +197,7 @@ function AssetTile({
 }
 
 function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityType; balance: number; apr?: number; minPayment?: number }) => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [type, setType] = useState<LiabilityType>("loan");
@@ -207,40 +208,40 @@ function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityTyp
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex items-center gap-1 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs font-medium">
-          <Plus className="h-3.5 w-3.5" /> Add
+          <Plus className="h-3.5 w-3.5" /> {t("action.add")}
         </button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>New liability</DialogTitle>
+          <DialogTitle>{t("nw.new")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Name</Label>
+            <Label>{t("nw.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Car loan" />
           </div>
           <div>
-            <Label>Type</Label>
+            <Label>{t("nw.type")}</Label>
             <div className="mt-1 flex gap-2 text-xs">
-              {(["loan", "credit_card", "mortgage"] as LiabilityType[]).map((t) => (
+              {(["loan", "credit_card", "mortgage"] as LiabilityType[]).map((tp) => (
                 <button
-                  key={t}
-                  onClick={() => setType(t)}
+                  key={tp}
+                  onClick={() => setType(tp)}
                   className={`flex-1 rounded-full border px-3 py-1.5 capitalize ${
-                    type === t ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                    type === tp ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
                   }`}
                 >
-                  {t.replace("_", " ")}
+                  {t(`nw.${tp}`)}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <Label>Balance owed</Label>
+            <Label>{t("nw.balance")}</Label>
             <Input value={balance} onChange={(e) => setBalance(e.target.value)} inputMode="decimal" placeholder="0.00" />
           </div>
           <div>
-            <Label>APR %</Label>
+            <Label>{t("nw.apr")}</Label>
             <Input value={apr} onChange={(e) => setApr(e.target.value)} inputMode="decimal" placeholder="Optional" />
           </div>
           <Button
@@ -253,7 +254,7 @@ function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityTyp
             }}
             className="w-full"
           >
-            Save
+            {t("action.save")}
           </Button>
         </div>
       </DialogContent>
