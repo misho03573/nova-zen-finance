@@ -5,6 +5,7 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova } from "@/lib/nova-store";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
+import { useT, fmt } from "@/lib/i18n";
 
 export const APP_VERSION = "1.0.0-rc.1";
 // Baked at file evaluation time. For a real build stamp, wire `define` in vite.config.ts.
@@ -58,13 +59,12 @@ function statusIcon(s: ModuleStatus) {
   return <Circle className="h-3.5 w-3.5 text-muted-foreground" />;
 }
 
-function statusLabel(s: ModuleStatus) {
-  return s === "complete" ? "Complete" : s === "preview" ? "Preview" : "In progress";
-}
-
 function Diagnostics() {
   const { state } = useNova();
   const confirm = useConfirm();
+  const t = useT();
+  const statusLabel = (s: ModuleStatus) =>
+    s === "complete" ? t("diag.status.complete") : s === "preview" ? t("diag.status.preview") : t("diag.status.wip");
   const [errors, setErrors] = useState<{ msg: string; at: number }[]>([]);
   const [storage, setStorage] = useState<{ key: string; bytes: number }[]>([]);
   const [perf, setPerf] = useState<{ nav: number; dom: number; load: number } | null>(null);
@@ -146,22 +146,22 @@ function Diagnostics() {
     };
     try {
       await navigator.clipboard.writeText(JSON.stringify(report, null, 2));
-      toast.success("Diagnostics report copied");
+      toast.success(t("diag.copySuccess"));
     } catch {
-      toast.error("Clipboard blocked");
+      toast.error(t("diag.copyFail"));
     }
   };
 
   const clearErrors = () => {
     setErrors([]);
-    toast.message("Error log cleared");
+    toast.message(t("diag.errorsCleared"));
   };
 
   const wipeStorage = async () => {
     const ok = await confirm({
-      title: "Wipe all local data?",
-      description: "Every NOVA key in localStorage is deleted and the app reloads. Cannot be undone.",
-      confirmLabel: "Wipe & reload",
+      title: t("diag.wipeTitle"),
+      description: t("diag.wipeDesc"),
+      confirmLabel: t("diag.wipeConfirm"),
       destructive: true,
     });
     if (!ok) return;
@@ -169,27 +169,27 @@ function Diagnostics() {
       localStorage.clear();
       location.reload();
     } catch {
-      toast.error("Storage not available");
+      toast.error(t("diag.wipeFail"));
     }
   };
 
   return (
     <AppShell>
       <PageHeader
-        subtitle="Internal · not linked from the app"
-        title="Diagnostics"
+        subtitle={t("diag.subtitle")}
+        title={t("diag.title")}
         right={
           <div className="flex items-center gap-2">
             <button
               onClick={copyReport}
-              aria-label="Copy diagnostics report"
+              aria-label={t("diag.copyAria")}
               className="press inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-card/60 px-3 text-xs font-medium backdrop-blur"
             >
-              <Copy className="h-3.5 w-3.5" /> Copy
+              <Copy className="h-3.5 w-3.5" /> {t("diag.copy")}
             </button>
             <Link
               to="/settings"
-              aria-label="Back"
+              aria-label={t("action.back")}
               className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -199,28 +199,28 @@ function Diagnostics() {
       />
 
       <section className="grid grid-cols-2 gap-3 px-5">
-        <Metric icon={<Package className="h-4 w-4" />} label="Version" value={APP_VERSION} />
+        <Metric icon={<Package className="h-4 w-4" />} label={t("diag.metric.version")} value={APP_VERSION} />
         <Metric
           icon={<Activity className="h-4 w-4" />}
-          label="Built"
+          label={t("diag.metric.built")}
           value={new Date(BUILD_TIMESTAMP).toLocaleString()}
         />
         <Metric
           icon={<Database className="h-4 w-4" />}
-          label="Store snapshot"
-          value={`${state.accounts.length} accounts · ${state.transactions.length} tx`}
+          label={t("diag.metric.snapshot")}
+          value={fmt(t("diag.snapshot"), { accounts: state.accounts.length, tx: state.transactions.length })}
         />
         <Metric
           icon={<HardDrive className="h-4 w-4" />}
-          label="localStorage"
-          value={`${(totalBytes / 1024).toFixed(1)} kB · ${storage.length} keys`}
+          label={t("diag.metric.storage")}
+          value={fmt(t("diag.storageStat"), { kb: (totalBytes / 1024).toFixed(1), n: storage.length })}
         />
       </section>
 
       <section className="mt-6 px-5">
-        <SectionHeader>Modules</SectionHeader>
+        <SectionHeader>{t("diag.section.modules")}</SectionHeader>
         <p className="mt-1 text-xs text-muted-foreground">
-          {totals.complete}/{totals.total} complete · {totals.preview} preview
+          {fmt(t("diag.moduleStats"), { c: totals.complete, t: totals.total, p: totals.preview })}
         </p>
         <ul className="mt-2 divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card/70">
           {MODULES.map((m) => (
@@ -251,23 +251,23 @@ function Diagnostics() {
       </section>
 
       <section className="mt-6 px-5">
-        <SectionHeader>Performance</SectionHeader>
+        <SectionHeader>{t("diag.section.perf")}</SectionHeader>
         {perf ? (
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <PerfCell label="Response" value={`${perf.nav} ms`} />
-            <PerfCell label="DOM ready" value={`${perf.dom} ms`} />
-            <PerfCell label="Loaded" value={`${perf.load} ms`} />
+            <PerfCell label={t("diag.perf.response")} value={`${perf.nav} ms`} />
+            <PerfCell label={t("diag.perf.dom")} value={`${perf.dom} ms`} />
+            <PerfCell label={t("diag.perf.load")} value={`${perf.load} ms`} />
           </div>
         ) : (
-          <p className="mt-1 text-xs text-muted-foreground">Performance API not available.</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("diag.perf.na")}</p>
         )}
       </section>
 
       <section className="mt-6 px-5">
-        <SectionHeader>localStorage inspector</SectionHeader>
+        <SectionHeader>{t("diag.section.storage")}</SectionHeader>
         <ul className="mt-2 divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card/70">
           {storage.length === 0 ? (
-            <li className="px-4 py-3 text-xs text-muted-foreground">No local data.</li>
+            <li className="px-4 py-3 text-xs text-muted-foreground">{t("diag.storage.empty")}</li>
           ) : (
             storage.map((row) => (
               <li key={row.key} className="flex items-center justify-between px-4 py-2 text-xs">
@@ -281,19 +281,19 @@ function Diagnostics() {
 
       <section className="mt-6 px-5">
         <div className="flex items-baseline justify-between">
-          <SectionHeader>Runtime errors (session)</SectionHeader>
+          <SectionHeader>{t("diag.section.errors")}</SectionHeader>
           {errors.length > 0 ? (
             <button
               onClick={clearErrors}
               className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
             >
-              Clear
+              {t("diag.clear")}
             </button>
           ) : null}
         </div>
         <ul className="mt-2 divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card/70">
           {errors.length === 0 ? (
-            <li className="px-4 py-3 text-xs text-muted-foreground">No errors captured this session.</li>
+            <li className="px-4 py-3 text-xs text-muted-foreground">{t("diag.errors.empty")}</li>
           ) : (
             errors.map((e, i) => (
               <li key={i} className="px-4 py-2 text-xs">
@@ -308,17 +308,17 @@ function Diagnostics() {
       </section>
 
       <section className="mt-6 px-5">
-        <SectionHeader>Danger zone</SectionHeader>
+        <SectionHeader>{t("diag.section.danger")}</SectionHeader>
         <button
           onClick={wipeStorage}
           className="press mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
         >
-          <Trash2 className="h-4 w-4" /> Wipe all local data
+          <Trash2 className="h-4 w-4" /> {t("diag.wipe")}
         </button>
       </section>
 
       <p className="mt-6 px-5 pb-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
-        NOVA diagnostics · Not linked from primary navigation
+        {t("diag.footer")}
       </p>
     </AppShell>
   );

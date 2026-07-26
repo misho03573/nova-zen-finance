@@ -8,6 +8,7 @@ import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useCurrency } from "@/lib/currency";
 import { useNova, subscriptionsMonthlyTotal, type Subscription } from "@/lib/nova-store";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
+import { useT, fmt } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -38,20 +39,21 @@ function SubscriptionsPage() {
   const { format } = useCurrency();
   const hide = useHideBalances();
   const confirm = useConfirm();
+  const t = useT();
   const total = subscriptionsMonthlyTotal(state.subscriptions);
   const yearly = total * 12;
 
   return (
     <AppShell>
       <PageHeader
-        subtitle="Recurring"
-        title="Subscriptions"
+        subtitle={t("subs.subtitle")}
+        title={t("subs.title")}
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker />
             <Link
               to="/"
-              aria-label="Back"
+              aria-label={t("action.back")}
               className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -65,12 +67,12 @@ function SubscriptionsPage() {
           className="relative overflow-hidden rounded-3xl border border-border p-5 shadow-[var(--shadow-card)]"
           style={{ background: "var(--gradient-card)" }}
         >
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Monthly total</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("subs.monthlyTotal")}</p>
           <p className="mt-1 text-3xl font-semibold tracking-tight">
             {maskAmount(hide, format(total), "lg")}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {state.subscriptions.length} active · {maskAmount(hide, format(yearly), "md")}/yr
+            {fmt(t("subs.summary"), { n: state.subscriptions.length, yr: maskAmount(hide, format(yearly), "md") })}
           </p>
         </div>
       </section>
@@ -79,8 +81,8 @@ function SubscriptionsPage() {
         {state.subscriptions.length === 0 ? (
           <EmptyState
             icon={<Plus className="h-6 w-6" />}
-            title="No subscriptions yet"
-            description="Add a recurring service to see the true monthly cost."
+            title={t("subs.empty.title")}
+            description={t("subs.empty.desc")}
           />
         ) : (
           state.subscriptions.map((s) => (
@@ -98,27 +100,30 @@ function SubscriptionsPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{s.name}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  Next {new Date(s.nextDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {s.category}
+                  {fmt(t("subs.nextOn"), {
+                    date: new Date(s.nextDate).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+                    category: (() => { const k = `catName.${s.category}`; const v = t(k); return v === k ? s.category : v; })(),
+                  })}
                 </p>
               </div>
               <div className="shrink-0 text-right">
                 <p className="text-sm font-semibold">{maskAmount(hide, format(s.amount), "md")}</p>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">/mo</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("subs.per_mo")}</p>
               </div>
               <button
                 onClick={async () => {
                   const ok = await confirm({
-                    title: `Delete ${s.name}?`,
-                    description: "This removes the subscription from tracking. Existing transactions stay.",
-                    confirmLabel: "Delete",
+                    title: fmt(t("subs.deleteTitle"), { name: s.name }),
+                    description: t("subs.deleteDesc"),
+                    confirmLabel: t("action.delete"),
                     destructive: true,
                   });
                   if (ok) {
                     deleteSubscription(s.id);
-                    toast.message(`${s.name} removed`);
+                    toast.message(`${s.name} ${t("subs.removed")}`);
                   }
                 }}
-                aria-label={`Delete ${s.name}`}
+                aria-label={fmt(t("subs.deleteTitle"), { name: s.name })}
                 className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
@@ -132,7 +137,7 @@ function SubscriptionsPage() {
         <AddSubscriptionDialog
           onAdd={(s) => {
             addSubscription(s);
-            toast.success(`${s.name} added`);
+            toast.success(`${s.name} ${t("subs.added")}`);
           }}
         />
       </section>
@@ -141,6 +146,7 @@ function SubscriptionsPage() {
 }
 
 function AddSubscriptionDialog({ onAdd }: { onAdd: (s: Omit<Subscription, "id">) => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -152,21 +158,21 @@ function AddSubscriptionDialog({ onAdd }: { onAdd: (s: Omit<Subscription, "id">)
           className="press flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
           style={{ background: "var(--gradient-primary)" }}
         >
-          <Plus className="h-4 w-4" /> Add subscription
+          <Plus className="h-4 w-4" /> {t("subs.add")}
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-sm rounded-3xl">
         <DialogHeader>
-          <DialogTitle>New subscription</DialogTitle>
+          <DialogTitle>{t("subs.new")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs">Name</Label>
+            <Label className="text-xs">{t("subs.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Notion" />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Monthly amount</Label>
+              <Label className="text-xs">{t("subs.monthlyAmount")}</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -176,7 +182,7 @@ function AddSubscriptionDialog({ onAdd }: { onAdd: (s: Omit<Subscription, "id">)
               />
             </div>
             <div>
-              <Label className="text-xs">Emoji</Label>
+              <Label className="text-xs">{t("subs.emoji")}</Label>
               <Input value={emoji} onChange={(e) => setEmoji(e.target.value.slice(0, 2))} />
             </div>
           </div>
@@ -204,7 +210,7 @@ function AddSubscriptionDialog({ onAdd }: { onAdd: (s: Omit<Subscription, "id">)
             className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
             style={{ background: "var(--gradient-primary)" }}
           >
-            Save
+            {t("action.save")}
           </button>
         </DialogFooter>
       </DialogContent>
