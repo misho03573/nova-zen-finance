@@ -6,6 +6,7 @@ import { PreviewBadge } from "@/components/nova/PreviewBadge";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
 import { useNova } from "@/lib/nova-store";
+import { useT, fmt } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/automation")({
@@ -24,17 +25,18 @@ export const Route = createFileRoute("/automation")({
 function AutomationPage() {
   const { state, toggleAutomation, deleteAutomation } = useNova();
   const confirm = useConfirm();
+  const t = useT();
   const active = state.automationRules.filter((r) => r.enabled).length;
 
   return (
     <AppShell>
       <PageHeader
-        subtitle="Savings on autopilot"
-        title="Automation"
+        subtitle={t("auto.subtitle")}
+        title={t("auto.title")}
         right={
           <Link
             to="/"
-            aria-label="Back"
+            aria-label={t("action.back")}
             className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -49,13 +51,13 @@ function AutomationPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Rules active</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("auto.rulesActive")}</p>
               <p className="mt-1 text-3xl font-semibold tracking-tight">
                 {active}
                 <span className="text-muted-foreground">/{state.automationRules.length}</span>
               </p>
               <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                <PreviewBadge /> Simulated — no funds move
+                <PreviewBadge /> {t("auto.simulated")}
               </p>
             </div>
             <span
@@ -72,8 +74,8 @@ function AutomationPage() {
         {state.automationRules.length === 0 ? (
           <EmptyState
             icon={<Wand2 className="h-6 w-6" />}
-            title="No automation rules"
-            description="Round-ups, salary splits and weekly transfers appear here once configured."
+            title={t("auto.empty.title")}
+            description={t("auto.empty.desc")}
           />
         ) : (
           state.automationRules.map((r) => (
@@ -95,24 +97,24 @@ function AutomationPage() {
                 checked={r.enabled}
                 onCheckedChange={() => {
                   toggleAutomation(r.id);
-                  toast.message(r.enabled ? "Rule paused" : "Rule enabled");
+                  toast.message(r.enabled ? t("auto.paused") : t("auto.enabled"));
                 }}
-                aria-label={`Toggle ${r.label}`}
+                aria-label={fmt(t("auto.toggleAria"), { label: r.label })}
               />
               <button
                 onClick={async () => {
                   const ok = await confirm({
-                    title: `Delete "${r.label}"?`,
-                    description: "The rule will stop running immediately.",
-                    confirmLabel: "Delete",
+                    title: fmt(t("auto.deleteTitle"), { label: r.label }),
+                    description: t("auto.deleteDesc"),
+                    confirmLabel: t("action.delete"),
                     destructive: true,
                   });
                   if (ok) {
                     deleteAutomation(r.id);
-                    toast.message("Rule deleted");
+                    toast.message(t("auto.deleted"));
                   }
                 }}
-                aria-label="Delete rule"
+                aria-label={t("auto.deleteAria")}
                 className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
