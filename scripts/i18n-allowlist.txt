@@ -1,0 +1,19 @@
+# One rule per line. Lines are treated as JavaScript regex sources when valid,
+# otherwise as plain substrings. Lines starting with `#` are comments.
+#
+# Brand and product names.
+^NOVA$
+^Nova$
+^Lovable$
+^Supabase$
+^Google$
+^Apple$
+#
+# Currencies / codes shown as-is.
+^(BGN|EUR|USD|GBP|JPY|CHF|CAD|AUD|NZD|SEK)$
+#
+# Common UI glyphs / separators.
+^[·•→←↑↓×✓✕—–\-•|/·]+$
+#
+# Numeric-only or code-like tokens.
+^[0-9.,%:$€£¥+\-\s]+$
