@@ -220,7 +220,7 @@ function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityTyp
         <div className="space-y-3">
           <div>
             <Label>{t("nw.name")}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Car loan" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("nw.namePlaceholder")} />
           </div>
           <div>
             <Label>{t("nw.type")}</Label>
@@ -240,11 +240,11 @@ function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityTyp
           </div>
           <div>
             <Label>{t("nw.balance")}</Label>
-            <Input value={balance} onChange={(e) => setBalance(e.target.value)} inputMode="decimal" placeholder="0.00" />
+            <Input value={balance} onChange={(e) => setBalance(e.target.value)} inputMode="decimal" placeholder={t("nw.balancePlaceholder")} />
           </div>
           <div>
             <Label>{t("nw.apr")}</Label>
-            <Input value={apr} onChange={(e) => setApr(e.target.value)} inputMode="decimal" placeholder="Optional" />
+            <Input value={apr} onChange={(e) => setApr(e.target.value)} inputMode="decimal" placeholder={t("nw.aprPlaceholder")} />
           </div>
           <Button
             onClick={() => {
