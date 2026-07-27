@@ -227,9 +227,13 @@ function Diagnostics() {
             <li key={m.id} className="flex items-center gap-3 px-4 py-2.5">
               <span className="shrink-0">{statusIcon(m.status)}</span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">{m.name}</span>
+                <span className="block truncate text-sm font-medium">
+                  {(() => { const k = `diag.module.${m.id}`; const v = t(k); return v === k ? m.name : v; })()}
+                </span>
                 {m.notes ? (
-                  <span className="block truncate text-[11px] text-muted-foreground">{m.notes}</span>
+                  <span className="block truncate text-[11px] text-muted-foreground">
+                    {(() => { const k = `diag.note.${m.id}`; const v = t(k); return v === k ? m.notes : v; })()}
+                  </span>
                 ) : null}
               </span>
               <span
