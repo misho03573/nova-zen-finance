@@ -168,7 +168,7 @@ function AddSubscriptionDialog({ onAdd }: { onAdd: (s: Omit<Subscription, "id">)
         <div className="space-y-3">
           <div>
             <Label className="text-xs">{t("subs.name")}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Notion" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("subs.namePlaceholder")} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -178,7 +178,7 @@ function AddSubscriptionDialog({ onAdd }: { onAdd: (s: Omit<Subscription, "id">)
                 step="0.01"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="9.99"
+                placeholder={t("subs.amountPlaceholder")}
               />
             </div>
             <div>
