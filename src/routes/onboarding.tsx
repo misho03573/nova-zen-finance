@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
+import { useT } from "@/lib/i18n";
 import {
   Wallet,
   Target,
@@ -76,6 +77,7 @@ const slides: Slide[] = [
 function Onboarding() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const t = useT();
   const [i, setI] = useState(0);
   const s = slides[i];
   const last = i === slides.length - 1;
@@ -102,7 +104,7 @@ function Onboarding() {
             onClick={finish}
             className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Skip
+            {t("onb.skip")}
           </button>
         </header>
 
@@ -153,7 +155,7 @@ function Onboarding() {
               onClick={finish}
               className="mt-3 w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground"
             >
-              I'll explore on my own
+              {t("onb.explore")}
             </button>
           ) : null}
         </div>
