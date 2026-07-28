@@ -34,11 +34,12 @@ const tabs: Tab[] = [
 ];
 
 export function SettingsButton() {
+  const tr = useT();
   return (
     <Link
       to="/settings"
       className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
-      aria-label="Settings"
+      aria-label={tr("shell.settings")}
     >
       <SettingsIcon className="h-4 w-4" />
     </Link>

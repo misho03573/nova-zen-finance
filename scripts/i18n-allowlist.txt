@@ -17,3 +17,17 @@
 #
 # Numeric-only or code-like tokens.
 ^[0-9.,%:$€£¥+\-\s]+$
+#
+# Short technical tokens / units / brand marks left as-is.
+^or$
+^AI$
+^kB$
+^ms$
+^Mon$
+^Tue$
+^Wed$
+^Thu$
+^Fri$
+^Sat$
+^Sun$
+^Primary$

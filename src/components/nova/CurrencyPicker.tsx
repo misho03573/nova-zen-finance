@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { CURRENCIES, useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export function CurrencyPicker({ variant = "icon" }: { variant?: "icon" | "chip" }) {
   const { currency, setCurrency } = useCurrency();
+  const t = useT();
 
   return (
     <Dialog>
@@ -18,7 +20,7 @@ export function CurrencyPicker({ variant = "icon" }: { variant?: "icon" | "chip"
         {variant === "chip" ? (
           <button
             className="flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-2 text-xs font-medium backdrop-blur transition-colors hover:bg-card"
-            aria-label="Change currency"
+            aria-label={t("cur.aria")}
           >
             <span className="text-base leading-none">{currency.flag}</span>
             <span>{currency.code}</span>
@@ -27,7 +29,7 @@ export function CurrencyPicker({ variant = "icon" }: { variant?: "icon" | "chip"
         ) : (
           <button
             className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
-            aria-label="Change currency"
+            aria-label={t("cur.aria")}
           >
             <Coins className="h-4 w-4" />
           </button>
@@ -36,7 +38,7 @@ export function CurrencyPicker({ variant = "icon" }: { variant?: "icon" | "chip"
       <DialogContent className="max-w-sm border-border bg-card/95 backdrop-blur-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <Coins className="h-4 w-4 text-primary" /> Choose currency
+            <Coins className="h-4 w-4 text-primary" /> {t("cur.title")}
           </DialogTitle>
         </DialogHeader>
         <ul className="mt-2 max-h-[60vh] space-y-1 overflow-y-auto pr-1">
