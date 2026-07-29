@@ -6,7 +6,7 @@ import { useNova, type Transaction } from "@/lib/nova-store";
 import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { toast } from "sonner";
 import { useCategoryLookup } from "@/lib/categories";
-import { useCategoryName } from "@/lib/i18n";
+import { useCategoryName, useT, fmt } from "@/lib/i18n";
 
 export const Route = createFileRoute("/import")({
   head: () => ({
@@ -47,6 +47,7 @@ function guessCategory(desc: string): string {
 function ImportPage() {
   const { state, importTransactions } = useNova();
   const { formatIn } = useCurrency();
+  const tr = useT();
   const [csv, setCsv] = useState<string>("");
   const [account, setAccount] = useState<string>(state.accounts[0]?.id ?? "");
   const navigate = useNavigate();
@@ -107,8 +108,8 @@ function ImportPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle="Bank"
-        title="Import CSV"
+        subtitle={tr("imp.subtitle")}
+        title={tr("imp.title")}
         right={
           <Link to="/" className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur">
             <ArrowLeft className="h-4 w-4" />
@@ -122,8 +123,8 @@ function ImportPage() {
             <Upload className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Upload bank CSV</p>
-            <p className="text-xs text-muted-foreground">Columns: date, description, amount</p>
+            <p className="text-sm font-semibold">{tr("imp.upload")}</p>
+            <p className="text-xs text-muted-foreground">{tr("imp.uploadDesc")}</p>
           </div>
           <input
             type="file"
@@ -136,13 +137,13 @@ function ImportPage() {
           onClick={() => setCsv(SAMPLE)}
           className="mt-2 flex items-center gap-1.5 text-xs text-primary"
         >
-          <FileText className="h-3.5 w-3.5" /> Load sample data
+          <FileText className="h-3.5 w-3.5" /> {tr("imp.loadSample")}
         </button>
       </section>
 
       <section className="mt-4 px-5">
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Import into
+          {tr("imp.into")}
         </p>
         <div className="flex flex-wrap gap-2">
           {state.accounts.map((a) => (
@@ -162,9 +163,9 @@ function ImportPage() {
       {drafts.length > 0 && (
         <section className="mt-4 px-5">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-semibold">Preview · {drafts.length}</p>
+            <p className="text-sm font-semibold">{fmt(tr("imp.preview"), { n: drafts.length })}</p>
             <p className="text-xs text-muted-foreground">
-              {toImport.length} new · {drafts.length - toImport.length} duplicates
+              {fmt(tr("imp.counts"), { n: toImport.length, d: drafts.length - toImport.length })}
             </p>
           </div>
           <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
@@ -187,7 +188,7 @@ function ImportPage() {
                   </div>
                   {d.dupe ? (
                     <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-amber-500">
-                      <AlertTriangle className="h-3 w-3" /> Dupe
+                      <AlertTriangle className="h-3 w-3" /> {tr("imp.dupe")}
                     </span>
                   ) : null}
                   <span className={`shrink-0 text-sm font-semibold ${d.amount > 0 ? "text-primary" : ""}`}>
@@ -204,7 +205,7 @@ function ImportPage() {
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] disabled:opacity-60"
             style={{ background: "var(--gradient-primary)" }}
           >
-            <Check className="h-4 w-4" /> Import {toImport.length} transactions
+            <Check className="h-4 w-4" /> {fmt(tr("imp.importBtn"), { n: toImport.length })}
           </button>
         </section>
       )}
