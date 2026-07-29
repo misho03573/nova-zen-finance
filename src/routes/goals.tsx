@@ -172,18 +172,19 @@ function GoalsPage() {
 
 function ContributeDialog({ goalId }: { goalId: string }) {
   const { contributeGoal } = useNova();
+  const tr = useT();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("50");
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-          <PiggyBank className="h-3.5 w-3.5" /> Add funds
+          <PiggyBank className="h-3.5 w-3.5" /> {tr("goals.addFunds")}
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-xs">
         <DialogHeader>
-          <DialogTitle>Add funds</DialogTitle>
+          <DialogTitle>{tr("goals.addFunds.title")}</DialogTitle>
         </DialogHeader>
         <Input
           type="number"
@@ -204,7 +205,7 @@ function ContributeDialog({ goalId }: { goalId: string }) {
             className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
             style={{ background: "var(--gradient-primary)" }}
           >
-            Confirm
+            {tr("goals.confirm")}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -214,6 +215,7 @@ function ContributeDialog({ goalId }: { goalId: string }) {
 
 function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }) {
   const { addGoal, updateGoal } = useNova();
+  const tr = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(goal?.name ?? "");
   const [target, setTarget] = useState(String(goal?.target ?? 1000));
@@ -243,15 +245,15 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{goal ? "Edit goal" : "New goal"}</DialogTitle>
+          <DialogTitle>{goal ? tr("goals.editTitle") : tr("goals.newTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs">Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Vacation" />
+            <Label className="text-xs">{tr("goals.name")}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("goals.name.placeholder")} />
           </div>
           <div>
-            <Label className="text-xs">Emoji</Label>
+            <Label className="text-xs">{tr("goals.emoji")}</Label>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {emojis.map((e) => (
                 <button
@@ -268,15 +270,15 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <Label className="text-xs">Target</Label>
+              <Label className="text-xs">{tr("goals.target")}</Label>
               <Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">Saved</Label>
+              <Label className="text-xs">{tr("goals.savedField")}</Label>
               <Input type="number" value={saved} onChange={(e) => setSaved(e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">Monthly</Label>
+              <Label className="text-xs">{tr("goals.monthly")}</Label>
               <Input type="number" value={monthly} onChange={(e) => setMonthly(e.target.value)} />
             </div>
           </div>
@@ -287,7 +289,7 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
             className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
             style={{ background: "var(--gradient-primary)" }}
           >
-            {goal ? "Save" : "Create goal"}
+            {goal ? tr("goals.save") : tr("goals.create")}
           </button>
         </DialogFooter>
       </DialogContent>
