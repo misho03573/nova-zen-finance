@@ -79,8 +79,8 @@ function InsightsPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle={tr("ins.subtitle") || "Powered by NOVA AI"}
-        title={tr("ins.title") || "Insights"}
+        subtitle={tr("ins.subtitle")}
+        title={tr("ins.title")}
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker />
