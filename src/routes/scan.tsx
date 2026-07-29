@@ -7,7 +7,7 @@ import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 import { useCategoryLookup, useCategories } from "@/lib/categories";
 import { iconRegistry } from "@/lib/categories";
-import { useCategoryName } from "@/lib/i18n";
+import { useCategoryName, useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/scan")({
   head: () => ({
@@ -45,6 +45,7 @@ function ScanPage() {
   const categoryOf = useCategoryLookup();
   const categories = useCategories("expense");
   const catName = useCategoryName();
+  const tr = useT();
 
   const start = () => {
     setPhase("scanning");
@@ -72,8 +73,8 @@ function ScanPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle="AI Scanner"
-        title="Scan receipt"
+        subtitle={tr("scan.subtitle")}
+        title={tr("scan.title")}
         right={
           <Link
             to="/"
@@ -95,9 +96,9 @@ function ScanPage() {
                 <span className="grid h-16 w-16 place-items-center rounded-full border border-border bg-background/60">
                   <Camera className="h-6 w-6 text-primary" />
                 </span>
-                <p className="text-sm font-medium">Point at your receipt</p>
+                <p className="text-sm font-medium">{tr("scan.point")}</p>
                 <p className="max-w-[240px] text-xs text-muted-foreground">
-                  NOVA AI detects merchant, total, VAT, category and payment method automatically.
+                  {tr("scan.pointDesc")}
                 </p>
               </div>
             )}
@@ -109,21 +110,21 @@ function ScanPage() {
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <p className="text-sm font-medium">Analyzing receipt…</p>
-                <p className="text-xs text-muted-foreground">Reading text · extracting total · categorizing</p>
+                <p className="text-sm font-medium">{tr("scan.analyzing")}</p>
+                <p className="text-xs text-muted-foreground">{tr("scan.reading")}</p>
               </div>
             )}
             {phase === "detected" && receipt && (
               <div className="w-full max-w-[280px] rounded-2xl border border-border bg-background/80 p-4 text-sm shadow-[var(--shadow-elevated)] backdrop-blur animate-fade-in">
-                <p className="text-[10px] uppercase tracking-widest text-primary">Detected</p>
+                <p className="text-[10px] uppercase tracking-widest text-primary">{tr("scan.detected")}</p>
                 <p className="mt-1 text-lg font-semibold">{receipt.merchant}</p>
                 <p className="text-xs text-muted-foreground">{new Date(receipt.date).toLocaleString()}</p>
                 <div className="mt-3 space-y-1.5 text-xs">
-                  <RowKV label="Total" value={format(receipt.total)} />
-                  <RowKV label="VAT" value={format(receipt.vat)} />
-                  <RowKV label="Currency" value={receipt.currency} />
-                  <RowKV label="Category" value={(() => { const c = categoryOf(receipt.category); return catName(c.id, c.name, c.builtin); })()} />
-                  <RowKV label="Payment" value={receipt.paymentMethod} />
+                  <RowKV label={tr("scan.total")} value={format(receipt.total)} />
+                  <RowKV label={tr("scan.vat")} value={format(receipt.vat)} />
+                  <RowKV label={tr("scan.currency")} value={receipt.currency} />
+                  <RowKV label={tr("scan.category")} value={(() => { const c = categoryOf(receipt.category); return catName(c.id, c.name, c.builtin); })()} />
+                  <RowKV label={tr("scan.payment")} value={receipt.paymentMethod} />
                 </div>
               </div>
             )}
@@ -154,14 +155,14 @@ function ScanPage() {
                 onClick={() => { setPhase("idle"); setReceipt(null); }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border bg-card/60 py-3 text-sm font-medium"
               >
-                <RefreshCw className="h-4 w-4" /> Rescan
+                <RefreshCw className="h-4 w-4" /> {tr("scan.rescan")}
               </button>
               <button
                 onClick={save}
                 className="flex flex-[2] items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
                 style={{ background: "var(--gradient-primary)" }}
               >
-                <Check className="h-4 w-4" /> Save transaction
+                <Check className="h-4 w-4" /> {tr("scan.save")}
               </button>
             </>
           ) : (
@@ -172,7 +173,7 @@ function ScanPage() {
               style={{ background: "var(--gradient-primary)" }}
             >
               <Camera className="h-4 w-4" />
-              {phase === "scanning" ? "Scanning…" : "Capture"}
+              {phase === "scanning" ? tr("scan.scanning") : tr("scan.capture")}
             </button>
           )}
         </div>
