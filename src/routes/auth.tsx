@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { lovable } from "@/integrations/lovable/index";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { user, signInEmail, signUpEmail } = useAuth();
+  const tr = useT();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -98,32 +100,32 @@ function AuthPage() {
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           {mode === "signup" ? (
             <div className="space-y-1.5">
-              <Label htmlFor="fullName">Full name</Label>
+              <Label htmlFor="fullName">{tr("auth.fullName")}</Label>
               <Input
                 id="fullName"
                 type="text"
                 autoComplete="name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Your name"
+                placeholder={tr("auth.placeholder.name")}
                 required
               />
             </div>
           ) : null}
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{tr("auth.email")}</Label>
             <Input
               id="email"
               type="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={tr("auth.placeholder.email")}
               required
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{tr("auth.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -154,7 +156,7 @@ function AuthPage() {
           disabled={busy}
         >
           <GoogleIcon className="mr-2 h-4 w-4" />
-          Continue with Google
+          {tr("auth.google")}
         </Button>
 
         <button
@@ -163,9 +165,9 @@ function AuthPage() {
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
         >
           {mode === "signin" ? (
-            <>Don&apos;t have an account? <span className="text-foreground font-medium">Sign up</span></>
+            <>{tr("auth.noAccount")} <span className="text-foreground font-medium">{tr("auth.signup")}</span></>
           ) : (
-            <>Already have an account? <span className="text-foreground font-medium">Sign in</span></>
+            <>{tr("auth.hasAccount")} <span className="text-foreground font-medium">{tr("auth.signin")}</span></>
           )}
         </button>
       </div>

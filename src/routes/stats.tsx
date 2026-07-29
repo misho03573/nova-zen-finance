@@ -14,7 +14,7 @@ import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useCategories, useCategoryLookup } from "@/lib/categories";
-import { useCategoryName } from "@/lib/i18n";
+import { useCategoryName, useT, fmt } from "@/lib/i18n";
 import {
   useNova,
   cashflowByRange,
@@ -45,6 +45,7 @@ function StatsPage() {
   const categoryOf = useCategoryLookup();
   const categories = useCategories();
   const catName = useCategoryName();
+  const tr = useT();
 
   const rangeTx = useMemo(
     () => filterTxsByRange(display.transactions, range),
@@ -72,21 +73,21 @@ function StatsPage() {
 
   return (
     <AppShell>
-      <PageHeader subtitle="Insights" title="Statistics" right={<CurrencyPicker />} />
+      <PageHeader subtitle={tr("stats.subtitle")} title={tr("stats.title")} right={<CurrencyPicker />} />
 
       <section className="px-5">
         <div className="inline-flex w-full rounded-full border border-border bg-card/60 p-1 text-xs">
-          {(["week", "month", "year"] as const).map((t) => (
+          {(["week", "month", "year"] as const).map((r) => (
             <button
-              key={t}
-              onClick={() => setRange(t)}
+              key={r}
+              onClick={() => setRange(r)}
               className={cn(
                 "flex-1 rounded-full px-3 py-1.5 font-medium capitalize transition-colors",
-                range === t ? "text-primary-foreground" : "text-muted-foreground",
+                range === r ? "text-primary-foreground" : "text-muted-foreground",
               )}
-              style={range === t ? { background: "var(--gradient-primary)" } : undefined}
+              style={range === r ? { background: "var(--gradient-primary)" } : undefined}
             >
-              {t}
+              {tr(`stats.${r}`)}
             </button>
           ))}
         </div>
@@ -97,7 +98,7 @@ function StatsPage() {
           <div className="flex items-baseline justify-between">
             <div>
               <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                Net cashflow
+                {tr("stats.netCashflow")}
               </p>
               <p className="mt-1 text-3xl font-semibold tracking-tight">
                 {format(net, { signed: true })}
@@ -162,7 +163,7 @@ function StatsPage() {
           </div>
           <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-primary" /> Income
+              <span className="h-2 w-2 rounded-full bg-primary" /> {tr("stats.income")}
               <span className="text-foreground">{format(income)}</span>
             </span>
             <span className="flex items-center gap-1.5">
@@ -170,7 +171,7 @@ function StatsPage() {
                 className="h-2 w-2 rounded-full"
                 style={{ background: "oklch(0.7 0.19 30)" }}
               />
-              Expenses
+              {tr("stats.expenses")}
               <span className="text-foreground">{format(expenses)}</span>
             </span>
           </div>
@@ -178,11 +179,11 @@ function StatsPage() {
       </section>
 
       <section className="mt-6 px-5">
-        <h2 className="mb-3 text-sm font-semibold">Monthly budgets</h2>
+        <h2 className="mb-3 text-sm font-semibold">{tr("stats.monthlyBudgets")}</h2>
         {state.budgets.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card/40 p-5 text-center">
-            <p className="text-sm font-semibold">No budgets set</p>
-            <p className="mt-1 text-xs text-muted-foreground">Cap a category to get gentle warnings as you spend.</p>
+            <p className="text-sm font-semibold">{tr("stats.noBudgets")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{tr("stats.noBudgetsDesc")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -229,7 +230,7 @@ function StatsPage() {
                   {near || over ? (
                     <p className="mt-2 flex items-center gap-1 text-[11px] font-medium text-warning">
                       <AlertTriangle className="h-3 w-3" />
-                      {over ? "Over budget" : "Nearing limit"}
+                      {over ? tr("stats.overBudget") : tr("stats.nearingLimit")}
                     </p>
                   ) : null}
                 </div>
@@ -240,10 +241,10 @@ function StatsPage() {
       </section>
 
       <section className="mt-6 px-5">
-        <h2 className="mb-3 text-sm font-semibold">By category</h2>
+        <h2 className="mb-3 text-sm font-semibold">{tr("stats.byCategory")}</h2>
         <div className="rounded-3xl border border-border bg-card/70 p-5 shadow-[var(--shadow-card)]">
           {catData.length === 0 ? (
-            <p className="text-center text-xs text-muted-foreground">No spending this month.</p>
+            <p className="text-center text-xs text-muted-foreground">{tr("stats.noSpending")}</p>
           ) : (
           <div className="grid grid-cols-[140px_minmax(0,1fr)] items-center gap-4">
             <div className="relative h-[140px] w-[140px]">
@@ -266,7 +267,7 @@ function StatsPage() {
               <div className="absolute inset-0 grid place-items-center text-center">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Total
+                    {tr("stats.total")}
                   </p>
                   <p className="text-lg font-semibold">{format(totalCats)}</p>
                 </div>
@@ -294,11 +295,11 @@ function StatsPage() {
           className="rounded-3xl border border-border p-5 shadow-[var(--shadow-card)]"
           style={{ background: "var(--gradient-card)" }}
         >
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Insight</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{tr("stats.insight")}</p>
           <p className="mt-1 text-sm font-medium">
             {net >= 0
-              ? `Great work — you're keeping ${format(net)} this ${range}.`
-              : `You're spending ${format(-net)} more than you earn this ${range}.`}
+              ? fmt(tr("stats.insight.positive"), { amt: format(net), range: tr(`stats.${range}`) })
+              : fmt(tr("stats.insight.negative"), { amt: format(-net), range: tr(`stats.${range}`) })}
           </p>
         </div>
       </section>

@@ -20,7 +20,7 @@ import {
 } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
-import { useCategoryName } from "@/lib/i18n";
+import { useCategoryName, useT, fmt } from "@/lib/i18n";
 import {
   generateInsights,
   cashflowForecast,
@@ -50,6 +50,7 @@ function InsightsPage() {
   const { format } = useCurrency();
   const categoryOf = useCategoryLookup();
   const catName = useCategoryName();
+  const tr = useT();
   const [query, setQuery] = useState("");
 
   const insights = useMemo(
@@ -78,14 +79,14 @@ function InsightsPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle="Powered by NOVA AI"
-        title="Insights"
+        subtitle={tr("ins.subtitle")}
+        title={tr("ins.title")}
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker />
             <Link
               to="/calendar"
-              aria-label="Calendar"
+              aria-label={tr("shell.calendar")}
               className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
             >
               <CalendarDays className="h-4 w-4" />
@@ -100,7 +101,7 @@ function InsightsPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Try: coffee, fuel, last month, over 100"
+            placeholder={tr("ins.searchPlaceholder")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           {query ? (
@@ -108,14 +109,14 @@ function InsightsPage() {
               onClick={() => setQuery("")}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
-              Clear
+              {tr("ins.clear")}
             </button>
           ) : null}
         </div>
         {query ? (
           <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-card/70">
             {searchResults.length === 0 ? (
-              <p className="p-4 text-center text-xs text-muted-foreground">No matches.</p>
+              <p className="p-4 text-center text-xs text-muted-foreground">{tr("ins.noMatches")}</p>
             ) : (
               <ul className="divide-y divide-border">
                 {searchResults.map((t) => {
@@ -160,7 +161,7 @@ function InsightsPage() {
 
       {alerts.length ? (
         <section className="mt-6 px-5">
-          <SectionTitle icon={<Bell className="h-3.5 w-3.5" />}>Alerts</SectionTitle>
+          <SectionTitle icon={<Bell className="h-3.5 w-3.5" />}>{tr("ins.alerts")}</SectionTitle>
           <ul className="mt-2 space-y-2">
             {alerts.map((a) => (
               <li
@@ -183,10 +184,10 @@ function InsightsPage() {
       ) : null}
 
       <section className="mt-6 px-5">
-        <SectionTitle icon={<Sparkles className="h-3.5 w-3.5" />}>AI Insights</SectionTitle>
+        <SectionTitle icon={<Sparkles className="h-3.5 w-3.5" />}>{tr("ins.aiInsights")}</SectionTitle>
         {insights.length === 0 ? (
           <div className="mt-2 rounded-3xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-            Add a few more transactions and we'll start finding patterns.
+            {tr("ins.aiEmpty")}
           </div>
         ) : (
           <ul className="mt-2 space-y-2">
@@ -221,9 +222,9 @@ function InsightsPage() {
       </section>
 
       <section className="mt-6 px-5">
-        <SectionTitle icon={<Wand2 className="h-3.5 w-3.5" />}>Smart budgets</SectionTitle>
+        <SectionTitle icon={<Wand2 className="h-3.5 w-3.5" />}>{tr("ins.smartBudgets")}</SectionTitle>
         <p className="mt-1 text-xs text-muted-foreground">
-          NOVA analyzes the last 6 months and recommends a limit per category.
+          {tr("ins.smartBudgetsDesc")}
         </p>
         <ul className="mt-3 space-y-2">
           {state.budgets.map((b) => {
@@ -244,7 +245,7 @@ function InsightsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{catName(cat.id, cat.name, cat.builtin)}</p>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    Current {format(b.limit)} · Suggested {rec ? format(rec) : "—"}
+                    {fmt(tr("ins.currentSuggested"), { cur: format(b.limit), sug: rec ? format(rec) : "—" })}
                   </p>
                 </div>
                 {rec > 0 && rec !== b.limit ? (
@@ -252,10 +253,10 @@ function InsightsPage() {
                     onClick={() => setBudget(b.category, rec)}
                     className="rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/25"
                   >
-                    Apply
+                    {tr("ins.apply")}
                   </button>
                 ) : (
-                  <span className="text-[11px] text-muted-foreground">On target</span>
+                  <span className="text-[11px] text-muted-foreground">{tr("ins.onTarget")}</span>
                 )}
               </li>
             );
@@ -264,7 +265,7 @@ function InsightsPage() {
       </section>
 
       <section className="mt-6 px-5">
-        <SectionTitle icon={<Trophy className="h-3.5 w-3.5" />}>Achievements</SectionTitle>
+        <SectionTitle icon={<Trophy className="h-3.5 w-3.5" />}>{tr("ins.achievements")}</SectionTitle>
         <div className="mt-3 grid grid-cols-2 gap-2">
           {achievements.map((a) => (
             <div
@@ -306,7 +307,7 @@ function InsightsPage() {
         >
           <span className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
-            Deep dive stats
+            {tr("ins.deepDive")}
           </span>
           <ArrowRight className="h-4 w-4 text-muted-foreground" />
         </Link>
@@ -336,6 +337,7 @@ function ForecastCard({
   forecast: { today: number; points: { label: string; days: number; value: number; confidence: number }[] };
 }) {
   const { format } = useCurrency();
+  const tr = useT();
   const values = [forecast.today, ...forecast.points.map((p) => p.value)];
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -355,9 +357,9 @@ function ForecastCard({
       <div className="flex items-baseline justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Cash-flow forecast
+            {tr("ins.forecast")}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">Balance today</p>
+          <p className="mt-1 text-xs text-muted-foreground">{tr("ins.balanceToday")}</p>
           <AnimatedNumber
             value={forecast.today}
             format={(n) => format(n)}
@@ -403,7 +405,7 @@ function ForecastCard({
             className="rounded-2xl border border-border bg-card/60 p-2.5 backdrop-blur"
           >
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              In {p.label}
+              {fmt(tr("ins.inLabel"), { label: p.label })}
             </p>
             <p
               className={cn(

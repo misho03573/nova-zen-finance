@@ -14,7 +14,7 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
 import { useCategoryLookup } from "@/lib/categories";
-import { useCategoryName } from "@/lib/i18n";
+import { useCategoryName, useT } from "@/lib/i18n";
 import {
   useNova,
   monthlyTotals,
@@ -57,6 +57,7 @@ function Home() {
   const { fullName, user } = useAuth();
   const categoryOf = useCategoryLookup();
   const catName = useCategoryName();
+  const tr = useT();
   void catName;
   const hide = !!state.settings.hideBalances;
   const netWorth = netWorthBreakdown(display).net;
@@ -74,12 +75,12 @@ function Home() {
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
     .slice(0, 4);
   const primaryAccount = state.accounts[0];
-  const displayName = fullName || (user ? "You" : "Guest");
+  const displayName = fullName || (user ? tr("home.you") : tr("home.guest"));
   const greeting = (() => {
     const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 18) return "Good afternoon";
-    return "Good evening";
+    if (h < 12) return tr("home.morning");
+    if (h < 18) return tr("home.afternoon");
+    return tr("home.evening");
   })();
   return (
     <AppShell>
@@ -91,7 +92,7 @@ function Home() {
             <CurrencyPicker variant="chip" />
             <Link
               to="/calendar"
-              aria-label="Calendar"
+              aria-label={tr("shell.calendar")}
               className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur transition-colors hover:bg-card"
             >
               <CalendarDays className="h-4 w-4" />
@@ -99,7 +100,7 @@ function Home() {
             <Link
               to="/settings"
               className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur transition-colors hover:bg-card"
-              aria-label="Settings"
+              aria-label={tr("shell.settings")}
             >
               <SettingsIcon className="h-4 w-4" />
             </Link>
@@ -125,10 +126,10 @@ function Home() {
 
       <section className="animate-rise-in mt-6 px-5" style={{ animationDelay: "200ms" }}>
         <div className="grid grid-cols-4 gap-3">
-          <QuickAction icon={<Plus className="h-4 w-4" />} label="Add" to="/add" primary />
-          <QuickAction icon={<ArrowUpRight className="h-4 w-4" />} label="Send" to="/wallet" />
-          <QuickAction icon={<ArrowDownRight className="h-4 w-4" />} label="Request" to="/wallet" />
-          <QuickAction icon={<Sparkles className="h-4 w-4" />} label="Insights" to="/insights" />
+          <QuickAction icon={<Plus className="h-4 w-4" />} label={tr("home.add")} to="/add" primary />
+          <QuickAction icon={<ArrowUpRight className="h-4 w-4" />} label={tr("home.send")} to="/wallet" />
+          <QuickAction icon={<ArrowDownRight className="h-4 w-4" />} label={tr("home.request")} to="/wallet" />
+          <QuickAction icon={<Sparkles className="h-4 w-4" />} label={tr("home.insights")} to="/insights" />
         </div>
       </section>
 
@@ -136,13 +137,13 @@ function Home() {
         <div className="grid grid-cols-2 gap-3">
           <MiniCard
             icon={<PiggyBank className="h-4 w-4" />}
-            label="Savings rate"
+            label={tr("home.savingsRate")}
             value={`${Math.round(rate * 100)}%`}
-            hint={rate >= 0.2 ? "Excellent" : rate >= 0.1 ? "On track" : "Push harder"}
+            hint={rate >= 0.2 ? tr("home.savingsRate.excellent") : rate >= 0.1 ? tr("home.savingsRate.ontrack") : tr("home.savingsRate.push")}
           />
           <MiniCard
             icon={<TrendingUp className="h-4 w-4" />}
-            label="Income vs Expenses"
+            label={tr("home.ivex")}
             value={format(monthlyIncome - monthlyExpenses, { signed: true })}
             hint={`${format(monthlyIncome)} · −${format(monthlyExpenses).replace("−", "")}`}
           />
@@ -151,15 +152,15 @@ function Home() {
 
       <section className="animate-rise-in mt-8 px-5" style={{ animationDelay: "320ms" }}>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-foreground">This week</h2>
+          <h2 className="text-sm font-semibold text-foreground">{tr("home.thisWeek")}</h2>
           <Link to="/stats" className="text-xs text-muted-foreground hover:text-foreground">
-            See all
+            {tr("home.seeAll")}
           </Link>
         </div>
         <div className="rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]">
           <div className="mb-3 flex items-end justify-between">
             <div>
-              <p className="text-xs text-muted-foreground">Spent</p>
+              <p className="text-xs text-muted-foreground">{tr("home.spent")}</p>
               <AnimatedNumber
                 value={spentWeek}
                 format={(n) => format(n)}
@@ -167,7 +168,7 @@ function Home() {
               />
             </div>
             <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
-              7 days
+              {tr("home.days7")}
             </span>
           </div>
           <div className="flex h-24 items-end gap-2">
@@ -195,12 +196,12 @@ function Home() {
 
       <section className="animate-rise-in mt-8 px-5" style={{ animationDelay: "420ms" }}>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-foreground">Upcoming bills</h2>
-          <span className="text-xs text-muted-foreground">Next {upcoming.length}</span>
+          <h2 className="text-sm font-semibold text-foreground">{tr("home.upcoming")}</h2>
+          <span className="text-xs text-muted-foreground">{upcoming.length}</span>
         </div>
         {upcoming.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-            No upcoming bills.
+            {tr("home.noUpcoming")}
           </div>
         ) : (
           <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
@@ -227,7 +228,7 @@ function Home() {
                     <p className="truncate text-sm font-medium">{r.title}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       <CalendarClock className="mr-1 inline h-3 w-3" />
-                      In {days} day{days === 1 ? "" : "s"} · {r.frequency}
+                      {tr("home.in")} {days} {days === 1 ? tr("home.day") : tr("home.days")} · {r.frequency}
                     </p>
                   </div>
                   <span className="shrink-0 text-sm font-semibold">
@@ -246,9 +247,9 @@ function Home() {
 
       <section className="animate-rise-in mt-8 px-5" style={{ animationDelay: "520ms" }}>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-foreground">Recent</h2>
+          <h2 className="text-sm font-semibold text-foreground">{tr("home.recent")}</h2>
           <Link to="/wallet" className="text-xs text-muted-foreground hover:text-foreground">
-            View all
+            {tr("home.viewAll")}
           </Link>
         </div>
         <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
@@ -314,6 +315,7 @@ function MiniCard({
 
 function ScoreCard({ health }: { health: ScoreBreakdown }) {
   const { score, status, explanation, chips } = health;
+  const tr = useT();
   const max = 900;
   const pct = Math.min(1, score / 1000);
   void max;
@@ -359,13 +361,13 @@ function ScoreCard({ health }: { health: ScoreBreakdown }) {
                 duration={900}
                 className="text-2xl font-semibold tracking-tight"
               />
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">score</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{tr("home.score")}</p>
             </div>
           </div>
         </div>
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Financial health
+            {tr("home.financialHealth")}
           </p>
           <p className="mt-1 text-lg font-semibold leading-tight text-foreground">{status}</p>
           <p className="mt-1 text-xs text-muted-foreground">{explanation}</p>
@@ -406,6 +408,7 @@ function NetWorthCard({
   hide?: boolean;
 }) {
   const { format } = useCurrency();
+  const tr = useT();
   return (
     <div
       className="press relative overflow-hidden rounded-3xl border border-white/10 p-5 text-white shadow-[var(--shadow-elevated)]"
@@ -413,7 +416,7 @@ function NetWorthCard({
     >
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 animate-float-slow rounded-full bg-white/10 blur-3xl" />
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium uppercase tracking-widest text-white/70">Net worth</p>
+        <p className="text-xs font-medium uppercase tracking-widest text-white/70">{tr("home.netWorth")}</p>
         <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/80">
           {brand}
         </span>
@@ -429,16 +432,16 @@ function NetWorthCard({
         />
       )}
       <p className="mt-1 text-[11px] uppercase tracking-widest text-white/60">
-        Savings rate · {Math.round(rate * 100)}%
+        {tr("home.savingsRate")} · {Math.round(rate * 100)}%
       </p>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <MiniStat
-          label="Income"
+          label={tr("home.income")}
           value={hide ? "••••" : format(income, { signed: true })}
           tone="up"
         />
         <MiniStat
-          label="Expenses"
+          label={tr("home.expenses")}
           value={hide ? "••••" : format(-expenses)}
           tone="down"
         />
