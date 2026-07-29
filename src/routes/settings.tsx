@@ -170,25 +170,25 @@ function SettingsPage() {
       />
 
       <section className="px-5">
-        <Group title="Account">
+        <Group title={t("set.account")}>
           {user ? (
             <Row
               icon={<UserCircle className="h-4 w-4" />}
-              label={fullName || "Add your name"}
-              description="Displayed on your dashboard"
+              label={fullName || t("set.addName")}
+              description={t("set.nameDesc")}
             >
               <button
                 onClick={openNameEditor}
                 className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
               >
-                Edit
+                {t("set.editBtn")}
               </button>
             </Row>
           ) : null}
           <Row
             icon={<UserCircle className="h-4 w-4" />}
-            label={user?.email ?? "Guest"}
-            description={user ? "Signed in" : "Not signed in"}
+            label={user?.email ?? t("set.guest")}
+            description={user ? t("set.signedIn") : t("set.notSignedIn")}
           >
             {user ? (
               <button
@@ -196,14 +196,14 @@ function SettingsPage() {
                 className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
               >
                 <LogOut className="h-3 w-3" />
-                Sign out
+                {t("set.signOut")}
               </button>
             ) : (
               <Link
                 to="/auth"
                 className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
               >
-                Sign in
+                {t("set.signIn")}
               </Link>
             )}
           </Row>
@@ -267,40 +267,40 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.security")}>
-          <Row icon={<Fingerprint className="h-4 w-4" />} label="Face ID" description="Unlock with your face" preview>
+          <Row icon={<Fingerprint className="h-4 w-4" />} label={t("set.faceId")} description={t("set.faceIdDesc")} preview>
             <Switch
               checked={!!s.faceId}
               onCheckedChange={(v) => { setSettings({ faceId: v }); toast.message(v ? "Face ID on" : "Face ID off"); }}
             />
           </Row>
-          <Row icon={<Fingerprint className="h-4 w-4" />} label="Touch ID" description="Fingerprint unlock" preview>
+          <Row icon={<Fingerprint className="h-4 w-4" />} label={t("set.touchId")} description={t("set.touchIdDesc")} preview>
             <Switch
               checked={!!s.touchId}
               onCheckedChange={(v) => setSettings({ touchId: v })}
             />
           </Row>
-          <Row icon={<Lock className="h-4 w-4" />} label="PIN code" description={s.pinEnabled ? "6-digit PIN active" : "Set a 6-digit PIN"} preview>
+          <Row icon={<Lock className="h-4 w-4" />} label={t("set.pin")} description={s.pinEnabled ? t("set.pinActive") : t("set.pinSet")} preview>
             <button
               onClick={() => setPinOpen(true)}
               className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
             >
-              {s.pinEnabled ? "Change" : "Set"}
+              {s.pinEnabled ? t("set.change") : t("set.setBtn")}
             </button>
           </Row>
-          <Row icon={<Lock className="h-4 w-4" />} label="Auto-lock" description="Lock when inactive" preview>
+          <Row icon={<Lock className="h-4 w-4" />} label={t("set.autoLock")} description={t("set.autoLockDesc")} preview>
             <select
               value={s.autoLockMinutes ?? 5}
               onChange={(e) => setSettings({ autoLockMinutes: parseInt(e.target.value, 10) })}
               className="rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs"
             >
-              <option value={1}>1 min</option>
-              <option value={5}>5 min</option>
-              <option value={15}>15 min</option>
-              <option value={60}>1 hour</option>
-              <option value={0}>Never</option>
+              <option value={1}>{t("set.autolock.min1")}</option>
+              <option value={5}>{t("set.autolock.min5")}</option>
+              <option value={15}>{t("set.autolock.min15")}</option>
+              <option value={60}>{t("set.autolock.hr1")}</option>
+              <option value={0}>{t("set.autolock.never")}</option>
             </select>
           </Row>
-          <Row icon={<ShieldCheck className="h-4 w-4" />} label="Hide balances" description="Blur amounts on the home screen">
+          <Row icon={<ShieldCheck className="h-4 w-4" />} label={t("set.hideBalances")} description={t("set.hideBalancesDesc")}>
             <Switch
               checked={!!s.hideBalances}
               onCheckedChange={(v) => setSettings({ hideBalances: v })}
@@ -309,7 +309,7 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.sync")}>
-          <Row icon={<Cloud className="h-4 w-4" />} label="Cloud sync" description="Sync across devices" preview>
+          <Row icon={<Cloud className="h-4 w-4" />} label={t("set.cloudSync")} description={t("set.cloudSyncDesc")} preview>
             <Switch
               checked={!!s.cloudSync}
               onCheckedChange={(v) => { setSettings({ cloudSync: v }); toast.message(v ? "Cloud sync coming soon" : "Cloud sync off"); }}
@@ -318,13 +318,13 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.notifications")}>
-          <Row icon={<Bell className="h-4 w-4" />} label="Push" description="Transactions & summaries" preview>
+          <Row icon={<Bell className="h-4 w-4" />} label={t("set.push")} description={t("set.pushDesc")} preview>
             <Switch
               checked={s.notifications}
               onCheckedChange={(v) => setSettings({ notifications: v })}
             />
           </Row>
-          <Row icon={<Bell className="h-4 w-4" />} label="Budget alerts" description="Warn near limits">
+          <Row icon={<Bell className="h-4 w-4" />} label={t("set.budgetAlerts")} description={t("set.budgetAlertsDesc")}>
             <Switch
               checked={s.budgetAlerts}
               onCheckedChange={(v) => setSettings({ budgetAlerts: v })}
@@ -354,8 +354,8 @@ function SettingsPage() {
               <Download className="h-4 w-4" />
             </span>
             <span className="flex-1">
-              <span className="block text-sm font-semibold">Export / backup</span>
-              <span className="block text-xs text-muted-foreground">Download JSON backup</span>
+              <span className="block text-sm font-semibold">{t("set.export")}</span>
+              <span className="block text-xs text-muted-foreground">{t("set.exportDesc")}</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -367,8 +367,8 @@ function SettingsPage() {
               <Upload className="h-4 w-4" />
             </span>
             <span className="flex-1">
-              <span className="block text-sm font-semibold">Restore backup</span>
-              <span className="block text-xs text-muted-foreground">Import a NOVA JSON file</span>
+              <span className="block text-sm font-semibold">{t("set.restore")}</span>
+              <span className="block text-xs text-muted-foreground">{t("set.restoreDesc")}</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -387,16 +387,16 @@ function SettingsPage() {
               <Trash2 className="h-4 w-4" />
             </span>
             <span className="flex-1">
-              <span className="block text-sm font-semibold">Reset all data</span>
-              <span className="block text-xs opacity-80">Delete accounts, transactions, goals</span>
+              <span className="block text-sm font-semibold">{t("set.reset")}</span>
+              <span className="block text-xs opacity-80">{t("set.resetDesc")}</span>
             </span>
           </button>
         </Group>
 
         <p className="mt-6 text-center text-[11px] text-muted-foreground">
-          NOVA · v1.0 RC ·{" "}
+          {t("set.version")}{" "}
           <Link to="/diagnostics" className="underline decoration-dotted underline-offset-4 hover:text-foreground">
-            Diagnostics
+            {t("set.diagnostics")}
           </Link>
         </p>
       </section>
@@ -404,10 +404,10 @@ function SettingsPage() {
       <Dialog open={pinOpen} onOpenChange={setPinOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{s.pinEnabled ? "Change PIN" : "Set PIN"}</DialogTitle>
+            <DialogTitle>{s.pinEnabled ? t("set.pinChangeTitle") : t("set.pinSetTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <Label>6-digit PIN</Label>
+            <Label>{t("set.pinLabel")}</Label>
             <Input
               type="password"
               inputMode="numeric"
@@ -427,14 +427,14 @@ function SettingsPage() {
               }}
               className="w-full"
             >
-              Save PIN
+              {t("set.pinSave")}
             </Button>
             {s.pinEnabled && (
               <button
                 onClick={() => { setSettings({ pinEnabled: false, pin: undefined }); setPinOpen(false); toast.message("PIN disabled"); }}
                 className="w-full text-xs text-muted-foreground"
               >
-                Disable PIN
+                {t("set.pinDisable")}
               </button>
             )}
           </div>
@@ -444,19 +444,19 @@ function SettingsPage() {
       <Dialog open={nameOpen} onOpenChange={setNameOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Your name</DialogTitle>
+            <DialogTitle>{t("set.nameTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <Label htmlFor="fullNameField">Full name</Label>
+            <Label htmlFor="fullNameField">{t("auth.fullName")}</Label>
             <Input
               id="fullNameField"
               value={nameDraft}
               onChange={(e) => setNameDraft(e.target.value)}
-              placeholder="Your name"
+              placeholder={t("auth.placeholder.name")}
               autoFocus
             />
             <Button onClick={saveName} disabled={savingName} className="w-full">
-              {savingName ? "Saving…" : "Save"}
+              {savingName ? t("set.nameSaving") : t("set.nameSave")}
             </Button>
           </div>
         </DialogContent>
