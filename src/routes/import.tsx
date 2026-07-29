@@ -165,7 +165,7 @@ function ImportPage() {
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-semibold">{fmt(tr("imp.preview"), { n: drafts.length })}</p>
             <p className="text-xs text-muted-foreground">
-              {fmt(tr("imp.counts"), { n: toImport.length, d: drafts.length - toImport.length })}
+              {fmt(tr("imp.counts"), { newCount: toImport.length, dupCount: drafts.length - toImport.length })}
             </p>
           </div>
           <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
