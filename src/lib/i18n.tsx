@@ -579,6 +579,8 @@ const en: Dict = {
   "ins.forecast": "Cash-flow forecast",
   "ins.balanceToday": "Balance today",
   "ins.inLabel": "In {label}",
+  "ins.title": "Insights",
+  "ins.subtitle": "Powered by NOVA AI",
   // --- Onboarding ---
   "onb.skip": "Skip",
   "onb.explore": "I'll explore on my own",
