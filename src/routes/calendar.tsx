@@ -7,6 +7,7 @@ import { useNova, type Transaction, type Recurring } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/calendar")({
   head: () => ({
@@ -35,6 +36,7 @@ function CalendarPage() {
   const { state } = useNova();
   const { format } = useCurrency();
   const categoryOf = useCategoryLookup();
+  const tr = useT();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     d.setDate(1);
@@ -82,8 +84,8 @@ function CalendarPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle="Your money over time"
-        title="Calendar"
+        subtitle={tr("cal.subtitle")}
+        title={tr("cal.title")}
         right={<CurrencyPicker />}
       />
 
@@ -93,7 +95,7 @@ function CalendarPage() {
             onClick={() =>
               setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1))
             }
-            aria-label="Previous month"
+            aria-label={tr("cal.prev")}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -105,7 +107,7 @@ function CalendarPage() {
             onClick={() =>
               setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1))
             }
-            aria-label="Next month"
+            aria-label={tr("cal.next")}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
           >
             <ChevronRight className="h-4 w-4" />
@@ -115,8 +117,8 @@ function CalendarPage() {
 
       <section className="mt-4 px-5">
         <div className="mb-2 grid grid-cols-7 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-            <div key={d}>{d}</div>
+          {(["mon","tue","wed","thu","fri","sat","sun"] as const).map((d) => (
+            <div key={d}>{tr(`cal.${d}`)}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1.5">
@@ -180,9 +182,9 @@ function CalendarPage() {
 
       <section className="mt-6 px-5">
         <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-          <Legend color="oklch(0.82 0.18 155)" label="Income" />
-          <Legend color="oklch(0.7 0.2 30)" label="Expenses" />
-          <Legend color="oklch(0.75 0.15 260)" label="Bills" />
+          <Legend color="oklch(0.82 0.18 155)" label={tr("cal.income")} />
+          <Legend color="oklch(0.7 0.2 30)" label={tr("cal.expenses")} />
+          <Legend color="oklch(0.75 0.15 260)" label={tr("cal.bills")} />
         </div>
       </section>
 
@@ -205,7 +207,7 @@ function CalendarPage() {
               </div>
               <button
                 onClick={() => setSelected(null)}
-                aria-label="Close"
+                aria-label={tr("cal.close")}
                 className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card"
               >
                 <X className="h-3.5 w-3.5" />
@@ -213,12 +215,12 @@ function CalendarPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Stat
-                label="Income"
+                label={tr("cal.income")}
                 value={format(selectedInfo.income)}
                 tone="up"
               />
               <Stat
-                label="Expenses"
+                label={tr("cal.expenses")}
                 value={format(-selectedInfo.expenses)}
                 tone="down"
               />
@@ -226,7 +228,7 @@ function CalendarPage() {
             {selectedInfo.bills.length ? (
               <div className="mt-4">
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  Bills
+                  {tr("cal.bills")}
                 </p>
                 <ul className="space-y-1.5">
                   {selectedInfo.bills.map((r) => (
@@ -244,7 +246,7 @@ function CalendarPage() {
             {selectedInfo.txs.length ? (
               <div className="mt-4">
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  Transactions
+                  {tr("cal.transactions")}
                 </p>
                 <ul className="space-y-1.5">
                   {selectedInfo.txs.map((t) => {
@@ -277,7 +279,7 @@ function CalendarPage() {
             ) : null}
             {!selectedInfo.bills.length && !selectedInfo.txs.length ? (
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                Nothing scheduled or logged on this day.
+                {tr("cal.nothing")}
               </p>
             ) : null}
           </div>
