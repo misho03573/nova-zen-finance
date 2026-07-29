@@ -17,7 +17,7 @@ import {
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useCategoryLookup, useCategories } from "@/lib/categories";
-import { useCategoryName } from "@/lib/i18n";
+import { useCategoryName, useT, fmt } from "@/lib/i18n";
 import {
   useNova,
   groupByBucket,
@@ -72,6 +72,7 @@ function WalletPage() {
   const categoryOf = useCategoryLookup();
   const categories = useCategories();
   const catName = useCategoryName();
+  const tr = useT();
   const [query, setQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -88,8 +89,8 @@ function WalletPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle="Your money"
-        title="Wallet"
+        subtitle={tr("wallet.subtitle")}
+        title={tr("wallet.title")}
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker />
@@ -97,7 +98,7 @@ function WalletPage() {
             <button
               onClick={() => setShowSearch((v) => !v)}
               className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
-              aria-label="Search"
+              aria-label={tr("wallet.search")}
             >
               {showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
             </button>
@@ -113,13 +114,13 @@ function WalletPage() {
           <AccountDialog trigger={
             <button
               className="grid aspect-[1.6/1] min-w-[280px] snap-center place-items-center rounded-3xl border border-dashed border-border bg-card/40 text-muted-foreground transition-colors hover:bg-card/60"
-              aria-label="Add account"
+              aria-label={tr("wallet.addAccount")}
             >
               <div className="flex flex-col items-center gap-2">
                 <span className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card">
                   <Plus className="h-4 w-4" />
                 </span>
-                <span className="text-xs">Add account</span>
+                <span className="text-xs">{tr("wallet.addAccount")}</span>
               </div>
             </button>
           } />
@@ -134,7 +135,7 @@ function WalletPage() {
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Try coffee, over 100, last month"
+              placeholder={tr("wallet.searchPlaceholder")}
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
             {query ? (
@@ -142,7 +143,7 @@ function WalletPage() {
                 onClick={() => setQuery("")}
                 className="text-xs text-muted-foreground hover:text-foreground"
               >
-                Clear
+                {tr("ins.clear")}
               </button>
             ) : null}
           </div>
@@ -152,10 +153,10 @@ function WalletPage() {
       <section className="mt-4 px-5">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <span className="flex items-center gap-1 text-[11px] uppercase tracking-widest text-muted-foreground">
-            <Filter className="h-3 w-3" /> Filter
+            <Filter className="h-3 w-3" /> {tr("cat.filter") /* i18n-ignore */}
           </span>
           <Chip active={filterCategory === null} onClick={() => setFilterCategory(null)}>
-            All
+            {tr("cat.all") /* i18n-ignore */}
           </Chip>
           {categories.map((c) => (
             <Chip
@@ -171,25 +172,25 @@ function WalletPage() {
 
       <section className="mt-8 space-y-5 px-5">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold">Transactions</h2>
+          <h2 className="text-sm font-semibold">{tr("wallet.transactions")}</h2>
           <span className="text-xs text-muted-foreground">
-            {filtered.length} of {state.transactions.length}
+            {filtered.length} {tr("wallet.of")} {state.transactions.length}
           </span>
         </div>
         {groups.length === 0 ? (
           state.transactions.length === 0 ? (
             <EmptyState
               icon={<Plus className="h-6 w-6" />}
-              title="No transactions yet"
-              description="Add your first income or expense to see it grouped here."
-              ctaLabel="Add transaction"
+              title={tr("wallet.noTx")}
+              description={tr("wallet.noTx.desc")}
+              ctaLabel={tr("nav.add")}
               ctaTo="/add"
             />
           ) : (
             <EmptyState
               icon={<Search className="h-6 w-6" />}
-              title="No matches"
-              description="Try a different search or clear the category filter."
+              title={tr("wallet.noResults")}
+              description={tr("wallet.noResults.desc")}
             />
           )
         ) : (
@@ -200,7 +201,7 @@ function WalletPage() {
                   {group.bucket}
                 </h3>
                 <span className="text-[11px] text-muted-foreground">
-                  {group.items.length} item{group.items.length === 1 ? "" : "s"}
+                  {group.items.length} {group.items.length === 1 ? tr("wallet.item") : tr("wallet.items")}
                 </span>
               </div>
               <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
@@ -237,17 +238,17 @@ function WalletPage() {
                       <button
                         onClick={async () => {
                           const ok = await confirm({
-                            title: "Delete this transaction?",
-                            description: `${t.title} · ${formatIn(t.amount, txCurrency(t, state.accounts))} will be removed and the account balance updated.`,
-                            confirmLabel: "Delete",
+                            title: tr("wallet.deleteTx"),
+                            description: fmt(tr("wallet.deleteTxDesc"), { title: t.title, amt: formatIn(t.amount, txCurrency(t, state.accounts)) }),
+                            confirmLabel: tr("common.delete") || "Delete",
                             destructive: true,
                           });
                           if (ok) {
                             deleteTransaction(t.id);
-                            toast.message("Transaction deleted");
+                            toast.message(tr("wallet.txDeleted"));
                           }
                         }}
-                        aria-label="Delete transaction"
+                        aria-label={tr("wallet.txDeleted")}
                         className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -293,6 +294,7 @@ function AccountCard({ account }: { account: Account }) {
   const { deleteAccount } = useNova();
   const confirm = useConfirm();
   const hide = useHideBalances();
+  const tr = useT();
   const Icon = TYPE_META[account.type].icon;
   return (
     <article
@@ -312,7 +314,7 @@ function AccountCard({ account }: { account: Account }) {
             account={account}
             trigger={
               <button
-                aria-label="Edit"
+                aria-label={tr("wallet.editAccount")}
                 className="grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -320,17 +322,17 @@ function AccountCard({ account }: { account: Account }) {
             }
           />
           <button
-            aria-label="Delete account"
+            aria-label={tr("wallet.deleteAccount")}
             onClick={async () => {
               const ok = await confirm({
-                title: `Delete ${account.name}?`,
-                description: "All transactions and recurring items on this account will also be removed.",
-                confirmLabel: "Delete account",
+                title: fmt(tr("wallet.deleteAccount") + " {name}?", { name: account.name }),
+                description: tr("wallet.deleteAccount.desc"),
+                confirmLabel: tr("wallet.deleteAccount"),
                 destructive: true,
               });
               if (ok) {
                 deleteAccount(account.id);
-                toast.message(`${account.name} deleted`);
+                toast.message(account.name);
               }
             }}
             className="grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
@@ -344,11 +346,11 @@ function AccountCard({ account }: { account: Account }) {
         <p className="text-lg font-semibold tracking-widest">{account.number}</p>
         <div className="mt-2 flex items-end justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/60">Holder</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/60">{tr("wallet.holder") /* i18n-ignore */}</p>
             <p className="text-xs font-medium">{account.holder}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-widest text-white/60">Balance</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/60">{tr("wallet.balanceField")}</p>
             <p className="text-sm font-semibold">
               {maskAmount(hide, formatIn(account.balance, accountCurrency(account)), "md")}
             </p>
@@ -367,6 +369,7 @@ function AccountDialog({
   account?: Account;
 }) {
   const { addAccount, updateAccount } = useNova();
+  const tr = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(account?.name ?? "");
   const [type, setType] = useState<AccountType>(account?.type ?? "bank");
@@ -389,7 +392,7 @@ function AccountDialog({
         currency,
         gradient: TYPE_META[type].gradient,
       });
-      toast.success("Account updated");
+      toast.success(tr("wallet.accountUpdated"));
     } else {
       addAccount({
         name: name.trim(),
@@ -401,7 +404,7 @@ function AccountDialog({
         brand: type === "crypto" ? "Wallet" : "Visa",
         gradient: TYPE_META[type].gradient,
       });
-      toast.success("Account added");
+      toast.success(tr("wallet.accountAdded"));
     }
     setOpen(false);
   };
@@ -411,15 +414,15 @@ function AccountDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{account ? "Edit account" : "New account"}</DialogTitle>
+          <DialogTitle>{account ? tr("wallet.editAccount") : tr("wallet.newAccount")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs">Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Chase Checking" />
+            <Label className="text-xs">{tr("common.name") /* i18n-ignore */}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("wallet.namePlaceholder") /* i18n-ignore */} />
           </div>
           <div>
-            <Label className="text-xs">Type</Label>
+            <Label className="text-xs">{tr("common.type") /* i18n-ignore */}</Label>
             <div className="mt-1.5 grid grid-cols-5 gap-1.5">
               {(Object.keys(TYPE_META) as AccountType[]).map((t) => {
                 const I = TYPE_META[t].icon;
@@ -444,16 +447,16 @@ function AccountDialog({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Balance</Label>
+              <Label className="text-xs">{tr("wallet.balanceField")}</Label>
               <Input type="number" step="0.01" value={balance} onChange={(e) => setBalance(e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">Identifier</Label>
+              <Label className="text-xs">{tr("wallet.identifier")}</Label>
               <Input value={number} onChange={(e) => setNumber(e.target.value)} />
             </div>
           </div>
           <div>
-            <Label className="text-xs">Currency</Label>
+            <Label className="text-xs">{tr("wallet.currencyField")}</Label>
             <select
               value={currency}
               onChange={(e) => setCurrencyCode(e.target.value as CurrencyCode)}
@@ -466,7 +469,7 @@ function AccountDialog({
               ))}
             </select>
             <p className="mt-1 text-[10px] text-muted-foreground">
-              All transactions on this account are stored in {currency}. Cross-account totals convert to your display currency automatically.
+              {fmt(tr("wallet.currencyNote"), { cur: currency })}
             </p>
           </div>
         </div>
@@ -476,7 +479,7 @@ function AccountDialog({
             className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
             style={{ background: "var(--gradient-primary)" }}
           >
-            {account ? "Save changes" : "Add account"}
+            {account ? tr("wallet.saveChanges") : tr("wallet.addAccount")}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -487,6 +490,7 @@ function AccountDialog({
 function TransferDialog() {
   const { state, transfer } = useNova();
   const { formatIn } = useCurrency();
+  const tr = useT();
   const [open, setOpen] = useState(false);
   const [fromId, setFromId] = useState(state.accounts[0]?.id ?? "");
   const [toId, setToId] = useState(state.accounts[1]?.id ?? "");
@@ -505,7 +509,7 @@ function TransferDialog() {
   const submit = () => {
     if (!canSave || !from || !to) return;
     transfer({ fromId: from.id, toId: to.id, amount, note: note.trim() || undefined });
-    toast.success("Transfer complete", {
+    toast.success(tr("wallet.transferComplete"), {
       description: `${formatIn(amount, fromCur)} → ${formatIn(converted, toCur)}`,
     });
     setOpen(false);
@@ -517,7 +521,7 @@ function TransferDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          aria-label="Transfer"
+          aria-label={tr("wallet.transfer")}
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
         >
           <ArrowLeftRight className="h-4 w-4" />
@@ -525,11 +529,11 @@ function TransferDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Transfer between accounts</DialogTitle>
+          <DialogTitle>{tr("wallet.transferTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs">From</Label>
+            <Label className="text-xs">{tr("wallet.from")}</Label>
             <select
               value={fromId}
               onChange={(e) => setFromId(e.target.value)}
@@ -543,7 +547,7 @@ function TransferDialog() {
             </select>
           </div>
           <div>
-            <Label className="text-xs">To</Label>
+            <Label className="text-xs">{tr("wallet.to")}</Label>
             <select
               value={toId}
               onChange={(e) => setToId(e.target.value)}
@@ -559,7 +563,7 @@ function TransferDialog() {
             </select>
           </div>
           <div>
-            <Label className="text-xs">Amount ({fromCur})</Label>
+            <Label className="text-xs">{fmt(tr("wallet.amountIn"), { cur: fromCur })}</Label>
             <Input
               type="number"
               step="0.01"
@@ -570,18 +574,18 @@ function TransferDialog() {
             />
             {amount > 0 && from && to && fromCur !== toCur ? (
               <p className="mt-1 text-[11px] text-muted-foreground">
-                ≈ {formatIn(converted, toCur)} at current FX. Converted exactly once.
+                {fmt(tr("wallet.fxNote"), { out: formatIn(converted, toCur) })}
               </p>
             ) : null}
             {from && amount > from.balance ? (
               <p className="mt-1 text-[11px] text-destructive">
-                Exceeds {from.name} balance ({formatIn(from.balance, fromCur)}).
+                {fmt(tr("wallet.exceeds"), { name: from.name, bal: formatIn(from.balance, fromCur) })}
               </p>
             ) : null}
           </div>
           <div>
-            <Label className="text-xs">Note</Label>
-            <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional" />
+            <Label className="text-xs">{tr("common.note") /* i18n-ignore */}</Label>
+            <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder={tr("common.optional") /* i18n-ignore */} />
           </div>
         </div>
         <DialogFooter>
@@ -591,7 +595,7 @@ function TransferDialog() {
             className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] disabled:opacity-40"
             style={{ background: "var(--gradient-primary)" }}
           >
-            Transfer
+            {tr("wallet.transfer")}
           </button>
         </DialogFooter>
       </DialogContent>
