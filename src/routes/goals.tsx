@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
 import { EmptyState } from "@/components/nova/EmptyState";
+import { useT, fmt } from "@/lib/i18n";
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -35,6 +36,7 @@ function GoalsPage() {
   const { state, deleteGoal, contributeGoal } = useNova();
   const confirm = useConfirm();
   const hide = useHideBalances();
+  const tr = useT();
   const goals = state.goals;
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target, 0) || 1;
@@ -43,8 +45,8 @@ function GoalsPage() {
   return (
     <AppShell>
       <PageHeader
-        subtitle="Savings"
-        title="Goals"
+        subtitle={tr("goals.subtitle")}
+        title={tr("goals.title")}
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker />
@@ -53,7 +55,7 @@ function GoalsPage() {
                 <button
                   className="grid h-10 w-10 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
                   style={{ background: "var(--gradient-primary)" }}
-                  aria-label="Add goal"
+                  aria-label={tr("goals.add")}
                 >
                   <Plus className="h-4 w-4" strokeWidth={2.5} />
                 </button>
@@ -71,13 +73,13 @@ function GoalsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                Total saved
+                {tr("goals.totalSaved")}
               </p>
               <p className="mt-1 text-3xl font-semibold tracking-tight">{maskAmount(hide, format(totalSaved), "lg")}</p>
-              <p className="text-xs text-muted-foreground">of {maskAmount(hide, format(totalTarget), "md")} goal</p>
+              <p className="text-xs text-muted-foreground">{tr("goals.of")} {maskAmount(hide, format(totalTarget), "md")} {tr("goals.goalWord")}</p>
             </div>
             <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
-              <Sparkles className="h-3 w-3" /> On track
+              <Sparkles className="h-3 w-3" /> {tr("goals.onTrack")}
             </span>
           </div>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
@@ -93,7 +95,7 @@ function GoalsPage() {
         {goals.length === 0 ? (
           <EmptyState
             icon={<PiggyBank className="h-6 w-6" />}
-            title="No goals yet"
+            title={tr("goals.emptyTitle")}
             description="Set a target — a trip, an emergency fund, a new laptop — and watch progress grow."
           />
         ) : null}
@@ -112,13 +114,13 @@ function GoalsPage() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{g.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    ETA · {eta}
+                    {tr("goals.eta")} · {eta}
                     {g.monthly ? ` · ${format(g.monthly)}/mo` : ""}
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-sm font-semibold">{maskAmount(hide, format(g.saved), "md")}</p>
-                  <p className="text-[11px] text-muted-foreground">of {maskAmount(hide, format(g.target), "md")}</p>
+                  <p className="text-[11px] text-muted-foreground">{tr("goals.of")} {maskAmount(hide, format(g.target), "md")}</p>
                 </div>
               </div>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
@@ -128,8 +130,8 @@ function GoalsPage() {
                 />
               </div>
               <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>{Math.round(pct * 100)}% complete</span>
-                <span>{format(Math.max(0, g.target - g.saved))} to go</span>
+                <span>{fmt(tr("goals.pctComplete"), { pct: Math.round(pct * 100) })}</span>
+                <span>{fmt(tr("goals.toGo"), { amt: format(Math.max(0, g.target - g.saved)) })}</span>
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <ContributeDialog goalId={g.id} />
@@ -155,7 +157,7 @@ function GoalsPage() {
                     }
                   }}
                   className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-destructive"
-                  aria-label="Delete goal"
+                  aria-label={tr("goals.deleteAria")}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
