@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "i18n:check": "node scripts/i18n-check.mjs",
-    "test:ci": "npm run i18n:check"
+    "i18n:locales": "node scripts/i18n-locale-check.mjs",
+    "test:ci": "npm run i18n:check && npm run i18n:locales"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
