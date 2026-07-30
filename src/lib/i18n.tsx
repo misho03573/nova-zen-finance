@@ -694,6 +694,14 @@ const en: Dict = {
   "wal.optional": "Optional",
   "wal.transfer": "Transfer",
   "wal.transferComplete": "Transfer complete",
+  "cat.all": "All",
+  "cat.filter": "Filter by category",
+  "common.delete": "Delete",
+  "common.name": "Name",
+  "common.note": "Note",
+  "common.type": "Type",
+  "wallet.holder": "Card holder",
+  "wallet.namePlaceholder": "e.g. Everyday card",
 };
 
 const bg: Dict = {
@@ -1151,6 +1159,14 @@ const bg: Dict = {
   "diag.wipeConfirm": "Изтрий и презареди",
   "diag.wipeFail": "Хранилището не е достъпно",
   "diag.footer": "NOVA диагностика · Не е свързана в основната навигация",
+  "cat.all": "Всички",
+  "cat.filter": "Филтър по категория",
+  "common.delete": "Изтрий",
+  "common.name": "Име",
+  "common.note": "Бележка",
+  "common.type": "Тип",
+  "wallet.holder": "Притежател",
+  "wallet.namePlaceholder": "напр. Ежедневна карта",
 };
 
 const de: Dict = {
@@ -1445,6 +1461,14 @@ const de: Dict = {
   "diag.wipeConfirm": "Löschen & neu laden",
   "diag.wipeFail": "Speicher nicht verfügbar",
   "diag.footer": "NOVA Diagnose · Nicht in der Hauptnavigation verlinkt",
+  "cat.all": "Alle",
+  "cat.filter": "Nach Kategorie filtern",
+  "common.delete": "Löschen",
+  "common.name": "Name",
+  "common.note": "Notiz",
+  "common.type": "Typ",
+  "wallet.holder": "Karteninhaber",
+  "wallet.namePlaceholder": "z. B. Alltagskarte",
 };
 
 const fr: Dict = {
@@ -1739,6 +1763,14 @@ const fr: Dict = {
   "diag.wipeConfirm": "Effacer & recharger",
   "diag.wipeFail": "Stockage indisponible",
   "diag.footer": "Diagnostics NOVA · Non lié à la navigation",
+  "cat.all": "Toutes",
+  "cat.filter": "Filtrer par catégorie",
+  "common.delete": "Supprimer",
+  "common.name": "Nom",
+  "common.note": "Note",
+  "common.type": "Type",
+  "wallet.holder": "Titulaire de la carte",
+  "wallet.namePlaceholder": "ex. Carte du quotidien",
 };
 
 const es: Dict = {
@@ -2033,6 +2065,14 @@ const es: Dict = {
   "diag.wipeConfirm": "Borrar y recargar",
   "diag.wipeFail": "Almacenamiento no disponible",
   "diag.footer": "Diagnóstico NOVA · No enlazado desde la navegación",
+  "cat.all": "Todas",
+  "cat.filter": "Filtrar por categoría",
+  "common.delete": "Eliminar",
+  "common.name": "Nombre",
+  "common.note": "Nota",
+  "common.type": "Tipo",
+  "wallet.holder": "Titular de la tarjeta",
+  "wallet.namePlaceholder": "p. ej. Tarjeta diaria",
 };
 
 const DICTS: Record<string, Dict> = { en, bg, de, fr, es };
