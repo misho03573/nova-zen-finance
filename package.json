@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "i18n:check": "node scripts/i18n-check.mjs",
-    "test:ci": "npm run i18n:check"
+    "i18n:locales": "node scripts/i18n-locale-check.mjs",
+    "test:ci": "npm run i18n:check && npm run i18n:locales"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -71,7 +72,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "2.7.7",
+    "@lovable.dev/vite-tanstack-config": "2.8.2",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

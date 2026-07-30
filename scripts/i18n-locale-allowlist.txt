@@ -1,0 +1,3 @@
+# Keys intentionally exempt from locale-coverage enforcement.
+# One key per line; lines are treated as anchored regex when valid.
+# Lines starting with `#` are comments.
