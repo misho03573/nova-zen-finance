@@ -34,6 +34,7 @@ function AddPage() {
   const expenseCats = useCategories("expense");
   const incomeCats = useCategories("income");
   const [category, setCategory] = useState<string>(expenseCats[0]?.id ?? "food");
+  const [categoryLocked, setCategoryLocked] = useState(false);
   const [accountId, setAccountId] = useState(state.accounts[0]?.id ?? "");
   const [date, setDate] = useState<Date>(new Date());
   const [note, setNote] = useState("");
@@ -69,6 +70,7 @@ function AddPage() {
       accountId,
       note: note.trim() || undefined,
       currency: accountCur,
+      categoryLocked,
     });
     if (recurring) {
       const next = new Date(date);
@@ -200,7 +202,7 @@ function AddPage() {
             return (
               <button
                 key={c.id}
-                onClick={() => setCategory(c.id)}
+                onClick={() => { setCategory(c.id); setCategoryLocked(true); }}
                 className={cn(
                   "flex shrink-0 flex-col items-center gap-1.5 rounded-2xl border px-3 py-2.5 transition-colors",
                   active

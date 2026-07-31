@@ -17,8 +17,7 @@ import {
   Languages,
   Sparkles,
   LogOut,
-  UserCircle,
-} from "lucide-react";
+  UserCircle, Wand2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { Tag } from "lucide-react";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -343,6 +342,19 @@ function SettingsPage() {
             <span className="flex-1">
               <span className="block text-sm font-semibold">{t("settings.categories.link")}</span>
               <span className="block text-xs text-muted-foreground">{t("settings.categories.linkDesc")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/rules"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Wand2 className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("rules.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("rules.empty.desc")}</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Link>
