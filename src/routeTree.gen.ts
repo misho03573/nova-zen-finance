@@ -14,6 +14,7 @@ import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScanRouteImport } from './routes/scan'
+import { Route as RulesRouteImport } from './routes/rules'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NetworthRouteImport } from './routes/networth'
 import { Route as InsightsRouteImport } from './routes/insights'
@@ -51,6 +52,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RulesRoute = RulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/insights': typeof InsightsRoute
   '/networth': typeof NetworthRoute
   '/onboarding': typeof OnboardingRoute
+  '/rules': typeof RulesRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/insights': typeof InsightsRoute
   '/networth': typeof NetworthRoute
   '/onboarding': typeof OnboardingRoute
+  '/rules': typeof RulesRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/insights': typeof InsightsRoute
   '/networth': typeof NetworthRoute
   '/onboarding': typeof OnboardingRoute
+  '/rules': typeof RulesRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/networth'
     | '/onboarding'
+    | '/rules'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/networth'
     | '/onboarding'
+    | '/rules'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/networth'
     | '/onboarding'
+    | '/rules'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   InsightsRoute: typeof InsightsRoute
   NetworthRoute: typeof NetworthRoute
   OnboardingRoute: typeof OnboardingRoute
+  RulesRoute: typeof RulesRoute
   ScanRoute: typeof ScanRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
@@ -299,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/scan'
       preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rules': {
+      id: '/rules'
+      path: '/rules'
+      fullPath: '/rules'
+      preLoaderRoute: typeof RulesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   InsightsRoute: InsightsRoute,
   NetworthRoute: NetworthRoute,
   OnboardingRoute: OnboardingRoute,
+  RulesRoute: RulesRoute,
   ScanRoute: ScanRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
