@@ -13,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
 import { defaultCategories, type UserCategory } from "@/lib/categories";
+import { resolveRuleCategory, type CategoryRule } from "@/lib/category-rules";
+
+export type { CategoryRule } from "@/lib/category-rules";
 
 /** Round a monetary value to the currency's smallest unit (JPY = whole, else 2dp). */
 function round(n: number, cur?: CurrencyCode): number {
@@ -48,6 +51,8 @@ export type Transaction = {
   currency?: CurrencyCode;
   /** Links the two legs of a transfer together. */
   transferId?: string;
+  /** True when the user picked the category by hand — rules must not override it. */
+  categoryLocked?: boolean;
 };
 
 export type Goal = {
@@ -106,6 +111,7 @@ export type NovaState = {
   subscriptions: Subscription[];
   automationRules: AutomationRule[];
   categories: UserCategory[];
+  categoryRules: CategoryRule[];
 };
 
 export type LiabilityType = "loan" | "credit_card" | "mortgage";
