@@ -288,6 +288,7 @@ const seed: NovaState = {
     { id: "ar3", kind: "weekly_transfer", enabled: false, label: "Every Monday", amount: 50, goalId: "g2" },
   ],
   categories: defaultCategories,
+  categoryRules: [],
 };
 
 const emptyState: NovaState = {
@@ -301,6 +302,7 @@ const emptyState: NovaState = {
   subscriptions: [],
   automationRules: [],
   categories: defaultCategories,
+  categoryRules: [],
 };
 
 type Action =
