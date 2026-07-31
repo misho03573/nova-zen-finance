@@ -335,7 +335,11 @@ type Action =
   | { type: "transfer"; fromId: string; toId: string; amount: number; date: string; note?: string }
   | { type: "addCategory"; c: UserCategory }
   | { type: "updateCategory"; c: UserCategory }
-  | { type: "deleteCategory"; id: string; reassignTo?: string };
+  | { type: "deleteCategory"; id: string; reassignTo?: string }
+  | { type: "addCategoryRule"; rule: CategoryRule }
+  | { type: "updateCategoryRule"; rule: CategoryRule }
+  | { type: "deleteCategoryRule"; id: string }
+  | { type: "toggleCategoryRule"; id: string };
 
 function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
@@ -348,11 +352,16 @@ function reducer(state: NovaState, action: Action): NovaState {
         subscriptions: action.state.subscriptions ?? [],
         automationRules: action.state.automationRules ?? [],
         categories: mergeCategories(action.state.categories),
+        categoryRules: action.state.categoryRules ?? [],
       };
     case "addTransaction": {
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
+      const ruled = action.tx.categoryLocked
+        ? null
+        : resolveRuleCategory(state.categoryRules, action.tx);
       const tx: Transaction = {
         ...action.tx,
+        category: ruled ?? action.tx.category,
         amount: round(action.tx.amount, action.tx.currency ?? accCur),
       };
       const accounts = state.accounts.map((a) =>
@@ -543,7 +552,13 @@ function reducer(state: NovaState, action: Action): NovaState {
         if (!a) continue;
         const cur = (tx.currency ?? a.currency) as CurrencyCode | undefined;
         const amt = round(tx.amount, cur);
-        stamped.push({ ...tx, amount: amt, currency: cur ?? tx.currency });
+        const ruled = tx.categoryLocked ? null : resolveRuleCategory(state.categoryRules, tx);
+        stamped.push({
+          ...tx,
+          category: ruled ?? tx.category,
+          amount: amt,
+          currency: cur ?? tx.currency,
+        });
         a.balance = round(a.balance + amt, a.currency);
       }
       return {
@@ -639,6 +654,24 @@ function reducer(state: NovaState, action: Action): NovaState {
         transactions: [outTx, inTx, ...state.transactions],
       };
     }
+    case "addCategoryRule":
+      return { ...state, categoryRules: [...state.categoryRules, action.rule] };
+    case "updateCategoryRule":
+      return {
+        ...state,
+        categoryRules: state.categoryRules.map((r) =>
+          r.id === action.rule.id ? { ...r, ...action.rule } : r,
+        ),
+      };
+    case "deleteCategoryRule":
+      return { ...state, categoryRules: state.categoryRules.filter((r) => r.id !== action.id) };
+    case "toggleCategoryRule":
+      return {
+        ...state,
+        categoryRules: state.categoryRules.map((r) =>
+          r.id === action.id ? { ...r, enabled: !r.enabled } : r,
+        ),
+      };
     case "addCategory":
       return { ...state, categories: [...state.categories, action.c] };
     case "updateCategory":
@@ -723,6 +756,10 @@ type Ctx = {
   updateCategory: (c: UserCategory) => void;
   deleteCategory: (id: string) => { ok: boolean; reason?: "builtin" | "in-use" };
   deleteCategoryWithReassign: (id: string, reassignTo: string) => { ok: boolean };
+  addCategoryRule: (r: Omit<CategoryRule, "id">) => void;
+  updateCategoryRule: (r: CategoryRule) => void;
+  deleteCategoryRule: (id: string) => void;
+  toggleCategoryRule: (id: string) => void;
 };
 
 const NovaContext = createContext<Ctx | null>(null);
@@ -951,6 +988,18 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     [state.categories],
   );
 
+  const addCategoryRule = useCallback(
+    (r: Omit<CategoryRule, "id">) =>
+      dispatch({ type: "addCategoryRule", rule: { ...r, id: rid("cr") } }),
+    [],
+  );
+  const updateCategoryRule = useCallback(
+    (r: CategoryRule) => dispatch({ type: "updateCategoryRule", rule: r }),
+    [],
+  );
+  const deleteCategoryRule = useCallback((id: string) => dispatch({ type: "deleteCategoryRule", id }), []);
+  const toggleCategoryRule = useCallback((id: string) => dispatch({ type: "toggleCategoryRule", id }), []);
+
   const value = useMemo<Ctx>(
     () => ({
       state,
@@ -986,6 +1035,10 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       updateCategory,
       deleteCategory: deleteCategoryImpl,
       deleteCategoryWithReassign,
+      addCategoryRule,
+      updateCategoryRule,
+      deleteCategoryRule,
+      toggleCategoryRule,
     }),
     [
       state,
@@ -1021,6 +1074,10 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       updateCategory,
       deleteCategoryImpl,
       deleteCategoryWithReassign,
+      addCategoryRule,
+      updateCategoryRule,
+      deleteCategoryRule,
+      toggleCategoryRule,
     ],
   );
 
