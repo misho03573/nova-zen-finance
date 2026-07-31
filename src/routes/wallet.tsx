@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   Search,
@@ -13,6 +13,7 @@ import {
   X,
   Pencil,
   ArrowLeftRight,
+  Wand2,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -235,6 +236,15 @@ function WalletPage() {
                       >
                         {maskAmount(hide, formatIn(t.amount, txCurrency(t, state.accounts)), "md")}
                       </span>
+                      <Link
+                        to="/rules"
+                        search={{ merchant: t.title, category: t.category }}
+                        aria-label={tr("rules.fromTx")}
+                        title={tr("rules.fromTx")}
+                        className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                      >
+                        <Wand2 className="h-3.5 w-3.5" />
+                      </Link>
                       <button
                         onClick={async () => {
                           const ok = await confirm({
