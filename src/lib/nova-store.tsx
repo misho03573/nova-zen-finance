@@ -773,6 +773,8 @@ type Ctx = {
   updateLiability: (l: Liability) => void;
   deleteLiability: (id: string) => void;
   addSubscription: (s: Omit<Subscription, "id">) => void;
+  updateSubscription: (s: Subscription) => void;
+  setSubscriptionStatus: (id: string, status: SubscriptionStatus) => void;
   deleteSubscription: (id: string) => void;
   toggleAutomation: (id: string) => void;
   addAutomation: (r: Omit<AutomationRule, "id">) => void;
@@ -961,6 +963,11 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     [],
   );
   const deleteSubscription = useCallback((id: string) => dispatch({ type: "deleteSubscription", id }), []);
+  const updateSubscription = useCallback((s: Subscription) => dispatch({ type: "updateSubscription", s }), []);
+  const setSubscriptionStatus = useCallback(
+    (id: string, status: SubscriptionStatus) => dispatch({ type: "setSubscriptionStatus", id, status }),
+    [],
+  );
   const toggleAutomation = useCallback((id: string) => dispatch({ type: "toggleAutomation", id }), []);
   const addAutomation = useCallback(
     (r: Omit<AutomationRule, "id">) => dispatch({ type: "addAutomation", rule: { ...r, id: rid("ar") } }),
@@ -1054,6 +1061,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addSubscription,
       deleteSubscription,
       toggleAutomation,
+      updateSubscription,
+      setSubscriptionStatus,
       addAutomation,
       deleteAutomation,
       importTransactions,
