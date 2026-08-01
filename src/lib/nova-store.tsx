@@ -134,6 +134,11 @@ export type Subscription = {
   emoji: string;
 };
 
+export const SUB_FREQUENCIES = ["weekly", "monthly", "quarterly", "yearly"] as const;
+export type BillingFrequency = (typeof SUB_FREQUENCIES)[number];
+export const SUB_STATUSES = ["active", "paused", "cancelled"] as const;
+export type SubscriptionStatus = (typeof SUB_STATUSES)[number];
+
 export type AutomationRule = {
   id: string;
   kind: "roundup" | "salary_percent" | "weekly_transfer" | "goal_auto";
