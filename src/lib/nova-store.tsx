@@ -127,11 +127,20 @@ export type Liability = {
 export type Subscription = {
   id: string;
   name: string;
-  amount: number; // monthly cost, positive
+  amount: number; // cost per billing period, positive
   category: string;
   nextDate: string;
   color: string;
   emoji: string;
+  /** Merchant / provider label used for future matching. */
+  merchant?: string;
+  /** Native currency of the charge. Defaults to the linked account's currency. */
+  currency?: CurrencyCode;
+  /** Account the charge is billed to. */
+  accountId?: string;
+  frequency?: BillingFrequency;
+  status?: SubscriptionStatus;
+  notes?: string;
 };
 
 export const SUB_FREQUENCIES = ["weekly", "monthly", "quarterly", "yearly"] as const;
