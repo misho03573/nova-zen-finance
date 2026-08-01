@@ -1357,7 +1357,37 @@ export function netWorthBreakdown(state: NovaState) {
 }
 
 export function subscriptionsMonthlyTotal(subs: Subscription[]) {
-  return subs.reduce((s, x) => s + x.amount, 0);
+  return subs.reduce((s, x) => s + subscriptionMonthlyAmount(x), 0);
+}
+
+/** Cost of one subscription normalized to a month, in its own native currency. */
+export function subscriptionMonthlyAmount(s: Subscription) {
+  switch (s.frequency ?? "monthly") {
+    case "weekly":
+      return (s.amount * 52) / 12;
+    case "quarterly":
+      return s.amount / 3;
+    case "yearly":
+      return s.amount / 12;
+    default:
+      return s.amount;
+  }
+}
+
+/**
+ * Monthly / yearly totals of the given subscriptions, converted into `to`
+ * for display only. Native amounts are never mutated.
+ */
+export function subscriptionTotals(
+  subs: Subscription[],
+  to: CurrencyCode,
+  fallback: CurrencyCode = "USD",
+) {
+  const monthly = subs.reduce(
+    (sum, s) => sum + convertAmount(subscriptionMonthlyAmount(s), s.currency ?? fallback, to),
+    0,
+  );
+  return { monthly, yearly: monthly * 12 };
 }
 
 /**
