@@ -340,6 +340,8 @@ type Action =
   | { type: "updateLiability"; l: Liability }
   | { type: "deleteLiability"; id: string }
   | { type: "addSubscription"; s: Subscription }
+  | { type: "updateSubscription"; s: Subscription }
+  | { type: "setSubscriptionStatus"; id: string; status: SubscriptionStatus }
   | { type: "deleteSubscription"; id: string }
   | { type: "toggleAutomation"; id: string }
   | { type: "addAutomation"; rule: AutomationRule }
@@ -542,6 +544,18 @@ function reducer(state: NovaState, action: Action): NovaState {
       return { ...state, liabilities: state.liabilities.filter((l) => l.id !== action.id) };
     case "addSubscription":
       return { ...state, subscriptions: [...state.subscriptions, action.s] };
+    case "updateSubscription":
+      return {
+        ...state,
+        subscriptions: state.subscriptions.map((s) => (s.id === action.s.id ? action.s : s)),
+      };
+    case "setSubscriptionStatus":
+      return {
+        ...state,
+        subscriptions: state.subscriptions.map((s) =>
+          s.id === action.id ? { ...s, status: action.status } : s,
+        ),
+      };
     case "deleteSubscription":
       return { ...state, subscriptions: state.subscriptions.filter((s) => s.id !== action.id) };
     case "toggleAutomation":
