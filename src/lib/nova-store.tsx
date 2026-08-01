@@ -127,12 +127,26 @@ export type Liability = {
 export type Subscription = {
   id: string;
   name: string;
-  amount: number; // monthly cost, positive
+  amount: number; // cost per billing period, positive
   category: string;
   nextDate: string;
   color: string;
   emoji: string;
+  /** Merchant / provider label used for future matching. */
+  merchant?: string;
+  /** Native currency of the charge. Defaults to the linked account's currency. */
+  currency?: CurrencyCode;
+  /** Account the charge is billed to. */
+  accountId?: string;
+  frequency?: BillingFrequency;
+  status?: SubscriptionStatus;
+  notes?: string;
 };
+
+export const SUB_FREQUENCIES = ["weekly", "monthly", "quarterly", "yearly"] as const;
+export type BillingFrequency = (typeof SUB_FREQUENCIES)[number];
+export const SUB_STATUSES = ["active", "paused", "cancelled"] as const;
+export type SubscriptionStatus = (typeof SUB_STATUSES)[number];
 
 export type AutomationRule = {
   id: string;
@@ -326,6 +340,8 @@ type Action =
   | { type: "updateLiability"; l: Liability }
   | { type: "deleteLiability"; id: string }
   | { type: "addSubscription"; s: Subscription }
+  | { type: "updateSubscription"; s: Subscription }
+  | { type: "setSubscriptionStatus"; id: string; status: SubscriptionStatus }
   | { type: "deleteSubscription"; id: string }
   | { type: "toggleAutomation"; id: string }
   | { type: "addAutomation"; rule: AutomationRule }
@@ -528,6 +544,18 @@ function reducer(state: NovaState, action: Action): NovaState {
       return { ...state, liabilities: state.liabilities.filter((l) => l.id !== action.id) };
     case "addSubscription":
       return { ...state, subscriptions: [...state.subscriptions, action.s] };
+    case "updateSubscription":
+      return {
+        ...state,
+        subscriptions: state.subscriptions.map((s) => (s.id === action.s.id ? action.s : s)),
+      };
+    case "setSubscriptionStatus":
+      return {
+        ...state,
+        subscriptions: state.subscriptions.map((s) =>
+          s.id === action.id ? { ...s, status: action.status } : s,
+        ),
+      };
     case "deleteSubscription":
       return { ...state, subscriptions: state.subscriptions.filter((s) => s.id !== action.id) };
     case "toggleAutomation":
@@ -745,6 +773,8 @@ type Ctx = {
   updateLiability: (l: Liability) => void;
   deleteLiability: (id: string) => void;
   addSubscription: (s: Omit<Subscription, "id">) => void;
+  updateSubscription: (s: Subscription) => void;
+  setSubscriptionStatus: (id: string, status: SubscriptionStatus) => void;
   deleteSubscription: (id: string) => void;
   toggleAutomation: (id: string) => void;
   addAutomation: (r: Omit<AutomationRule, "id">) => void;
@@ -933,6 +963,11 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     [],
   );
   const deleteSubscription = useCallback((id: string) => dispatch({ type: "deleteSubscription", id }), []);
+  const updateSubscription = useCallback((s: Subscription) => dispatch({ type: "updateSubscription", s }), []);
+  const setSubscriptionStatus = useCallback(
+    (id: string, status: SubscriptionStatus) => dispatch({ type: "setSubscriptionStatus", id, status }),
+    [],
+  );
   const toggleAutomation = useCallback((id: string) => dispatch({ type: "toggleAutomation", id }), []);
   const addAutomation = useCallback(
     (r: Omit<AutomationRule, "id">) => dispatch({ type: "addAutomation", rule: { ...r, id: rid("ar") } }),
@@ -1026,6 +1061,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addSubscription,
       deleteSubscription,
       toggleAutomation,
+      updateSubscription,
+      setSubscriptionStatus,
       addAutomation,
       deleteAutomation,
       importTransactions,
@@ -1073,6 +1110,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addCategory,
       updateCategory,
       deleteCategoryImpl,
+      updateSubscription,
+      setSubscriptionStatus,
       deleteCategoryWithReassign,
       addCategoryRule,
       updateCategoryRule,
@@ -1080,6 +1119,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       toggleCategoryRule,
     ],
   );
+
 
   return <NovaContext.Provider value={value}>{children}</NovaContext.Provider>;
 }
@@ -1317,7 +1357,37 @@ export function netWorthBreakdown(state: NovaState) {
 }
 
 export function subscriptionsMonthlyTotal(subs: Subscription[]) {
-  return subs.reduce((s, x) => s + x.amount, 0);
+  return subs.reduce((s, x) => s + subscriptionMonthlyAmount(x), 0);
+}
+
+/** Cost of one subscription normalized to a month, in its own native currency. */
+export function subscriptionMonthlyAmount(s: Subscription) {
+  switch (s.frequency ?? "monthly") {
+    case "weekly":
+      return (s.amount * 52) / 12;
+    case "quarterly":
+      return s.amount / 3;
+    case "yearly":
+      return s.amount / 12;
+    default:
+      return s.amount;
+  }
+}
+
+/**
+ * Monthly / yearly totals of the given subscriptions, converted into `to`
+ * for display only. Native amounts are never mutated.
+ */
+export function subscriptionTotals(
+  subs: Subscription[],
+  to: CurrencyCode,
+  fallback: CurrencyCode = "USD",
+) {
+  const monthly = subs.reduce(
+    (sum, s) => sum + convertAmount(subscriptionMonthlyAmount(s), s.currency ?? fallback, to),
+    0,
+  );
+  return { monthly, yearly: monthly * 12 };
 }
 
 /**
