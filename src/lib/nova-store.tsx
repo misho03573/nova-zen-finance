@@ -1110,6 +1110,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addCategory,
       updateCategory,
       deleteCategoryImpl,
+      updateSubscription,
+      setSubscriptionStatus,
       deleteCategoryWithReassign,
       addCategoryRule,
       updateCategoryRule,
