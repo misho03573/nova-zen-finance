@@ -10,7 +10,7 @@ import {
   liabilityCurrency,
   type LiabilityType,
 } from "@/lib/nova-store";
-import { useCurrency, type CurrencyCode } from "@/lib/currency";
+import { useCurrency, CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
