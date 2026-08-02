@@ -1528,11 +1528,19 @@ export function subscriptionTotals(
  * Recomputes from live state — savings rate, debt ratio, emergency fund,
  * goal progress, budget performance, and positive net worth trend.
  */
+export type ScoreStatus = "excellent" | "good" | "fair" | "needsWork" | "gettingStarted";
+
+export type ScoreChip = { key: string; params?: Record<string, string | number> };
+
 export type ScoreBreakdown = {
   score: number;
-  status: "Excellent" | "Good" | "Fair" | "Needs work" | "Getting started";
-  explanation: string;
-  chips: string[];
+  /** i18n key, e.g. `score.status.good`. */
+  statusKey: string;
+  status: ScoreStatus;
+  /** i18n key, e.g. `score.explain.good`. */
+  explanationKey: string;
+  explanationParams?: Record<string, string | number>;
+  chips: ScoreChip[];
 };
 
 export function computeFinancialScore(display: NovaState): ScoreBreakdown {
@@ -1544,9 +1552,10 @@ export function computeFinancialScore(display: NovaState): ScoreBreakdown {
   if (!hasActivity) {
     return {
       score: 0,
-      status: "Getting started",
-      explanation: "Add an account or a transaction to start tracking your score.",
-      chips: ["No data yet"],
+      status: "gettingStarted",
+      statusKey: "score.status.gettingStarted",
+      explanationKey: "score.explain.gettingStarted",
+      chips: [{ key: "score.chip.noData" }],
     };
   }
 
@@ -1590,27 +1599,29 @@ export function computeFinancialScore(display: NovaState): ScoreBreakdown {
 
   const score = Math.round(srPts + debtPts + efPts + goalPts + budgetPts + nwPts);
 
-  const status: ScoreBreakdown["status"] =
-    score >= 800 ? "Excellent" : score >= 650 ? "Good" : score >= 450 ? "Fair" : "Needs work";
+  const status: ScoreStatus =
+    score >= 800 ? "excellent" : score >= 650 ? "good" : score >= 450 ? "fair" : "needsWork";
+  const statusKey = `score.status.${status}`;
 
-  const chips: string[] = [];
-  if (sr >= 0.2) chips.push(`Saves ${Math.round(sr * 100)}%`);
-  if (debtRatio < 0.35 && nb.liab > 0) chips.push("Low debt");
-  if (liquid >= target) chips.push("Emergency fund");
-  if (goalPct >= 0.5) chips.push("Goals on track");
-  if (budgetPts >= 120 && display.budgets.length) chips.push("On budget");
-  if (chips.length === 0) chips.push(status);
+  const pct = Math.round(sr * 100);
+  const chips: ScoreChip[] = [];
+  if (sr >= 0.2) chips.push({ key: "score.chip.saves", params: { pct } });
+  if (debtRatio < 0.35 && nb.liab > 0) chips.push({ key: "score.chip.lowDebt" });
+  if (liquid >= target) chips.push({ key: "score.chip.emergencyFund" });
+  if (goalPct >= 0.5) chips.push({ key: "score.chip.goalsOnTrack" });
+  if (budgetPts >= 120 && display.budgets.length) chips.push({ key: "score.chip.onBudget" });
+  if (chips.length === 0) chips.push({ key: statusKey });
 
-  const explanation =
+  const explanationKey =
     score >= 800
-      ? `You're saving ${Math.round(sr * 100)}% of income and staying on budget.`
+      ? "score.explain.excellent"
       : score >= 650
-        ? `Solid progress — savings rate ${Math.round(sr * 100)}%.`
+        ? "score.explain.good"
         : score >= 450
-          ? "You're building momentum. Trim discretionary spend to lift your score."
+          ? "score.explain.fair"
           : income === 0
-            ? "Log this month's income and expenses to see your health score."
-            : "Push savings above 10% and pay down debt to raise your score.";
+            ? "score.explain.noIncome"
+            : "score.explain.needsWork";
 
-  return { score, status, explanation, chips };
+  return { score, status, statusKey, explanationKey, explanationParams: { pct }, chips };
 }
