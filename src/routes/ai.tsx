@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Send, Sparkles, ArrowLeft, Bot } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import { useNova, totalBalance, monthlyTotals, savingsRate, monthlySpendByCategory, netWorthBreakdown } from "@/lib/nova-store";
+import { useNova, totalBalance, monthlyTotals, savingsRate, monthlySpendByCategory, netWorthBreakdown, useDisplayState } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { useT, fmt } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -21,7 +21,10 @@ export const Route = createFileRoute("/ai")({
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
 function AIChat() {
-  const { state } = useNova();
+  const { state: rawState } = useNova();
+  // Aggregates must be currency-normalized before any cross-account math.
+  const state = useDisplayState();
+  void rawState;
   const { format, currency } = useCurrency();
   const tr = useT();
   const { fullName } = useAuth();

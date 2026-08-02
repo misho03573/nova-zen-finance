@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
 import { EmptyState } from "@/components/nova/EmptyState";
-import { useT, fmt } from "@/lib/i18n";
+import { useT, fmt, useLocale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -37,6 +37,7 @@ function GoalsPage() {
   const confirm = useConfirm();
   const hide = useHideBalances();
   const tr = useT();
+  const locale = useLocale();
   const goals = state.goals;
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target, 0) || 1;
@@ -96,12 +97,12 @@ function GoalsPage() {
           <EmptyState
             icon={<PiggyBank className="h-6 w-6" />}
             title={tr("goals.emptyTitle")}
-            description="Set a target — a trip, an emergency fund, a new laptop — and watch progress grow."
+            description={tr("goals.emptyDesc")}
           />
         ) : null}
         {goals.map((g) => {
           const pct = Math.min(1, g.saved / g.target);
-          const eta = estimateGoalETA(g);
+          const eta = estimateGoalETA(g, { achieved: tr("goal.achieved"), locale });
           return (
             <article
               key={g.id}

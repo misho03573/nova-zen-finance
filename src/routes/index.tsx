@@ -14,7 +14,14 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
 import { useCategoryLookup } from "@/lib/categories";
-import { useCategoryName, useT } from "@/lib/i18n";
+import { useCategoryName, useT, useDateLabels, useLocale, fmt } from "@/lib/i18n";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   useNova,
   monthlyTotals,
@@ -58,19 +65,54 @@ function Home() {
   const categoryOf = useCategoryLookup();
   const catName = useCategoryName();
   const tr = useT();
+  const dateLabels = useDateLabels();
+  const locale = useLocale();
   void catName;
   const hide = !!state.settings.hideBalances;
-  const netWorth = netWorthBreakdown(display).net;
+  const nw = netWorthBreakdown(display);
+  const netWorth = nw.net;
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(
     display.transactions,
   );
   const rate = savingsRate(monthlyIncome, monthlyExpenses);
   const health = computeFinancialScore(display);
-  const week = cashflowByRange(display.transactions, "week");
+  const week = cashflowByRange(display.transactions, "week", locale);
   const spentWeek = week.reduce((s, d) => s + d.expense, 0);
-  const upcoming = [...state.recurring]
-    .sort((a, b) => +new Date(a.nextDate) - +new Date(b.nextDate))
-    .slice(0, 3);
+  // Upcoming = recurring transactions + active subscriptions, de-duplicated
+  // by name so a subscription mirrored as a recurring item appears once.
+  const upcoming = (() => {
+    const norm = (s: string) => s.trim().toLowerCase();
+    const seen = new Set(state.recurring.map((r) => norm(r.title)));
+    const items = state.recurring.map((r) => ({
+      id: r.id,
+      title: r.title,
+      category: r.category,
+      nextDate: r.nextDate,
+      amount: r.amount,
+      currency:
+        r.currency ?? state.accounts.find((a) => a.id === r.accountId)?.currency ?? "USD",
+      meta: tr(`add.recurring.${r.frequency}`),
+    }));
+    for (const s of state.subscriptions) {
+      if ((s.status ?? "active") !== "active") continue;
+      const key = norm(s.merchant || s.name);
+      if (seen.has(key) || seen.has(norm(s.name))) continue;
+      seen.add(key);
+      items.push({
+        id: s.id,
+        title: s.name,
+        category: s.category,
+        nextDate: s.nextDate,
+        amount: -Math.abs(s.amount),
+        currency:
+          s.currency ?? state.accounts.find((a) => a.id === s.accountId)?.currency ?? "USD",
+        meta: tr("home.upcoming.subscription"),
+      });
+    }
+    return items
+      .sort((a, b) => +new Date(a.nextDate) - +new Date(b.nextDate))
+      .slice(0, 3);
+  })();
   const recent = [...state.transactions]
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
     .slice(0, 4);
@@ -118,9 +160,9 @@ function Home() {
           income={monthlyIncome}
           expenses={monthlyExpenses}
           rate={rate}
-          brand={primaryAccount?.brand ?? "Visa"}
           gradient={primaryAccount?.gradient ?? "var(--gradient-wallet)"}
           hide={hide}
+          breakdown={nw}
         />
       </section>
 
@@ -228,15 +270,11 @@ function Home() {
                     <p className="truncate text-sm font-medium">{r.title}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       <CalendarClock className="mr-1 inline h-3 w-3" />
-                      {tr("home.in")} {days} {days === 1 ? tr("home.day") : tr("home.days")} · {r.frequency}
+                      {tr("home.in")} {days} {days === 1 ? tr("home.day") : tr("home.days")} · {r.meta}
                     </p>
                   </div>
                   <span className="shrink-0 text-sm font-semibold">
-                    {formatIn(
-                      r.amount,
-                      r.currency ??
-                        (state.accounts.find((a) => a.id === r.accountId)?.currency ?? "USD"),
-                    )}
+                    {formatIn(r.amount, r.currency)}
                   </span>
                 </li>
               );
@@ -272,7 +310,7 @@ function Home() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{t.title}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {formatTxDate(t.date)}
+                    {formatTxDate(t.date, dateLabels)}
                   </p>
                 </div>
                 <span
@@ -314,7 +352,7 @@ function MiniCard({
 }
 
 function ScoreCard({ health }: { health: ScoreBreakdown }) {
-  const { score, status, explanation, chips } = health;
+  const { score, statusKey, explanationKey, explanationParams, chips } = health;
   const tr = useT();
   const max = 900;
   const pct = Math.min(1, score / 1000);
@@ -369,11 +407,15 @@ function ScoreCard({ health }: { health: ScoreBreakdown }) {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             {tr("home.financialHealth")}
           </p>
-          <p className="mt-1 text-lg font-semibold leading-tight text-foreground">{status}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{explanation}</p>
+          <p className="mt-1 text-lg font-semibold leading-tight text-foreground">
+            {tr(statusKey)}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {fmt(tr(explanationKey), explanationParams ?? {})}
+          </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {chips.map((c) => (
-              <Chip key={c}>{c}</Chip>
+              <Chip key={c.key}>{fmt(tr(c.key), c.params ?? {})}</Chip>
             ))}
           </div>
         </div>
@@ -395,19 +437,19 @@ function NetWorthCard({
   income,
   expenses,
   rate,
-  brand,
   gradient,
   hide,
+  breakdown,
 }: {
   netWorth: number;
   income: number;
   expenses: number;
   rate: number;
-  brand: string;
   gradient: string;
   hide?: boolean;
+  breakdown: ReturnType<typeof netWorthBreakdown>;
 }) {
-  const { format } = useCurrency();
+  const { format, currency } = useCurrency();
   const tr = useT();
   return (
     <div
@@ -417,9 +459,34 @@ function NetWorthCard({
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 animate-float-slow rounded-full bg-white/10 blur-3xl" />
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-widest text-white/70">{tr("home.netWorth")}</p>
-        <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/80">
-          {brand}
-        </span>
+        <Dialog>
+          <DialogTrigger asChild>
+            <button
+              aria-label={tr("nw.breakdown.open")}
+              className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/80 transition-colors hover:bg-white/10"
+            >
+              {tr("nw.allAccounts")} · {currency.code}
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-base">{tr("nw.breakdown.title")}</DialogTitle>
+            </DialogHeader>
+            <ul className="space-y-1 text-sm">
+              <BreakdownRow label={tr("nw.cash")} value={format(breakdown.cash)} />
+              <BreakdownRow label={tr("nw.bank")} value={format(breakdown.bank)} />
+              <BreakdownRow label={tr("nw.investments")} value={format(breakdown.invest)} />
+              <BreakdownRow label={tr("nw.crypto")} value={format(breakdown.crypto)} />
+              <BreakdownRow label={tr("nw.assets")} value={format(breakdown.assets)} strong />
+              <BreakdownRow
+                label={tr("nw.liabilities")}
+                value={format(-breakdown.liab)}
+                tone="negative"
+              />
+              <BreakdownRow label={tr("nw.final")} value={format(breakdown.net)} strong />
+            </ul>
+          </DialogContent>
+        </Dialog>
       </div>
       {hide ? (
         <span className="mt-2 block select-none text-4xl font-semibold tracking-tight">••••••</span>
@@ -451,6 +518,33 @@ function NetWorthCard({
 }
 
 function MiniStat({ label, value, tone }: { label: string; value: string; tone: "up" | "down" }) {
+  return <MiniStatInner label={label} value={value} tone={tone} />;
+}
+
+function BreakdownRow({
+  label,
+  value,
+  strong,
+  tone,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  tone?: "negative";
+}) {
+  return (
+    <li
+      className={`flex items-center justify-between rounded-2xl px-3 py-2 ${
+        strong ? "bg-muted/50 font-semibold" : ""
+      }`}
+    >
+      <span className="text-muted-foreground">{label}</span>
+      <span className={tone === "negative" ? "text-destructive" : ""}>{value}</span>
+    </li>
+  );
+}
+
+function MiniStatInner({ label, value, tone }: { label: string; value: string; tone: "up" | "down" }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur">
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-white/70">

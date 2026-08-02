@@ -18,7 +18,7 @@ import {
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useCategoryLookup, useCategories } from "@/lib/categories";
-import { useCategoryName, useT, fmt } from "@/lib/i18n";
+import { useCategoryName, useT, fmt, useDateLabels } from "@/lib/i18n";
 import {
   useNova,
   groupByBucket,
@@ -74,6 +74,7 @@ function WalletPage() {
   const categories = useCategories();
   const catName = useCategoryName();
   const tr = useT();
+  const dateLabels = useDateLabels();
   const [query, setQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -199,7 +200,11 @@ function WalletPage() {
             <div key={group.bucket} className="animate-fade-in">
               <div className="mb-2 flex items-baseline justify-between px-1">
                 <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  {group.bucket}
+                  {group.bucket === "Today"
+                    ? tr("date.today")
+                    : group.bucket === "Yesterday"
+                      ? tr("date.yesterday")
+                      : tr("date.earlier")}
                 </h3>
                 <span className="text-[11px] text-muted-foreground">
                   {group.items.length} {group.items.length === 1 ? tr("wallet.item") : tr("wallet.items")}
@@ -226,7 +231,7 @@ function WalletPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{t.title}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {catName(cat.id, cat.name, cat.builtin)} · {formatTxDate(t.date)}
+                          {catName(cat.id, cat.name, cat.builtin)} · {formatTxDate(t.date, dateLabels)}
                         </p>
                       </div>
                       <span
@@ -301,11 +306,16 @@ function Chip({
 
 function AccountCard({ account }: { account: Account }) {
   const { formatIn } = useCurrency();
-  const { deleteAccount } = useNova();
+  const { state, deleteAccount, accountUsageOf } = useNova();
   const confirm = useConfirm();
   const hide = useHideBalances();
   const tr = useT();
   const Icon = TYPE_META[account.type].icon;
+  const usage = accountUsageOf(account.id);
+  const linked = usage.transactions + usage.recurring + usage.subscriptions;
+  const others = state.accounts.filter((a) => a.id !== account.id);
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [target, setTarget] = useState<string>(others[0]?.id ?? "");
   return (
     <article
       className="group relative aspect-[1.6/1] min-w-[280px] snap-center overflow-hidden rounded-3xl border border-white/10 p-5 text-white shadow-[var(--shadow-elevated)]"
@@ -315,7 +325,7 @@ function AccountCard({ account }: { account: Account }) {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-white/70">
-            {accountTypeLabel(account.type)}
+            {accountTypeLabel(account.type, tr)}
           </p>
           <p className="text-sm font-semibold">{account.name}</p>
         </div>
@@ -334,6 +344,15 @@ function AccountCard({ account }: { account: Account }) {
           <button
             aria-label={tr("wallet.deleteAccount")}
             onClick={async () => {
+              if (linked > 0) {
+                if (others.length === 0) {
+                  toast.error(tr("wallet.delete.noTarget"));
+                  return;
+                }
+                setTarget(others[0].id);
+                setReassignOpen(true);
+                return;
+              }
               const ok = await confirm({
                 title: fmt(tr("wallet.deleteAccount") + " {name}?", { name: account.name }),
                 description: tr("wallet.deleteAccount.desc"),
@@ -342,7 +361,7 @@ function AccountCard({ account }: { account: Account }) {
               });
               if (ok) {
                 deleteAccount(account.id);
-                toast.message(account.name);
+                toast.message(tr("wallet.deleted"));
               }
             }}
             className="grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
@@ -352,6 +371,51 @@ function AccountCard({ account }: { account: Account }) {
           <Icon className="h-5 w-5 opacity-80" />
         </div>
       </div>
+      <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{tr("wallet.delete.blocked.title")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {fmt(tr("wallet.delete.blocked.desc"), { count: linked })}
+          </p>
+          <div className="space-y-2">
+            <Label>{tr("wallet.delete.reassign")}</Label>
+            <div className="flex flex-wrap gap-2">
+              {others.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setTarget(a.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium",
+                    target === a.id
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground",
+                  )}
+                >
+                  {a.name} · {accountCurrency(a)}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {tr("wallet.delete.reassignDesc")}
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                if (!target) return;
+                deleteAccount(account.id, target);
+                setReassignOpen(false);
+                toast.success(tr("wallet.deleted"));
+              }}
+              className="w-full rounded-full bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground"
+            >
+              {tr("wallet.delete.confirmMove")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="absolute bottom-5 left-5 right-5">
         <p className="text-lg font-semibold tracking-widest">{account.number}</p>
         <div className="mt-2 flex items-end justify-between">

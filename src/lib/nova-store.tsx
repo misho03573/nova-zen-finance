@@ -122,7 +122,26 @@ export type Liability = {
   balance: number; // amount owed, positive number
   apr?: number;
   minPayment?: number;
+  /**
+   * Native currency the balance is stored in. Legacy rows created before
+   * multi-currency liabilities have no value — they are migrated to
+   * {@link LEGACY_LIABILITY_CURRENCY} on hydrate.
+   */
+  currency?: CurrencyCode;
 };
+
+/**
+ * Documented fallback for liabilities persisted before the `currency` field
+ * existed. USD is the app's neutral FX base, which is exactly how those
+ * balances were previously interpreted by Net Worth — so migration is a
+ * no-op in value terms.
+ */
+export const LEGACY_LIABILITY_CURRENCY: CurrencyCode = "USD";
+
+/** Native currency of a liability (with legacy fallback). */
+export function liabilityCurrency(l: Liability): CurrencyCode {
+  return (l.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
+}
 
 export type Subscription = {
   id: string;
@@ -176,6 +195,11 @@ function isoAhead(daysAhead: number) {
   return d.toISOString();
 }
 
+/**
+ * DEMO DATA — guest mode only.
+ * Never hydrated for an authenticated user: signing up always starts from
+ * {@link emptyState}. See the hydration effect in `NovaProvider`.
+ */
 const seed: NovaState = {
   accounts: [
     {
@@ -284,9 +308,9 @@ const seed: NovaState = {
     language: "en",
   },
   liabilities: [
-    { id: "l1", name: "Student Loan", type: "loan", balance: 12400, apr: 4.5, minPayment: 220 },
-    { id: "l2", name: "Amex Platinum", type: "credit_card", balance: 1840, apr: 21.9, minPayment: 60 },
-    { id: "l3", name: "Mortgage", type: "mortgage", balance: 184000, apr: 3.2, minPayment: 1250 },
+    { id: "l1", name: "Student Loan", type: "loan", balance: 12400, apr: 4.5, minPayment: 220, currency: "USD" },
+    { id: "l2", name: "Amex Platinum", type: "credit_card", balance: 1840, apr: 21.9, minPayment: 60, currency: "USD" },
+    { id: "l3", name: "Mortgage", type: "mortgage", balance: 184000, apr: 3.2, minPayment: 1250, currency: "USD" },
   ],
   subscriptions: [
     { id: "s1", name: "Netflix", amount: 15.99, category: "entertainment", nextDate: isoAhead(6), color: "#E50914", emoji: "🎬" },
@@ -326,7 +350,7 @@ type Action =
   | { type: "deleteTransaction"; id: string }
   | { type: "addAccount"; account: Account }
   | { type: "updateAccount"; account: Account }
-  | { type: "deleteAccount"; id: string }
+  | { type: "deleteAccount"; id: string; reassignTo?: string }
   | { type: "addGoal"; goal: Goal }
   | { type: "updateGoal"; goal: Goal }
   | { type: "deleteGoal"; id: string }
@@ -364,7 +388,11 @@ function reducer(state: NovaState, action: Action): NovaState {
         ...emptyState,
         ...action.state,
         settings: { ...emptyState.settings, ...action.state.settings },
-        liabilities: action.state.liabilities ?? [],
+        // Migrate legacy liabilities that predate per-row currency.
+        liabilities: (action.state.liabilities ?? []).map((l) => ({
+          ...l,
+          currency: (l.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode,
+        })),
         subscriptions: action.state.subscriptions ?? [],
         automationRules: action.state.automationRules ?? [],
         categories: mergeCategories(action.state.categories),
@@ -471,11 +499,26 @@ function reducer(state: NovaState, action: Action): NovaState {
               }
             : r,
         );
+        // Subscriptions billed to this account are re-denominated too, so a
+        // currency edit never leaves a linked charge in the old currency.
+        const subscriptions = state.subscriptions.map((s) =>
+          s.accountId === next.id
+            ? {
+                ...s,
+                amount: round(
+                  convertAmount(s.amount, (s.currency ?? prevCur) as CurrencyCode, nextCur),
+                  nextCur,
+                ),
+                currency: nextCur,
+              }
+            : s,
+        );
         return {
           ...state,
           accounts: state.accounts.map((a) => (a.id === next.id ? next : a)),
           transactions,
           recurring,
+          subscriptions,
         };
       }
       next.balance = round(next.balance, nextCur);
@@ -484,13 +527,49 @@ function reducer(state: NovaState, action: Action): NovaState {
         accounts: state.accounts.map((a) => (a.id === next.id ? next : a)),
       };
     }
-    case "deleteAccount":
+    case "deleteAccount": {
+      const victim = state.accounts.find((a) => a.id === action.id);
+      if (!victim) return state;
+      const usage = accountUsage(state, action.id);
+      const hasHistory = usage.transactions + usage.recurring + usage.subscriptions > 0;
+      // Never silently destroy financial history: linked records must be
+      // reassigned to another account first.
+      if (hasHistory && !action.reassignTo) return state;
+      if (!hasHistory) {
+        return { ...state, accounts: state.accounts.filter((a) => a.id !== action.id) };
+      }
+      const target = state.accounts.find((a) => a.id === action.reassignTo);
+      if (!target || target.id === action.id) return state;
+      const fromCur = accountCurrency(victim);
+      const toCur = accountCurrency(target);
+      const re = (amount: number, cur?: CurrencyCode) =>
+        round(convertAmount(amount, (cur ?? fromCur) as CurrencyCode, toCur), toCur);
+      const moved = state.transactions.filter((t) => t.accountId === action.id);
+      const movedTotal = moved.reduce((s, t) => s + re(t.amount, t.currency), 0);
       return {
         ...state,
-        accounts: state.accounts.filter((a) => a.id !== action.id),
-        transactions: state.transactions.filter((t) => t.accountId !== action.id),
-        recurring: state.recurring.filter((r) => r.accountId !== action.id),
+        accounts: state.accounts
+          .filter((a) => a.id !== action.id)
+          .map((a) =>
+            a.id === target.id ? { ...a, balance: round(a.balance + movedTotal, toCur) } : a,
+          ),
+        transactions: state.transactions.map((t) =>
+          t.accountId === action.id
+            ? { ...t, accountId: target.id, amount: re(t.amount, t.currency), currency: toCur }
+            : t,
+        ),
+        recurring: state.recurring.map((r) =>
+          r.accountId === action.id
+            ? { ...r, accountId: target.id, amount: re(r.amount, r.currency), currency: toCur }
+            : r,
+        ),
+        subscriptions: state.subscriptions.map((s) =>
+          s.accountId === action.id
+            ? { ...s, accountId: target.id, amount: re(s.amount, s.currency), currency: toCur }
+            : s,
+        ),
       };
+    }
     case "addGoal":
       return { ...state, goals: [...state.goals, action.goal] };
     case "updateGoal":
@@ -743,6 +822,17 @@ function reducer(state: NovaState, action: Action): NovaState {
 }
 
 /** Merge persisted user categories with any newly-added built-in defaults. */
+/**
+ * How many records reference an account. Used to block destructive deletes.
+ */
+export function accountUsage(state: NovaState, accountId: string) {
+  return {
+    transactions: state.transactions.filter((t) => t.accountId === accountId).length,
+    recurring: state.recurring.filter((r) => r.accountId === accountId).length,
+    subscriptions: state.subscriptions.filter((s) => s.accountId === accountId).length,
+  };
+}
+
 function mergeCategories(persisted?: UserCategory[]): UserCategory[] {
   if (!persisted || persisted.length === 0) return defaultCategories;
   const byId = new Map(persisted.map((c) => [c.id, c]));
@@ -757,7 +847,8 @@ type Ctx = {
   deleteTransaction: (id: string) => void;
   addAccount: (a: Omit<Account, "id">) => void;
   updateAccount: (a: Account) => void;
-  deleteAccount: (id: string) => void;
+  deleteAccount: (id: string, reassignTo?: string) => void;
+  accountUsageOf: (id: string) => { transactions: number; recurring: number; subscriptions: number };
   addGoal: (g: Omit<Goal, "id">) => void;
   updateGoal: (g: Goal) => void;
   deleteGoal: (id: string) => void;
@@ -795,7 +886,9 @@ type Ctx = {
 const NovaContext = createContext<Ctx | null>(null);
 
 export function NovaProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, seed);
+  // Start empty. Demo seed is applied only for guests, inside the hydration
+  // effect below — an authenticated user must never see demo data.
+  const [state, dispatch] = useReducer(reducer, emptyState);
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const activeKeyRef = useRef<string>(keyFor(null));
@@ -919,7 +1012,11 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     [],
   );
   const updateAccount = useCallback((a: Account) => dispatch({ type: "updateAccount", account: a }), []);
-  const deleteAccount = useCallback((id: string) => dispatch({ type: "deleteAccount", id }), []);
+  const deleteAccount = useCallback(
+    (id: string, reassignTo?: string) => dispatch({ type: "deleteAccount", id, reassignTo }),
+    [],
+  );
+  const accountUsageOf = useCallback((id: string) => accountUsage(state, id), [state]);
   const addGoal = useCallback(
     (g: Omit<Goal, "id">) => dispatch({ type: "addGoal", goal: { ...g, id: rid("g") } }),
     [],
@@ -1044,6 +1141,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addAccount,
       updateAccount,
       deleteAccount,
+      accountUsageOf,
       addGoal,
       updateGoal,
       deleteGoal,
@@ -1085,6 +1183,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addAccount,
       updateAccount,
       deleteAccount,
+      accountUsageOf,
       addGoal,
       updateGoal,
       deleteGoal,
@@ -1175,12 +1274,17 @@ export function useDisplayState() {
         ...r,
         amount: conv(r.amount, r.currency ?? accCur.get(r.accountId) ?? "USD"),
       })),
-      // Liabilities have no per-row currency; treat their stored balance as
-      // USD (the app's neutral base) and convert to the display currency so
-      // Net Worth math (Assets − Liabilities) stays consistent across FX.
+      // Liabilities are stored in their own native currency and converted
+      // exactly once, here, for Net Worth math (Assets − Liabilities).
       liabilities: state.liabilities.map((l) => ({
         ...l,
-        balance: conv(l.balance, "USD"),
+        balance: conv(l.balance, liabilityCurrency(l)),
+        currency: to,
+      })),
+      subscriptions: state.subscriptions.map((s) => ({
+        ...s,
+        amount: conv(s.amount, s.currency ?? accCur.get(s.accountId ?? "") ?? "USD"),
+        currency: to,
       })),
     };
   }, [state, currency.code]);
@@ -1199,13 +1303,25 @@ export function bucketOf(iso: string): Bucket {
   return "Earlier";
 }
 
-export function formatTxDate(isoStr: string): string {
+export type DateLabels = { today: string; yesterday: string; locale: string };
+
+const DEFAULT_DATE_LABELS: DateLabels = {
+  today: "Today",
+  yesterday: "Yesterday",
+  locale: "en-US",
+};
+
+export function formatTxDate(isoStr: string, labels: DateLabels = DEFAULT_DATE_LABELS): string {
   const d = new Date(isoStr);
   const b = bucketOf(isoStr);
-  const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
-  if (b === "Today") return `Today · ${time}`;
-  if (b === "Yesterday") return `Yesterday · ${time}`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " · " + time;
+  const time = d.toLocaleTimeString(labels.locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  if (b === "Today") return `${labels.today} · ${time}`;
+  if (b === "Yesterday") return `${labels.yesterday} · ${time}`;
+  return d.toLocaleDateString(labels.locale, { month: "short", day: "numeric" }) + " · " + time;
 }
 
 export function groupByBucket(txs: Transaction[]): { bucket: Bucket; items: Transaction[] }[] {
@@ -1269,7 +1385,11 @@ export function filterTxsByRange(txs: Transaction[], range: "week" | "month" | "
   return txs.filter((t) => new Date(t.date) >= start);
 }
 
-export function cashflowByRange(txs: Transaction[], range: "week" | "month" | "year") {
+export function cashflowByRange(
+  txs: Transaction[],
+  range: "week" | "month" | "year",
+  locale = "en-US",
+) {
   const now = new Date();
   if (range === "week") {
     const days = Array.from({ length: 7 }).map((_, i) => {
@@ -1279,7 +1399,7 @@ export function cashflowByRange(txs: Transaction[], range: "week" | "month" | "y
       return d;
     });
     return days.map((d) => {
-      const label = d.toLocaleDateString("en-US", { weekday: "short" });
+      const label = d.toLocaleDateString(locale, { weekday: "short" });
       let income = 0;
       let expense = 0;
       for (const t of txs) {
@@ -1310,7 +1430,7 @@ export function cashflowByRange(txs: Transaction[], range: "week" | "month" | "y
     return buckets;
   }
   const months = Array.from({ length: 12 }).map((_, i) => ({
-    m: new Date(now.getFullYear(), i, 1).toLocaleDateString("en-US", { month: "short" }),
+    m: new Date(now.getFullYear(), i, 1).toLocaleDateString(locale, { month: "short" }),
     income: 0,
     expense: 0,
   }));
@@ -1324,18 +1444,31 @@ export function cashflowByRange(txs: Transaction[], range: "week" | "month" | "y
   return months;
 }
 
-export function estimateGoalETA(goal: Goal): string {
-  if (goal.saved >= goal.target) return "Achieved 🎉";
+export function estimateGoalETA(
+  goal: Goal,
+  labels: { achieved: string; locale: string } = { achieved: "Achieved 🎉", locale: "en-US" },
+): string {
+  if (goal.saved >= goal.target) return labels.achieved;
   const monthly = goal.monthly && goal.monthly > 0 ? goal.monthly : 0;
   if (!monthly) return goal.eta;
   const remaining = goal.target - goal.saved;
   const months = Math.ceil(remaining / monthly);
   const d = new Date();
   d.setMonth(d.getMonth() + months);
-  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  return d.toLocaleDateString(labels.locale, { month: "short", year: "numeric" });
 }
 
-export function accountTypeLabel(t: AccountType): string {
+/** i18n key for an account type, e.g. `acct.type.bank`. */
+export function accountTypeKey(t: AccountType): string {
+  return `acct.type.${t}`;
+}
+
+export function accountTypeLabel(t: AccountType, tr?: (k: string) => string): string {
+  if (tr) {
+    const key = accountTypeKey(t);
+    const v = tr(key);
+    if (v !== key) return v;
+  }
   return { cash: "Cash", bank: "Bank", revolut: "Revolut", trading: "Trading", crypto: "Crypto" }[t];
 }
 
@@ -1395,11 +1528,19 @@ export function subscriptionTotals(
  * Recomputes from live state — savings rate, debt ratio, emergency fund,
  * goal progress, budget performance, and positive net worth trend.
  */
+export type ScoreStatus = "excellent" | "good" | "fair" | "needsWork" | "gettingStarted";
+
+export type ScoreChip = { key: string; params?: Record<string, string | number> };
+
 export type ScoreBreakdown = {
   score: number;
-  status: "Excellent" | "Good" | "Fair" | "Needs work" | "Getting started";
-  explanation: string;
-  chips: string[];
+  /** i18n key, e.g. `score.status.good`. */
+  statusKey: string;
+  status: ScoreStatus;
+  /** i18n key, e.g. `score.explain.good`. */
+  explanationKey: string;
+  explanationParams?: Record<string, string | number>;
+  chips: ScoreChip[];
 };
 
 export function computeFinancialScore(display: NovaState): ScoreBreakdown {
@@ -1411,9 +1552,10 @@ export function computeFinancialScore(display: NovaState): ScoreBreakdown {
   if (!hasActivity) {
     return {
       score: 0,
-      status: "Getting started",
-      explanation: "Add an account or a transaction to start tracking your score.",
-      chips: ["No data yet"],
+      status: "gettingStarted",
+      statusKey: "score.status.gettingStarted",
+      explanationKey: "score.explain.gettingStarted",
+      chips: [{ key: "score.chip.noData" }],
     };
   }
 
@@ -1457,27 +1599,29 @@ export function computeFinancialScore(display: NovaState): ScoreBreakdown {
 
   const score = Math.round(srPts + debtPts + efPts + goalPts + budgetPts + nwPts);
 
-  const status: ScoreBreakdown["status"] =
-    score >= 800 ? "Excellent" : score >= 650 ? "Good" : score >= 450 ? "Fair" : "Needs work";
+  const status: ScoreStatus =
+    score >= 800 ? "excellent" : score >= 650 ? "good" : score >= 450 ? "fair" : "needsWork";
+  const statusKey = `score.status.${status}`;
 
-  const chips: string[] = [];
-  if (sr >= 0.2) chips.push(`Saves ${Math.round(sr * 100)}%`);
-  if (debtRatio < 0.35 && nb.liab > 0) chips.push("Low debt");
-  if (liquid >= target) chips.push("Emergency fund");
-  if (goalPct >= 0.5) chips.push("Goals on track");
-  if (budgetPts >= 120 && display.budgets.length) chips.push("On budget");
-  if (chips.length === 0) chips.push(status);
+  const pct = Math.round(sr * 100);
+  const chips: ScoreChip[] = [];
+  if (sr >= 0.2) chips.push({ key: "score.chip.saves", params: { pct } });
+  if (debtRatio < 0.35 && nb.liab > 0) chips.push({ key: "score.chip.lowDebt" });
+  if (liquid >= target) chips.push({ key: "score.chip.emergencyFund" });
+  if (goalPct >= 0.5) chips.push({ key: "score.chip.goalsOnTrack" });
+  if (budgetPts >= 120 && display.budgets.length) chips.push({ key: "score.chip.onBudget" });
+  if (chips.length === 0) chips.push({ key: statusKey });
 
-  const explanation =
+  const explanationKey =
     score >= 800
-      ? `You're saving ${Math.round(sr * 100)}% of income and staying on budget.`
+      ? "score.explain.excellent"
       : score >= 650
-        ? `Solid progress — savings rate ${Math.round(sr * 100)}%.`
+        ? "score.explain.good"
         : score >= 450
-          ? "You're building momentum. Trim discretionary spend to lift your score."
+          ? "score.explain.fair"
           : income === 0
-            ? "Log this month's income and expenses to see your health score."
-            : "Push savings above 10% and pay down debt to raise your score.";
+            ? "score.explain.noIncome"
+            : "score.explain.needsWork";
 
-  return { score, status, explanation, chips };
+  return { score, status, statusKey, explanationKey, explanationParams: { pct }, chips };
 }
