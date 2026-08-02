@@ -1303,13 +1303,25 @@ export function bucketOf(iso: string): Bucket {
   return "Earlier";
 }
 
-export function formatTxDate(isoStr: string): string {
+export type DateLabels = { today: string; yesterday: string; locale: string };
+
+const DEFAULT_DATE_LABELS: DateLabels = {
+  today: "Today",
+  yesterday: "Yesterday",
+  locale: "en-US",
+};
+
+export function formatTxDate(isoStr: string, labels: DateLabels = DEFAULT_DATE_LABELS): string {
   const d = new Date(isoStr);
   const b = bucketOf(isoStr);
-  const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
-  if (b === "Today") return `Today · ${time}`;
-  if (b === "Yesterday") return `Yesterday · ${time}`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " · " + time;
+  const time = d.toLocaleTimeString(labels.locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  if (b === "Today") return `${labels.today} · ${time}`;
+  if (b === "Yesterday") return `${labels.yesterday} · ${time}`;
+  return d.toLocaleDateString(labels.locale, { month: "short", day: "numeric" }) + " · " + time;
 }
 
 export function groupByBucket(txs: Transaction[]): { bucket: Bucket; items: Transaction[] }[] {
