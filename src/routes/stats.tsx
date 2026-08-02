@@ -14,7 +14,7 @@ import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useCategories, useCategoryLookup } from "@/lib/categories";
-import { useCategoryName, useT, fmt } from "@/lib/i18n";
+import { useCategoryName, useT, fmt, useLocale } from "@/lib/i18n";
 import {
   useNova,
   cashflowByRange,
@@ -46,6 +46,7 @@ function StatsPage() {
   const categories = useCategories();
   const catName = useCategoryName();
   const tr = useT();
+  const locale = useLocale();
 
   const rangeTx = useMemo(
     () => filterTxsByRange(display.transactions, range),

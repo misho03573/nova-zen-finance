@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
 import { EmptyState } from "@/components/nova/EmptyState";
-import { useT, fmt } from "@/lib/i18n";
+import { useT, fmt, useLocale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -37,6 +37,7 @@ function GoalsPage() {
   const confirm = useConfirm();
   const hide = useHideBalances();
   const tr = useT();
+  const locale = useLocale();
   const goals = state.goals;
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target, 0) || 1;

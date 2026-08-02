@@ -20,7 +20,7 @@ import {
 } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
-import { useCategoryName, useT, fmt } from "@/lib/i18n";
+import { useCategoryName, useT, fmt, useDateLabels } from "@/lib/i18n";
 import {
   generateInsights,
   cashflowForecast,
@@ -51,6 +51,7 @@ function InsightsPage() {
   const categoryOf = useCategoryLookup();
   const catName = useCategoryName();
   const tr = useT();
+  const dateLabels = useDateLabels();
   const [query, setQuery] = useState("");
 
   const insights = useMemo(
