@@ -122,7 +122,26 @@ export type Liability = {
   balance: number; // amount owed, positive number
   apr?: number;
   minPayment?: number;
+  /**
+   * Native currency the balance is stored in. Legacy rows created before
+   * multi-currency liabilities have no value — they are migrated to
+   * {@link LEGACY_LIABILITY_CURRENCY} on hydrate.
+   */
+  currency?: CurrencyCode;
 };
+
+/**
+ * Documented fallback for liabilities persisted before the `currency` field
+ * existed. USD is the app's neutral FX base, which is exactly how those
+ * balances were previously interpreted by Net Worth — so migration is a
+ * no-op in value terms.
+ */
+export const LEGACY_LIABILITY_CURRENCY: CurrencyCode = "USD";
+
+/** Native currency of a liability (with legacy fallback). */
+export function liabilityCurrency(l: Liability): CurrencyCode {
+  return (l.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
+}
 
 export type Subscription = {
   id: string;
