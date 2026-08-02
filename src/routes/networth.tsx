@@ -208,13 +208,27 @@ function AssetTile({
   );
 }
 
-function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityType; balance: number; apr?: number; minPayment?: number }) => void }) {
+function AddLiability({
+  onAdd,
+  defaultCurrency,
+}: {
+  defaultCurrency: CurrencyCode;
+  onAdd: (l: {
+    name: string;
+    type: LiabilityType;
+    balance: number;
+    currency: CurrencyCode;
+    apr?: number;
+    minPayment?: number;
+  }) => void;
+}) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [type, setType] = useState<LiabilityType>("loan");
   const [balance, setBalance] = useState("");
   const [apr, setApr] = useState("");
+  const [cur, setCur] = useState<CurrencyCode>(defaultCurrency);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -253,6 +267,24 @@ function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityTyp
             <Input value={balance} onChange={(e) => setBalance(e.target.value)} inputMode="decimal" placeholder={t("nw.balancePlaceholder")} />
           </div>
           <div>
+            <Label>{t("nw.currency")}</Label>
+            <div className="mt-1 flex flex-wrap gap-2 text-xs">
+              {CURRENCIES.map((c) => (
+                <button
+                  key={c.code}
+                  onClick={() => setCur(c.code)}
+                  className={`rounded-full border px-3 py-1.5 ${
+                    cur === c.code
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {c.code}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
             <Label>{t("nw.apr")}</Label>
             <Input value={apr} onChange={(e) => setApr(e.target.value)} inputMode="decimal" placeholder={t("nw.aprPlaceholder")} />
           </div>
@@ -260,7 +292,7 @@ function AddLiability({ onAdd }: { onAdd: (l: { name: string; type: LiabilityTyp
             onClick={() => {
               const bal = parseFloat(balance);
               if (!name || !isFinite(bal)) return;
-              onAdd({ name, type, balance: bal, apr: parseFloat(apr) || undefined });
+              onAdd({ name, type, balance: bal, currency: cur, apr: parseFloat(apr) || undefined });
               setOpen(false);
               setName(""); setBalance(""); setApr("");
             }}
