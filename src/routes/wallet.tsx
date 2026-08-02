@@ -18,7 +18,7 @@ import {
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useCategoryLookup, useCategories } from "@/lib/categories";
-import { useCategoryName, useT, fmt } from "@/lib/i18n";
+import { useCategoryName, useT, fmt, useDateLabels } from "@/lib/i18n";
 import {
   useNova,
   groupByBucket,
@@ -226,7 +226,7 @@ function WalletPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{t.title}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {catName(cat.id, cat.name, cat.builtin)} · {formatTxDate(t.date)}
+                          {catName(cat.id, cat.name, cat.builtin)} · {formatTxDate(t.date, dateLabels)}
                         </p>
                       </div>
                       <span
