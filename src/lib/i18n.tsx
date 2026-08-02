@@ -3943,6 +3943,29 @@ export function fmt(template: string, values: Record<string, string | number>) {
   return template.replace(/\{(\w+)\}/g, (_, k) => (values[k] != null ? String(values[k]) : `{${k}}`));
 }
 
+const LOCALES: Record<string, string> = {
+  en: "en-US",
+  bg: "bg-BG",
+  de: "de-DE",
+  fr: "fr-FR",
+  es: "es-ES",
+};
+
+/** BCP-47 locale matching the user's selected language. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useLocale() {
+  const { state } = useNova();
+  return LOCALES[state.settings.language ?? "en"] ?? "en-US";
+}
+
+/** Localized labels for `formatTxDate`. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useDateLabels() {
+  const t = useT();
+  const locale = useLocale();
+  return { today: t("date.today"), yesterday: t("date.yesterday"), locale };
+}
+
 /**
  * Translate a category name. Built-in categories have `catName.<id>` keys;
  * user-created categories keep their literal name.
