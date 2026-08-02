@@ -437,19 +437,19 @@ function NetWorthCard({
   income,
   expenses,
   rate,
-  brand,
   gradient,
   hide,
+  breakdown,
 }: {
   netWorth: number;
   income: number;
   expenses: number;
   rate: number;
-  brand: string;
   gradient: string;
   hide?: boolean;
+  breakdown: ReturnType<typeof netWorthBreakdown>;
 }) {
-  const { format } = useCurrency();
+  const { format, currency } = useCurrency();
   const tr = useT();
   return (
     <div
@@ -459,9 +459,34 @@ function NetWorthCard({
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 animate-float-slow rounded-full bg-white/10 blur-3xl" />
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-widest text-white/70">{tr("home.netWorth")}</p>
-        <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/80">
-          {brand}
-        </span>
+        <Dialog>
+          <DialogTrigger asChild>
+            <button
+              aria-label={tr("nw.breakdown.open")}
+              className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/80 transition-colors hover:bg-white/10"
+            >
+              {tr("nw.allAccounts")} · {currency.code}
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-base">{tr("nw.breakdown.title")}</DialogTitle>
+            </DialogHeader>
+            <ul className="space-y-1 text-sm">
+              <BreakdownRow label={tr("nw.cash")} value={format(breakdown.cash)} />
+              <BreakdownRow label={tr("nw.bank")} value={format(breakdown.bank)} />
+              <BreakdownRow label={tr("nw.investments")} value={format(breakdown.invest)} />
+              <BreakdownRow label={tr("nw.crypto")} value={format(breakdown.crypto)} />
+              <BreakdownRow label={tr("nw.assets")} value={format(breakdown.assets)} strong />
+              <BreakdownRow
+                label={tr("nw.liabilities")}
+                value={format(-breakdown.liab)}
+                tone="negative"
+              />
+              <BreakdownRow label={tr("nw.final")} value={format(breakdown.net)} strong />
+            </ul>
+          </DialogContent>
+        </Dialog>
       </div>
       {hide ? (
         <span className="mt-2 block select-none text-4xl font-semibold tracking-tight">••••••</span>
