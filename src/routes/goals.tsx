@@ -101,7 +101,7 @@ function GoalsPage() {
         ) : null}
         {goals.map((g) => {
           const pct = Math.min(1, g.saved / g.target);
-          const eta = estimateGoalETA(g);
+          const eta = estimateGoalETA(g, { achieved: tr("goal.achieved"), locale });
           return (
             <article
               key={g.id}

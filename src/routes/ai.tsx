@@ -21,7 +21,10 @@ export const Route = createFileRoute("/ai")({
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
 function AIChat() {
-  const { state } = useNova();
+  const { state: rawState } = useNova();
+  // Aggregates must be currency-normalized before any cross-account math.
+  const state = useDisplayState();
+  void rawState;
   const { format, currency } = useCurrency();
   const tr = useT();
   const { fullName } = useAuth();

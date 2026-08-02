@@ -135,7 +135,7 @@ function InsightsPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{t.title}</p>
                         <p className="truncate text-[11px] text-muted-foreground">
-                          {formatTxDate(t.date)}
+                          {formatTxDate(t.date, dateLabels)}
                         </p>
                       </div>
                       <span

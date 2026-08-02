@@ -52,8 +52,8 @@ function StatsPage() {
     [display.transactions, range],
   );
   const cashflow = useMemo(
-    () => cashflowByRange(display.transactions, range),
-    [display.transactions, range],
+    () => cashflowByRange(display.transactions, range, locale),
+    [display.transactions, range, locale],
   );
   const income = rangeTx.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
   const expenses = rangeTx.filter((t) => t.amount < 0).reduce((s, t) => s - t.amount, 0);
