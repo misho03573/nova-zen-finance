@@ -3,6 +3,7 @@ import { useNova } from "@/lib/nova-store";
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  "date.earlier": "Earlier",
   "date.today": "Today",
   "date.yesterday": "Yesterday",
   "acct.type.cash": "Cash",
@@ -814,6 +815,7 @@ const en: Dict = {
 };
 
 const bg: Dict = {
+  "date.earlier": "По-рано",
   "date.today": "Днес",
   "date.yesterday": "Вчера",
   "acct.type.cash": "Кеш",
@@ -1588,6 +1590,7 @@ const bg: Dict = {
 };
 
 const de: Dict = {
+  "date.earlier": "Früher",
   "date.today": "Heute",
   "date.yesterday": "Gestern",
   "acct.type.cash": "Bargeld",
@@ -2368,6 +2371,7 @@ const de: Dict = {
 };
 
 const fr: Dict = {
+  "date.earlier": "Plus tôt",
   "date.today": "Aujourd'hui",
   "date.yesterday": "Hier",
   "acct.type.cash": "Espèces",
@@ -3148,6 +3152,7 @@ const fr: Dict = {
 };
 
 const es: Dict = {
+  "date.earlier": "Antes",
   "date.today": "Hoy",
   "date.yesterday": "Ayer",
   "acct.type.cash": "Efectivo",
