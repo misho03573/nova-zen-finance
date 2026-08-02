@@ -1010,7 +1010,11 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     [],
   );
   const updateAccount = useCallback((a: Account) => dispatch({ type: "updateAccount", account: a }), []);
-  const deleteAccount = useCallback((id: string) => dispatch({ type: "deleteAccount", id }), []);
+  const deleteAccount = useCallback(
+    (id: string, reassignTo?: string) => dispatch({ type: "deleteAccount", id, reassignTo }),
+    [],
+  );
+  const accountUsageOf = useCallback((id: string) => accountUsage(state, id), [state]);
   const addGoal = useCallback(
     (g: Omit<Goal, "id">) => dispatch({ type: "addGoal", goal: { ...g, id: rid("g") } }),
     [],
@@ -1135,6 +1139,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addAccount,
       updateAccount,
       deleteAccount,
+      accountUsageOf,
       addGoal,
       updateGoal,
       deleteGoal,
@@ -1176,6 +1181,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       addAccount,
       updateAccount,
       deleteAccount,
+      accountUsageOf,
       addGoal,
       updateGoal,
       deleteGoal,
