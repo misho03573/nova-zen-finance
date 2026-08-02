@@ -822,6 +822,17 @@ function reducer(state: NovaState, action: Action): NovaState {
 }
 
 /** Merge persisted user categories with any newly-added built-in defaults. */
+/**
+ * How many records reference an account. Used to block destructive deletes.
+ */
+export function accountUsage(state: NovaState, accountId: string) {
+  return {
+    transactions: state.transactions.filter((t) => t.accountId === accountId).length,
+    recurring: state.recurring.filter((r) => r.accountId === accountId).length,
+    subscriptions: state.subscriptions.filter((s) => s.accountId === accountId).length,
+  };
+}
+
 function mergeCategories(persisted?: UserCategory[]): UserCategory[] {
   if (!persisted || persisted.length === 0) return defaultCategories;
   const byId = new Map(persisted.map((c) => [c.id, c]));
