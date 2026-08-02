@@ -3,8 +3,14 @@ import { Landmark, Coins, TrendingUp, Bitcoin, Home, Car, CreditCard, Building2,
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
-import { useNova, netWorthBreakdown, useDisplayState, type LiabilityType } from "@/lib/nova-store";
-import { useCurrency } from "@/lib/currency";
+import {
+  useNova,
+  netWorthBreakdown,
+  useDisplayState,
+  liabilityCurrency,
+  type LiabilityType,
+} from "@/lib/nova-store";
+import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
@@ -33,14 +39,13 @@ export const Route = createFileRoute("/networth")({
 function NetWorthPage() {
   const { state, addLiability, deleteLiability } = useNova();
   const display = useDisplayState();
-  const { format } = useCurrency();
+  const { format, formatIn, currency } = useCurrency();
   const confirm = useConfirm();
   const hide = useHideBalances();
   const t = useT();
-  const b = useMemo(
-    () => netWorthBreakdown({ ...state, accounts: display.accounts }),
-    [state, display.accounts],
-  );
+  // Everything in `display` is already converted exactly once into the active
+  // display currency — accounts AND liabilities. Net = assets − liabilities.
+  const b = useMemo(() => netWorthBreakdown(display), [display]);
 
   // Build a smooth 12-month animated line from cashflow monthly net movement
   const points = useMemo(() => {
@@ -120,7 +125,10 @@ function NetWorthPage() {
       <section className="mt-8 px-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("nw.liabilities")}</h2>
-          <AddLiability onAdd={(l) => { addLiability(l); toast.success(t("nw.added")); }} />
+          <AddLiability
+            defaultCurrency={currency.code as CurrencyCode}
+            onAdd={(l) => { addLiability(l); toast.success(t("nw.added")); }}
+          />
         </div>
         {state.liabilities.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card/40 p-6 text-center">
@@ -141,7 +149,9 @@ function NetWorthPage() {
                     {l.minPayment != null ? ` · Min ${format(l.minPayment)}/mo` : ""}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm font-semibold text-destructive">−{maskAmount(hide, format(l.balance), "md")}</span>
+                <span className="shrink-0 text-sm font-semibold text-destructive">
+                  −{maskAmount(hide, formatIn(l.balance, liabilityCurrency(l)), "md")}
+                </span>
                 <button
                   onClick={async () => {
                     const ok = await confirm({
