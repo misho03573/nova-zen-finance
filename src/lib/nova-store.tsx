@@ -499,11 +499,26 @@ function reducer(state: NovaState, action: Action): NovaState {
               }
             : r,
         );
+        // Subscriptions billed to this account are re-denominated too, so a
+        // currency edit never leaves a linked charge in the old currency.
+        const subscriptions = state.subscriptions.map((s) =>
+          s.accountId === next.id
+            ? {
+                ...s,
+                amount: round(
+                  convertAmount(s.amount, (s.currency ?? prevCur) as CurrencyCode, nextCur),
+                  nextCur,
+                ),
+                currency: nextCur,
+              }
+            : s,
+        );
         return {
           ...state,
           accounts: state.accounts.map((a) => (a.id === next.id ? next : a)),
           transactions,
           recurring,
+          subscriptions,
         };
       }
       next.balance = round(next.balance, nextCur);
@@ -512,13 +527,49 @@ function reducer(state: NovaState, action: Action): NovaState {
         accounts: state.accounts.map((a) => (a.id === next.id ? next : a)),
       };
     }
-    case "deleteAccount":
+    case "deleteAccount": {
+      const victim = state.accounts.find((a) => a.id === action.id);
+      if (!victim) return state;
+      const usage = accountUsage(state, action.id);
+      const hasHistory = usage.transactions + usage.recurring + usage.subscriptions > 0;
+      // Never silently destroy financial history: linked records must be
+      // reassigned to another account first.
+      if (hasHistory && !action.reassignTo) return state;
+      if (!hasHistory) {
+        return { ...state, accounts: state.accounts.filter((a) => a.id !== action.id) };
+      }
+      const target = state.accounts.find((a) => a.id === action.reassignTo);
+      if (!target || target.id === action.id) return state;
+      const fromCur = accountCurrency(victim);
+      const toCur = accountCurrency(target);
+      const re = (amount: number, cur?: CurrencyCode) =>
+        round(convertAmount(amount, (cur ?? fromCur) as CurrencyCode, toCur), toCur);
+      const moved = state.transactions.filter((t) => t.accountId === action.id);
+      const movedTotal = moved.reduce((s, t) => s + re(t.amount, t.currency), 0);
       return {
         ...state,
-        accounts: state.accounts.filter((a) => a.id !== action.id),
-        transactions: state.transactions.filter((t) => t.accountId !== action.id),
-        recurring: state.recurring.filter((r) => r.accountId !== action.id),
+        accounts: state.accounts
+          .filter((a) => a.id !== action.id)
+          .map((a) =>
+            a.id === target.id ? { ...a, balance: round(a.balance + movedTotal, toCur) } : a,
+          ),
+        transactions: state.transactions.map((t) =>
+          t.accountId === action.id
+            ? { ...t, accountId: target.id, amount: re(t.amount, t.currency), currency: toCur }
+            : t,
+        ),
+        recurring: state.recurring.map((r) =>
+          r.accountId === action.id
+            ? { ...r, accountId: target.id, amount: re(r.amount, r.currency), currency: toCur }
+            : r,
+        ),
+        subscriptions: state.subscriptions.map((s) =>
+          s.accountId === action.id
+            ? { ...s, accountId: target.id, amount: re(s.amount, s.currency), currency: toCur }
+            : s,
+        ),
       };
+    }
     case "addGoal":
       return { ...state, goals: [...state.goals, action.goal] };
     case "updateGoal":
