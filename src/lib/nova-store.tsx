@@ -886,7 +886,9 @@ type Ctx = {
 const NovaContext = createContext<Ctx | null>(null);
 
 export function NovaProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, seed);
+  // Start empty. Demo seed is applied only for guests, inside the hydration
+  // effect below — an authenticated user must never see demo data.
+  const [state, dispatch] = useReducer(reducer, emptyState);
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const activeKeyRef = useRef<string>(keyFor(null));
