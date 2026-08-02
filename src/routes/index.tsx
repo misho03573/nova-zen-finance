@@ -352,7 +352,7 @@ function MiniCard({
 }
 
 function ScoreCard({ health }: { health: ScoreBreakdown }) {
-  const { score, status, explanation, chips } = health;
+  const { score, statusKey, explanationKey, explanationParams, chips } = health;
   const tr = useT();
   const max = 900;
   const pct = Math.min(1, score / 1000);
@@ -407,11 +407,15 @@ function ScoreCard({ health }: { health: ScoreBreakdown }) {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             {tr("home.financialHealth")}
           </p>
-          <p className="mt-1 text-lg font-semibold leading-tight text-foreground">{status}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{explanation}</p>
+          <p className="mt-1 text-lg font-semibold leading-tight text-foreground">
+            {tr(statusKey)}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {fmt(tr(explanationKey), explanationParams ?? {})}
+          </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {chips.map((c) => (
-              <Chip key={c}>{c}</Chip>
+              <Chip key={c.key}>{fmt(tr(c.key), c.params ?? {})}</Chip>
             ))}
           </div>
         </div>
