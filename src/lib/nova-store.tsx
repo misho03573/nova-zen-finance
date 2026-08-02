@@ -350,7 +350,7 @@ type Action =
   | { type: "deleteTransaction"; id: string }
   | { type: "addAccount"; account: Account }
   | { type: "updateAccount"; account: Account }
-  | { type: "deleteAccount"; id: string }
+  | { type: "deleteAccount"; id: string; reassignTo?: string }
   | { type: "addGoal"; goal: Goal }
   | { type: "updateGoal"; goal: Goal }
   | { type: "deleteGoal"; id: string }
@@ -388,7 +388,11 @@ function reducer(state: NovaState, action: Action): NovaState {
         ...emptyState,
         ...action.state,
         settings: { ...emptyState.settings, ...action.state.settings },
-        liabilities: action.state.liabilities ?? [],
+        // Migrate legacy liabilities that predate per-row currency.
+        liabilities: (action.state.liabilities ?? []).map((l) => ({
+          ...l,
+          currency: (l.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode,
+        })),
         subscriptions: action.state.subscriptions ?? [],
         automationRules: action.state.automationRules ?? [],
         categories: mergeCategories(action.state.categories),
