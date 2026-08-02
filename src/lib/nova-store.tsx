@@ -195,6 +195,11 @@ function isoAhead(daysAhead: number) {
   return d.toISOString();
 }
 
+/**
+ * DEMO DATA — guest mode only.
+ * Never hydrated for an authenticated user: signing up always starts from
+ * {@link emptyState}. See the hydration effect in `NovaProvider`.
+ */
 const seed: NovaState = {
   accounts: [
     {
@@ -303,9 +308,9 @@ const seed: NovaState = {
     language: "en",
   },
   liabilities: [
-    { id: "l1", name: "Student Loan", type: "loan", balance: 12400, apr: 4.5, minPayment: 220 },
-    { id: "l2", name: "Amex Platinum", type: "credit_card", balance: 1840, apr: 21.9, minPayment: 60 },
-    { id: "l3", name: "Mortgage", type: "mortgage", balance: 184000, apr: 3.2, minPayment: 1250 },
+    { id: "l1", name: "Student Loan", type: "loan", balance: 12400, apr: 4.5, minPayment: 220, currency: "USD" },
+    { id: "l2", name: "Amex Platinum", type: "credit_card", balance: 1840, apr: 21.9, minPayment: 60, currency: "USD" },
+    { id: "l3", name: "Mortgage", type: "mortgage", balance: 184000, apr: 3.2, minPayment: 1250, currency: "USD" },
   ],
   subscriptions: [
     { id: "s1", name: "Netflix", amount: 15.99, category: "entertainment", nextDate: isoAhead(6), color: "#E50914", emoji: "🎬" },
