@@ -97,7 +97,7 @@ function GoalsPage() {
           <EmptyState
             icon={<PiggyBank className="h-6 w-6" />}
             title={tr("goals.emptyTitle")}
-            description="Set a target — a trip, an emergency fund, a new laptop — and watch progress grow."
+            description={tr("goals.emptyDesc")}
           />
         ) : null}
         {goals.map((g) => {
