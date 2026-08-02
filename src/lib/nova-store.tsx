@@ -1385,7 +1385,11 @@ export function filterTxsByRange(txs: Transaction[], range: "week" | "month" | "
   return txs.filter((t) => new Date(t.date) >= start);
 }
 
-export function cashflowByRange(txs: Transaction[], range: "week" | "month" | "year") {
+export function cashflowByRange(
+  txs: Transaction[],
+  range: "week" | "month" | "year",
+  locale = "en-US",
+) {
   const now = new Date();
   if (range === "week") {
     const days = Array.from({ length: 7 }).map((_, i) => {
@@ -1395,7 +1399,7 @@ export function cashflowByRange(txs: Transaction[], range: "week" | "month" | "y
       return d;
     });
     return days.map((d) => {
-      const label = d.toLocaleDateString("en-US", { weekday: "short" });
+      const label = d.toLocaleDateString(locale, { weekday: "short" });
       let income = 0;
       let expense = 0;
       for (const t of txs) {
@@ -1426,7 +1430,7 @@ export function cashflowByRange(txs: Transaction[], range: "week" | "month" | "y
     return buckets;
   }
   const months = Array.from({ length: 12 }).map((_, i) => ({
-    m: new Date(now.getFullYear(), i, 1).toLocaleDateString("en-US", { month: "short" }),
+    m: new Date(now.getFullYear(), i, 1).toLocaleDateString(locale, { month: "short" }),
     income: 0,
     expense: 0,
   }));
@@ -1440,18 +1444,31 @@ export function cashflowByRange(txs: Transaction[], range: "week" | "month" | "y
   return months;
 }
 
-export function estimateGoalETA(goal: Goal): string {
-  if (goal.saved >= goal.target) return "Achieved 🎉";
+export function estimateGoalETA(
+  goal: Goal,
+  labels: { achieved: string; locale: string } = { achieved: "Achieved 🎉", locale: "en-US" },
+): string {
+  if (goal.saved >= goal.target) return labels.achieved;
   const monthly = goal.monthly && goal.monthly > 0 ? goal.monthly : 0;
   if (!monthly) return goal.eta;
   const remaining = goal.target - goal.saved;
   const months = Math.ceil(remaining / monthly);
   const d = new Date();
   d.setMonth(d.getMonth() + months);
-  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  return d.toLocaleDateString(labels.locale, { month: "short", year: "numeric" });
 }
 
-export function accountTypeLabel(t: AccountType): string {
+/** i18n key for an account type, e.g. `acct.type.bank`. */
+export function accountTypeKey(t: AccountType): string {
+  return `acct.type.${t}`;
+}
+
+export function accountTypeLabel(t: AccountType, tr?: (k: string) => string): string {
+  if (tr) {
+    const key = accountTypeKey(t);
+    const v = tr(key);
+    if (v !== key) return v;
+  }
   return { cash: "Cash", bank: "Bank", revolut: "Revolut", trading: "Trading", crypto: "Crypto" }[t];
 }
 
