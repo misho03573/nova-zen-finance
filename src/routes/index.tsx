@@ -518,6 +518,33 @@ function NetWorthCard({
 }
 
 function MiniStat({ label, value, tone }: { label: string; value: string; tone: "up" | "down" }) {
+  return <MiniStatInner label={label} value={value} tone={tone} />;
+}
+
+function BreakdownRow({
+  label,
+  value,
+  strong,
+  tone,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  tone?: "negative";
+}) {
+  return (
+    <li
+      className={`flex items-center justify-between rounded-2xl px-3 py-2 ${
+        strong ? "bg-muted/50 font-semibold" : ""
+      }`}
+    >
+      <span className="text-muted-foreground">{label}</span>
+      <span className={tone === "negative" ? "text-destructive" : ""}>{value}</span>
+    </li>
+  );
+}
+
+function MiniStatInner({ label, value, tone }: { label: string; value: string; tone: "up" | "down" }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur">
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-white/70">
