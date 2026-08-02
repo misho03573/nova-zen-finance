@@ -74,6 +74,7 @@ function WalletPage() {
   const categories = useCategories();
   const catName = useCategoryName();
   const tr = useT();
+  const dateLabels = useDateLabels();
   const [query, setQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -199,7 +200,11 @@ function WalletPage() {
             <div key={group.bucket} className="animate-fade-in">
               <div className="mb-2 flex items-baseline justify-between px-1">
                 <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  {group.bucket}
+                  {group.bucket === "Today"
+                    ? tr("date.today")
+                    : group.bucket === "Yesterday"
+                      ? tr("date.yesterday")
+                      : tr("date.earlier")}
                 </h3>
                 <span className="text-[11px] text-muted-foreground">
                   {group.items.length} {group.items.length === 1 ? tr("wallet.item") : tr("wallet.items")}
