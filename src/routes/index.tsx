@@ -14,7 +14,14 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
 import { useCategoryLookup } from "@/lib/categories";
-import { useCategoryName, useT } from "@/lib/i18n";
+import { useCategoryName, useT, useDateLabels, useLocale, fmt } from "@/lib/i18n";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   useNova,
   monthlyTotals,
@@ -58,19 +65,54 @@ function Home() {
   const categoryOf = useCategoryLookup();
   const catName = useCategoryName();
   const tr = useT();
+  const dateLabels = useDateLabels();
+  const locale = useLocale();
   void catName;
   const hide = !!state.settings.hideBalances;
-  const netWorth = netWorthBreakdown(display).net;
+  const nw = netWorthBreakdown(display);
+  const netWorth = nw.net;
   const { income: monthlyIncome, expenses: monthlyExpenses } = monthlyTotals(
     display.transactions,
   );
   const rate = savingsRate(monthlyIncome, monthlyExpenses);
   const health = computeFinancialScore(display);
-  const week = cashflowByRange(display.transactions, "week");
+  const week = cashflowByRange(display.transactions, "week", locale);
   const spentWeek = week.reduce((s, d) => s + d.expense, 0);
-  const upcoming = [...state.recurring]
-    .sort((a, b) => +new Date(a.nextDate) - +new Date(b.nextDate))
-    .slice(0, 3);
+  // Upcoming = recurring transactions + active subscriptions, de-duplicated
+  // by name so a subscription mirrored as a recurring item appears once.
+  const upcoming = (() => {
+    const norm = (s: string) => s.trim().toLowerCase();
+    const seen = new Set(state.recurring.map((r) => norm(r.title)));
+    const items = state.recurring.map((r) => ({
+      id: r.id,
+      title: r.title,
+      category: r.category,
+      nextDate: r.nextDate,
+      amount: r.amount,
+      currency:
+        r.currency ?? state.accounts.find((a) => a.id === r.accountId)?.currency ?? "USD",
+      meta: tr(`add.recurring.${r.frequency}`),
+    }));
+    for (const s of state.subscriptions) {
+      if ((s.status ?? "active") !== "active") continue;
+      const key = norm(s.merchant || s.name);
+      if (seen.has(key) || seen.has(norm(s.name))) continue;
+      seen.add(key);
+      items.push({
+        id: s.id,
+        title: s.name,
+        category: s.category,
+        nextDate: s.nextDate,
+        amount: -Math.abs(s.amount),
+        currency:
+          s.currency ?? state.accounts.find((a) => a.id === s.accountId)?.currency ?? "USD",
+        meta: tr("home.upcoming.subscription"),
+      });
+    }
+    return items
+      .sort((a, b) => +new Date(a.nextDate) - +new Date(b.nextDate))
+      .slice(0, 3);
+  })();
   const recent = [...state.transactions]
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
     .slice(0, 4);
@@ -118,9 +160,9 @@ function Home() {
           income={monthlyIncome}
           expenses={monthlyExpenses}
           rate={rate}
-          brand={primaryAccount?.brand ?? "Visa"}
           gradient={primaryAccount?.gradient ?? "var(--gradient-wallet)"}
           hide={hide}
+          breakdown={nw}
         />
       </section>
 
@@ -228,15 +270,11 @@ function Home() {
                     <p className="truncate text-sm font-medium">{r.title}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       <CalendarClock className="mr-1 inline h-3 w-3" />
-                      {tr("home.in")} {days} {days === 1 ? tr("home.day") : tr("home.days")} · {r.frequency}
+                      {tr("home.in")} {days} {days === 1 ? tr("home.day") : tr("home.days")} · {r.meta}
                     </p>
                   </div>
                   <span className="shrink-0 text-sm font-semibold">
-                    {formatIn(
-                      r.amount,
-                      r.currency ??
-                        (state.accounts.find((a) => a.id === r.accountId)?.currency ?? "USD"),
-                    )}
+                    {formatIn(r.amount, r.currency)}
                   </span>
                 </li>
               );
@@ -272,7 +310,7 @@ function Home() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{t.title}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {formatTxDate(t.date)}
+                    {formatTxDate(t.date, dateLabels)}
                   </p>
                 </div>
                 <span
