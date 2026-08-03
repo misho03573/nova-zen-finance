@@ -535,7 +535,7 @@ function reducer(state: NovaState, action: Action): NovaState {
       // Never silently destroy financial history: linked records must be
       // reassigned to another account first.
       if (hasHistory && !action.reassignTo) return state;
-      if (!hasHistory) {
+      if (!hasHistory && !action.reassignTo) {
         return { ...state, accounts: state.accounts.filter((a) => a.id !== action.id) };
       }
       const target = state.accounts.find((a) => a.id === action.reassignTo);
