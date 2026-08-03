@@ -17,7 +17,7 @@ import {
   Languages,
   Sparkles,
   LogOut,
-  UserCircle, Wand2 } from "lucide-react";
+  UserCircle, Wand2, Repeat, TrendingUp, Zap } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { Tag } from "lucide-react";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -332,6 +332,45 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.data")}>
+          <Link
+            to="/subscriptions"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Repeat className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("subs.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("subs.subtitle")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/networth"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <TrendingUp className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("nw.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("nw.subtitle")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/automation"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Zap className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("auto.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("auto.subtitle")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
           <Link
             to="/categories"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
