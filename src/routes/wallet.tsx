@@ -314,6 +314,10 @@ function AccountCard({ account }: { account: Account }) {
   const usage = accountUsageOf(account.id);
   const linked = usage.transactions + usage.recurring + usage.subscriptions;
   const others = state.accounts.filter((a) => a.id !== account.id);
+  // A non-zero balance is financial value: deleting it outright would change
+  // Net Worth, so it must be moved to another account too.
+  const hasBalance = Math.abs(account.balance) > 0.005;
+  const needsMove = linked > 0 || hasBalance;
   const [reassignOpen, setReassignOpen] = useState(false);
   const [target, setTarget] = useState<string>(others[0]?.id ?? "");
   return (
@@ -344,7 +348,7 @@ function AccountCard({ account }: { account: Account }) {
           <button
             aria-label={tr("wallet.deleteAccount")}
             onClick={async () => {
-              if (linked > 0) {
+              if (needsMove) {
                 if (others.length === 0) {
                   toast.error(tr("wallet.delete.noTarget"));
                   return;
@@ -379,6 +383,13 @@ function AccountCard({ account }: { account: Account }) {
           <p className="text-sm text-muted-foreground">
             {fmt(tr("wallet.delete.blocked.desc"), { count: linked })}
           </p>
+          {hasBalance ? (
+            <p className="text-sm text-muted-foreground">
+              {fmt(tr("wallet.delete.movesBalance"), {
+                amount: formatIn(account.balance, accountCurrency(account)),
+              })}
+            </p>
+          ) : null}
           <div className="space-y-2">
             <Label>{tr("wallet.delete.reassign")}</Label>
             <div className="flex flex-wrap gap-2">

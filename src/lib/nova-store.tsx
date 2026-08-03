@@ -535,7 +535,7 @@ function reducer(state: NovaState, action: Action): NovaState {
       // Never silently destroy financial history: linked records must be
       // reassigned to another account first.
       if (hasHistory && !action.reassignTo) return state;
-      if (!hasHistory) {
+      if (!hasHistory && !action.reassignTo) {
         return { ...state, accounts: state.accounts.filter((a) => a.id !== action.id) };
       }
       const target = state.accounts.find((a) => a.id === action.reassignTo);
@@ -544,14 +544,17 @@ function reducer(state: NovaState, action: Action): NovaState {
       const toCur = accountCurrency(target);
       const re = (amount: number, cur?: CurrencyCode) =>
         round(convertAmount(amount, (cur ?? fromCur) as CurrencyCode, toCur), toCur);
-      const moved = state.transactions.filter((t) => t.accountId === action.id);
-      const movedTotal = moved.reduce((s, t) => s + re(t.amount, t.currency), 0);
+      // The account's CURRENT balance is the single source of truth for the
+      // value being moved — transaction history is incomplete (opening
+      // balances, imports, pre-history adjustments) and summing it would
+      // silently change Net Worth. Convert exactly once, here.
+      const movedBalance = round(convertAmount(victim.balance, fromCur, toCur), toCur);
       return {
         ...state,
         accounts: state.accounts
           .filter((a) => a.id !== action.id)
           .map((a) =>
-            a.id === target.id ? { ...a, balance: round(a.balance + movedTotal, toCur) } : a,
+            a.id === target.id ? { ...a, balance: round(a.balance + movedBalance, toCur) } : a,
           ),
         transactions: state.transactions.map((t) =>
           t.accountId === action.id
