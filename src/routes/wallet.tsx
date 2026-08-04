@@ -29,6 +29,7 @@ import {
   accountCurrency,
   txCurrency,
 } from "@/lib/nova-store";
+import type { Transaction } from "@/lib/nova-store";
 import { parseSearchQuery } from "@/lib/insights";
 import { useCurrency, CURRENCIES, convertAmount, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -250,6 +251,7 @@ function WalletPage() {
                       >
                         <Wand2 className="h-3.5 w-3.5" />
                       </Link>
+                      <EditTxDialog tx={t} />
                       <button
                         onClick={async () => {
                           const ok = await confirm({
@@ -305,6 +307,186 @@ function Chip({
 }
 
 function AccountCard({ account }: { account: Account }) {
+  return <AccountCardInner account={account} />;
+}
+
+function EditTxDialog({ tx }: { tx: Transaction }) {
+  const { state, updateTransaction } = useNova();
+  const categories = useCategories();
+  const catName = useCategoryName();
+  const tr = useT();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(tx.title);
+  const [amount, setAmount] = useState(String(Math.abs(tx.amount)));
+  const [isIncome, setIsIncome] = useState(tx.amount > 0);
+  const [category, setCategory] = useState(tx.category);
+  const [accountId, setAccountId] = useState(tx.accountId);
+  const [date, setDate] = useState(tx.date.slice(0, 10));
+  const [note, setNote] = useState(tx.note ?? "");
+
+  function reset() {
+    setTitle(tx.title);
+    setAmount(String(Math.abs(tx.amount)));
+    setIsIncome(tx.amount > 0);
+    setCategory(tx.category);
+    setAccountId(tx.accountId);
+    setDate(tx.date.slice(0, 10));
+    setNote(tx.note ?? "");
+  }
+
+  function save() {
+    const abs = Math.abs(Number(amount));
+    if (!title.trim() || !Number.isFinite(abs) || abs === 0) {
+      toast.error(tr("wallet.editTx.invalid"));
+      return;
+    }
+    updateTransaction({
+      ...tx,
+      title: title.trim(),
+      amount: isIncome ? abs : -abs,
+      category,
+      accountId,
+      date: new Date(`${date}T12:00:00`).toISOString(),
+      note: note.trim() || undefined,
+      // A hand-picked category must never be overwritten by smart rules.
+      categoryLocked: category !== tx.category ? true : tx.categoryLocked,
+    });
+    setOpen(false);
+    toast.success(tr("wallet.txUpdated"));
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (v) reset();
+        setOpen(v);
+      }}
+    >
+      <DialogTrigger asChild>
+        <button
+          aria-label={tr("wallet.editTx")}
+          title={tr("wallet.editTx")}
+          className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{tr("wallet.editTx")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            {([false, true] as const).map((inc) => (
+              <button
+                key={String(inc)}
+                onClick={() => setIsIncome(inc)}
+                className={cn(
+                  "rounded-2xl border px-3 py-2 text-xs font-semibold transition-colors",
+                  isIncome === inc
+                    ? "border-primary/60 bg-primary/15 text-primary"
+                    : "border-border bg-card/60 text-muted-foreground",
+                )}
+              >
+                {inc ? tr("add.type.income") : tr("add.type.expense")}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`tx-title-${tx.id}`}>{tr("wallet.tx.name")}</Label>
+            <Input
+              id={`tx-title-${tx.id}`}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label htmlFor={`tx-amount-${tx.id}`}>{tr("add.amount")}</Label>
+              <Input
+                id={`tx-amount-${tx.id}`}
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`tx-date-${tx.id}`}>{tr("wallet.tx.date")}</Label>
+              <Input
+                id={`tx-date-${tx.id}`}
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>{tr("wallet.tx.account")}</Label>
+            <div className="flex flex-wrap gap-2">
+              {state.accounts.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setAccountId(a.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    accountId === a.id
+                      ? "border-primary/60 bg-primary/15 text-primary"
+                      : "border-border bg-card/60 text-muted-foreground",
+                  )}
+                >
+                  {a.name} · {accountCurrency(a)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>{tr("wallet.tx.category")}</Label>
+            <div className="flex max-h-28 flex-wrap gap-2 overflow-y-auto">
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setCategory(c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    category === c.id
+                      ? "border-primary/60 bg-primary/15 text-primary"
+                      : "border-border bg-card/60 text-muted-foreground",
+                  )}
+                >
+                  {catName(c.id, c.name, c.builtin)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`tx-note-${tx.id}`}>{tr("wallet.tx.note")}</Label>
+            <Input
+              id={`tx-note-${tx.id}`}
+              value={note}
+              placeholder={tr("add.note.placeholder")}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+          {accountId !== tx.accountId ? (
+            <p className="text-xs text-muted-foreground">{tr("wallet.editTx.fxNote")}</p>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <button
+            onClick={save}
+            className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            {tr("wallet.saveChanges")}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AccountCardInner({ account }: { account: Account }) {
   const { formatIn } = useCurrency();
   const { state, deleteAccount, accountUsageOf } = useNova();
   const confirm = useConfirm();
