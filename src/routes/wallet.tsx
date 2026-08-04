@@ -29,6 +29,7 @@ import {
   accountCurrency,
   txCurrency,
 } from "@/lib/nova-store";
+import type { Transaction } from "@/lib/nova-store";
 import { parseSearchQuery } from "@/lib/insights";
 import { useCurrency, CURRENCIES, convertAmount, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -250,6 +251,7 @@ function WalletPage() {
                       >
                         <Wand2 className="h-3.5 w-3.5" />
                       </Link>
+                      <EditTxDialog tx={t} />
                       <button
                         onClick={async () => {
                           const ok = await confirm({
