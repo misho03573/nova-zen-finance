@@ -247,7 +247,8 @@ function StatsPage() {
             {state.budgets.map((b) => {
               const cat = categoryOf(b.category);
               const spent = catSpend[b.category] ?? 0;
-              const pct = Math.min(1.2, spent / b.limit);
+              const limitDisp = toDisplay(b.limit);
+              const pct = Math.min(1.2, limitDisp > 0 ? spent / limitDisp : 0);
               const near = pct >= 0.8 && pct < 1;
               const over = pct >= 1;
               return (
@@ -270,7 +271,7 @@ function StatsPage() {
                       <div className="flex items-baseline justify-between">
                         <p className="truncate text-sm font-semibold">{catName(cat.id, cat.name, cat.builtin)}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(spent)} <span className="opacity-60">/ {format(b.limit)}</span>
+                          {format(spent)} <span className="opacity-60">/ {format(limitDisp)}</span>
                         </p>
                       </div>
                       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
