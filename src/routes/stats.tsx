@@ -85,7 +85,7 @@ function StatsPage() {
       title: tr("stats.budget.deleteTitle"),
       description: tr("stats.budget.deleteDesc"),
       confirmLabel: tr("common.delete"),
-      cancelLabel: tr("common.cancel"),
+      cancelLabel: tr("action.cancel"),
       destructive: true,
     });
     if (ok) deleteBudget(id);
@@ -412,7 +412,7 @@ function StatsPage() {
               className="w-full rounded-full px-4 py-2.5 text-sm font-semibold text-primary-foreground"
               style={{ background: "var(--gradient-primary)" }}
             >
-              {tr("common.save")}
+              {tr("action.save")}
             </button>
           </DialogFooter>
         </DialogContent>
