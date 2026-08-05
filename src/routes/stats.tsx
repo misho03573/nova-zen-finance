@@ -33,7 +33,7 @@ import {
   monthlySpendByCategory,
   useDisplayState,
 } from "@/lib/nova-store";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, convertAmount } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 type Range = "week" | "month" | "year";
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/stats")({
 });
 
 function StatsPage() {
-  const { format } = useCurrency();
+  const { format, currency } = useCurrency();
   const { state, setBudget, deleteBudget } = useNova();
   const display = useDisplayState();
   const [range, setRange] = useState<Range>("month");
@@ -63,9 +63,13 @@ function StatsPage() {
   const [budgetCat, setBudgetCat] = useState<string>("");
   const [budgetLimit, setBudgetLimit] = useState("");
 
+  // Budget limits are stored in the USD base unit so they stay stable when the
+  // display currency changes; convert on read and on write.
+  const toDisplay = (usd: number) => convertAmount(usd, "USD", currency.code);
+
   const openBudget = (category?: string, limit?: number) => {
     setBudgetCat(category ?? categories[0]?.id ?? "");
-    setBudgetLimit(limit != null ? String(limit) : "");
+    setBudgetLimit(limit != null ? toDisplay(limit).toFixed(2) : "");
     setBudgetOpen(true);
   };
 
@@ -75,7 +79,7 @@ function StatsPage() {
       toast.error(tr("stats.budget.invalid"));
       return;
     }
-    setBudget(budgetCat, value);
+    setBudget(budgetCat, convertAmount(value, currency.code, "USD"));
     setBudgetOpen(false);
     toast.success(tr("stats.budget.saved"));
   };
