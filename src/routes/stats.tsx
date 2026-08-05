@@ -10,9 +10,20 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
-import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useCategories, useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, fmt, useLocale } from "@/lib/i18n";
 import {
@@ -39,7 +50,7 @@ export const Route = createFileRoute("/stats")({
 
 function StatsPage() {
   const { format } = useCurrency();
-  const { state } = useNova();
+  const { state, setBudget, deleteBudget } = useNova();
   const display = useDisplayState();
   const [range, setRange] = useState<Range>("month");
   const categoryOf = useCategoryLookup();
@@ -47,6 +58,38 @@ function StatsPage() {
   const catName = useCategoryName();
   const tr = useT();
   const locale = useLocale();
+  const confirm = useConfirm();
+  const [budgetOpen, setBudgetOpen] = useState(false);
+  const [budgetCat, setBudgetCat] = useState<string>("");
+  const [budgetLimit, setBudgetLimit] = useState("");
+
+  const openBudget = (category?: string, limit?: number) => {
+    setBudgetCat(category ?? categories[0]?.id ?? "");
+    setBudgetLimit(limit != null ? String(limit) : "");
+    setBudgetOpen(true);
+  };
+
+  const saveBudget = () => {
+    const value = Number(budgetLimit);
+    if (!budgetCat || !Number.isFinite(value) || value <= 0) {
+      toast.error(tr("stats.budget.invalid"));
+      return;
+    }
+    setBudget(budgetCat, value);
+    setBudgetOpen(false);
+    toast.success(tr("stats.budget.saved"));
+  };
+
+  const removeBudget = async (id: string) => {
+    const ok = await confirm({
+      title: tr("stats.budget.deleteTitle"),
+      description: tr("stats.budget.deleteDesc"),
+      confirmLabel: tr("common.delete"),
+      cancelLabel: tr("common.cancel"),
+      destructive: true,
+    });
+    if (ok) deleteBudget(id);
+  };
 
   const rangeTx = useMemo(
     () => filterTxsByRange(display.transactions, range),
@@ -180,7 +223,16 @@ function StatsPage() {
       </section>
 
       <section className="mt-6 px-5">
-        <h2 className="mb-3 text-sm font-semibold">{tr("stats.monthlyBudgets")}</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">{tr("stats.monthlyBudgets")}</h2>
+          <button
+            onClick={() => openBudget()}
+            className="flex items-center gap-1 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs font-medium"
+          >
+            <Plus className="h-3 w-3" />
+            {tr("stats.budget.add")}
+          </button>
+        </div>
         {state.budgets.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card/40 p-5 text-center">
             <p className="text-sm font-semibold">{tr("stats.noBudgets")}</p>
@@ -206,7 +258,11 @@ function StatsPage() {
                     >
                       <cat.icon className="h-4 w-4" style={{ color: cat.color }} />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <button
+                      onClick={() => openBudget(b.category, b.limit)}
+                      className="min-w-0 flex-1 text-left"
+                      aria-label={tr("stats.budget.edit")}
+                    >
                       <div className="flex items-baseline justify-between">
                         <p className="truncate text-sm font-semibold">{catName(cat.id, cat.name, cat.builtin)}</p>
                         <p className="text-xs text-muted-foreground">
@@ -226,7 +282,14 @@ function StatsPage() {
                           }}
                         />
                       </div>
-                    </div>
+                    </button>
+                    <button
+                      onClick={() => removeBudget(b.id)}
+                      aria-label={tr("stats.budget.delete")}
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-foreground"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                   {near || over ? (
                     <p className="mt-2 flex items-center gap-1 text-[11px] font-medium text-warning">
@@ -304,6 +367,56 @@ function StatsPage() {
           </p>
         </div>
       </section>
+
+      <Dialog open={budgetOpen} onOpenChange={setBudgetOpen}>
+        <DialogContent className="max-w-sm rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>{tr("stats.budget.title")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">{tr("stats.budget.category")}</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {categories.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setBudgetCat(c.id)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-xs font-medium",
+                      budgetCat === c.id
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border text-muted-foreground",
+                    )}
+                  >
+                    {catName(c.id, c.name, c.builtin)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs" htmlFor="budget-limit">
+                {tr("stats.budget.limit")}
+              </Label>
+              <Input
+                id="budget-limit"
+                inputMode="decimal"
+                value={budgetLimit}
+                onChange={(e) => setBudgetLimit(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={saveBudget}
+              className="w-full rounded-full px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+              style={{ background: "var(--gradient-primary)" }}
+            >
+              {tr("common.save")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
