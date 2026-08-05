@@ -17,8 +17,9 @@ import {
   useNova,
   totalBalance,
   formatTxDate,
+  useDisplayState,
 } from "@/lib/nova-store";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, convertAmount } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, fmt, useDateLabels } from "@/lib/i18n";
 import {
@@ -47,7 +48,8 @@ export const Route = createFileRoute("/insights")({
 
 function InsightsPage() {
   const { state, setBudget } = useNova();
-  const { format } = useCurrency();
+  const { format, currency } = useCurrency();
+  const display = useDisplayState();
   const categoryOf = useCategoryLookup();
   const catName = useCategoryName();
   const tr = useT();
@@ -230,7 +232,8 @@ function InsightsPage() {
         <ul className="mt-3 space-y-2">
           {state.budgets.map((b) => {
             const cat = categoryOf(b.category);
-            const rec = recommendBudget(state.transactions, b.category);
+            const rec = recommendBudget(display.transactions, b.category);
+            const limitDisp = convertAmount(b.limit, "USD", currency.code);
             const Icon = cat.icon;
             return (
               <li
@@ -246,12 +249,12 @@ function InsightsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{catName(cat.id, cat.name, cat.builtin)}</p>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    {fmt(tr("ins.currentSuggested"), { cur: format(b.limit), sug: rec ? format(rec) : "—" })}
+                    {fmt(tr("ins.currentSuggested"), { cur: format(limitDisp), sug: rec ? format(rec) : "—" })}
                   </p>
                 </div>
-                {rec > 0 && rec !== b.limit ? (
+                {rec > 0 && Math.abs(rec - limitDisp) > 0.5 ? (
                   <button
-                    onClick={() => setBudget(b.category, rec)}
+                    onClick={() => setBudget(b.category, convertAmount(rec, currency.code, "USD"))}
                     className="rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/25"
                   >
                     {tr("ins.apply")}
@@ -337,7 +340,8 @@ function ForecastCard({
 }: {
   forecast: { today: number; points: { label: string; days: number; value: number; confidence: number }[] };
 }) {
-  const { format } = useCurrency();
+  const { format, currency } = useCurrency();
+  const display = useDisplayState();
   const tr = useT();
   const values = [forecast.today, ...forecast.points.map((p) => p.value)];
   const min = Math.min(...values);
