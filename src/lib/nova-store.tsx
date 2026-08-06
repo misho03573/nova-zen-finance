@@ -362,7 +362,7 @@ type Action =
   | { type: "updateGoal"; goal: Goal }
   | { type: "deleteGoal"; id: string }
   | { type: "contributeGoal"; id: string; amount: number }
-  | { type: "setBudget"; category: string; limit: number }
+  | { type: "setBudget"; category: string; limit: number; currency: CurrencyCode }
   | { type: "deleteBudget"; id: string }
   | { type: "addRecurring"; rec: Recurring }
   | { type: "deleteRecurring"; id: string }
@@ -602,7 +602,9 @@ function reducer(state: NovaState, action: Action): NovaState {
         return {
           ...state,
           budgets: state.budgets.map((b) =>
-            b.category === action.category ? { ...b, limit: action.limit } : b,
+            b.category === action.category
+              ? { ...b, limit: action.limit, currency: action.currency }
+              : b,
           ),
         };
       }
@@ -610,7 +612,12 @@ function reducer(state: NovaState, action: Action): NovaState {
         ...state,
         budgets: [
           ...state.budgets,
-          { id: `b_${Date.now()}`, category: action.category, limit: action.limit },
+          {
+            id: `b_${Date.now()}`,
+            category: action.category,
+            limit: action.limit,
+            currency: action.currency,
+          },
         ],
       };
     }
@@ -863,7 +870,7 @@ type Ctx = {
   updateGoal: (g: Goal) => void;
   deleteGoal: (id: string) => void;
   contributeGoal: (id: string, amount: number) => void;
-  setBudget: (category: string, limit: number) => void;
+  setBudget: (category: string, limit: number, currency?: CurrencyCode) => void;
   deleteBudget: (id: string) => void;
   addRecurring: (r: Omit<Recurring, "id">) => void;
   deleteRecurring: (id: string) => void;
@@ -1038,7 +1045,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     [],
   );
   const setBudget = useCallback(
-    (category: string, limit: number) => dispatch({ type: "setBudget", category, limit }),
+    (category: string, limit: number, currency: CurrencyCode = "USD") =>
+      dispatch({ type: "setBudget", category, limit, currency }),
     [],
   );
   const deleteBudget = useCallback((id: string) => dispatch({ type: "deleteBudget", id }), []);
@@ -1294,6 +1302,14 @@ export function useDisplayState() {
       subscriptions: state.subscriptions.map((s) => ({
         ...s,
         amount: conv(s.amount, s.currency ?? accCur.get(s.accountId ?? "") ?? "USD"),
+        currency: to,
+      })),
+      // Budget limits carry a native currency and are converted exactly once
+      // here, so warnings, the health score and Insights all compare like
+      // with like against converted spend.
+      budgets: state.budgets.map((b) => ({
+        ...b,
+        limit: conv(b.limit, budgetCurrency(b)),
         currency: to,
       })),
     };
