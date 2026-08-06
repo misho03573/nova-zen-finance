@@ -19,7 +19,7 @@ import {
   formatTxDate,
   useDisplayState,
 } from "@/lib/nova-store";
-import { useCurrency, convertAmount } from "@/lib/currency";
+import { useCurrency } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, fmt, useDateLabels } from "@/lib/i18n";
 import {
@@ -69,8 +69,8 @@ function InsightsPage() {
     [state.transactions, state.goals],
   );
   const alerts = useMemo(
-    () => computeAlerts(state.recurring, state.budgets, state.transactions),
-    [state.recurring, state.budgets, state.transactions],
+    () => computeAlerts(display.recurring, display.budgets, display.transactions),
+    [display.recurring, display.budgets, display.transactions],
   );
 
   const searchResults = useMemo(() => {
@@ -230,10 +230,10 @@ function InsightsPage() {
           {tr("ins.smartBudgetsDesc")}
         </p>
         <ul className="mt-3 space-y-2">
-          {state.budgets.map((b) => {
+          {display.budgets.map((b) => {
             const cat = categoryOf(b.category);
             const rec = recommendBudget(display.transactions, b.category);
-            const limitDisp = convertAmount(b.limit, "USD", currency.code);
+            const limitDisp = b.limit;
             const Icon = cat.icon;
             return (
               <li
@@ -254,7 +254,7 @@ function InsightsPage() {
                 </div>
                 {rec > 0 && Math.abs(rec - limitDisp) > 0.5 ? (
                   <button
-                    onClick={() => setBudget(b.category, convertAmount(rec, currency.code, "USD"))}
+                    onClick={() => setBudget(b.category, rec, currency.code)}
                     className="rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/25"
                   >
                     {tr("ins.apply")}
