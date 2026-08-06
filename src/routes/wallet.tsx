@@ -30,7 +30,14 @@ import {
   txCurrency,
 } from "@/lib/nova-store";
 import type { Transaction } from "@/lib/nova-store";
-import { parseSearchQuery } from "@/lib/insights";
+import { useAuth } from "@/lib/auth";
+import { TxFilterPanel, Highlight } from "@/components/nova/TxFilterPanel";
+import {
+  useTxFilters,
+  matchesFilters,
+  filtersActive,
+  highlightParts,
+} from "@/lib/tx-filters";
 import { useCurrency, CURRENCIES, convertAmount, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
@@ -76,17 +83,27 @@ function WalletPage() {
   const catName = useCategoryName();
   const tr = useT();
   const dateLabels = useDateLabels();
-  const [query, setQuery] = useState("");
-  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { filters, update, reset } = useTxFilters(user?.id);
   const [showSearch, setShowSearch] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const filtered = useMemo(() => {
-    const match = parseSearchQuery(query);
-    return state.transactions.filter((t) => {
-      if (filterCategory && t.category !== filterCategory) return false;
-      return match(t);
-    });
-  }, [state.transactions, query, filterCategory]);
+  const names = useMemo(
+    () => ({
+      categoryName: (id: string) => {
+        const c = categoryOf(id);
+        return catName(c.id, c.name, c.builtin);
+      },
+      accountName: (id: string) => state.accounts.find((a) => a.id === id)?.name ?? "",
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.accounts, state.categories],
+  );
+
+  const filtered = useMemo(
+    () => state.transactions.filter((t) => matchesFilters(t, filters, state.accounts, names)),
+    [state.transactions, state.accounts, filters, names],
+  );
   const groups = groupByBucket(filtered);
 
   return (
@@ -130,48 +147,15 @@ function WalletPage() {
         </div>
       </section>
 
-      {showSearch ? (
-        <section className="mt-3 px-5">
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card/70 px-3 py-2 backdrop-blur">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={tr("wallet.searchPlaceholder")}
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
-            {query ? (
-              <button
-                onClick={() => setQuery("")}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                {tr("ins.clear")}
-              </button>
-            ) : null}
-          </div>
-        </section>
+      {showSearch || filtersActive(filters) ? (
+        <TxFilterPanel
+          filters={filters}
+          update={update}
+          reset={reset}
+          open={showAdvanced}
+          onToggleOpen={() => setShowAdvanced((v) => !v)}
+        />
       ) : null}
-
-      <section className="mt-4 px-5">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <span className="flex items-center gap-1 text-[11px] uppercase tracking-widest text-muted-foreground">
-            <Filter className="h-3 w-3" /> {tr("cat.filter") /* i18n-ignore */}
-          </span>
-          <Chip active={filterCategory === null} onClick={() => setFilterCategory(null)}>
-            {tr("cat.all") /* i18n-ignore */}
-          </Chip>
-          {categories.map((c) => (
-            <Chip
-              key={c.id}
-              active={filterCategory === c.id}
-              onClick={() => setFilterCategory(filterCategory === c.id ? null : c.id)}
-            >
-              {catName(c.id, c.name, c.builtin)}
-            </Chip>
-          ))}
-        </div>
-      </section>
 
       <section className="mt-8 space-y-5 px-5">
         <div className="flex items-baseline justify-between">
@@ -230,9 +214,18 @@ function WalletPage() {
                         <Icon className="h-4 w-4" style={{ color: cat.color }} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{t.title}</p>
+                        <p className="truncate text-sm font-medium">
+                          <Highlight parts={highlightParts(t.title, filters.query)} />
+                        </p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {catName(cat.id, cat.name, cat.builtin)} · {formatTxDate(t.date, dateLabels)}
+                          <Highlight
+                            parts={highlightParts(
+                              catName(cat.id, cat.name, cat.builtin),
+                              filters.query,
+                            )}
+                          />
+                          {" · "}
+                          {formatTxDate(t.date, dateLabels)}
                         </p>
                       </div>
                       <span
