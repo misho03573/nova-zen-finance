@@ -65,8 +65,7 @@ export function matchesFilters(
   if (f.categories.length && !f.categories.includes(t.category)) return false;
   if (f.accounts.length && !f.accounts.includes(t.accountId)) return false;
   if (f.currencies.length) {
-    const cur =
-      t.currency ?? accounts.find((a) => a.id === t.accountId)?.currency ?? "USD";
+    const cur = t.currency ?? accounts.find((a) => a.id === t.accountId)?.currency ?? "USD";
     if (!f.currencies.includes(cur as CurrencyCode)) return false;
   }
   const day = t.date.slice(0, 10);
@@ -89,10 +88,7 @@ export function matchesFilters(
 }
 
 /** Splits a string into matched / unmatched segments for highlighting. */
-export function highlightParts(
-  text: string,
-  query: string,
-): { text: string; hit: boolean }[] {
+export function highlightParts(text: string, query: string): { text: string; hit: boolean }[] {
   const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (!tokens.length) return [{ text, hit: false }];
   const lower = text.toLowerCase();
@@ -138,8 +134,7 @@ export function useTxFilters(userId?: string | null) {
   const update = useCallback(
     (patch: Partial<TxFilters> | ((prev: TxFilters) => TxFilters)) => {
       setFilters((prev) => {
-        const next =
-          typeof patch === "function" ? patch(prev) : { ...prev, ...patch };
+        const next = typeof patch === "function" ? patch(prev) : { ...prev, ...patch };
         try {
           window.localStorage.setItem(storageKey, JSON.stringify(next));
         } catch {

@@ -5,13 +5,7 @@ import { useCategoryName } from "@/lib/i18n";
 import { useNova, accountCurrency } from "@/lib/nova-store";
 import { CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
-import {
-  emptyFilters,
-  filtersActive,
-  toggle,
-  type TxFilters,
-  type TxKind,
-} from "@/lib/tx-filters";
+import { emptyFilters, filtersActive, toggle, type TxFilters, type TxKind } from "@/lib/tx-filters";
 
 type Props = {
   filters: TxFilters;
@@ -79,9 +73,17 @@ export function TxFilterPanel({ filters, update, reset, open, onToggleOpen }: Pr
       clear: () => update({ query: "" }),
     });
   if (filters.from)
-    chips.push({ key: "from", label: `${t("filt.from")}: ${filters.from}`, clear: () => update({ from: "" }) });
+    chips.push({
+      key: "from",
+      label: `${t("filt.from")}: ${filters.from}`,
+      clear: () => update({ from: "" }),
+    });
   if (filters.to)
-    chips.push({ key: "to", label: `${t("filt.to")}: ${filters.to}`, clear: () => update({ to: "" }) });
+    chips.push({
+      key: "to",
+      label: `${t("filt.to")}: ${filters.to}`,
+      clear: () => update({ to: "" }),
+    });
   for (const k of filters.kinds)
     chips.push({
       key: `k-${k}`,
@@ -229,15 +231,17 @@ export function TxFilterPanel({ filters, update, reset, open, onToggleOpen }: Pr
           </Row>
 
           <Row label={t("filt.currency")}>
-            {(usedCurrencies.length ? usedCurrencies : CURRENCIES.map((c) => c.code)).map((code) => (
-              <Pill
-                key={code}
-                active={filters.currencies.includes(code)}
-                onClick={() => update((p) => ({ ...p, currencies: toggle(p.currencies, code) }))}
-              >
-                {code}
-              </Pill>
-            ))}
+            {(usedCurrencies.length ? usedCurrencies : CURRENCIES.map((c) => c.code)).map(
+              (code) => (
+                <Pill
+                  key={code}
+                  active={filters.currencies.includes(code)}
+                  onClick={() => update((p) => ({ ...p, currencies: toggle(p.currencies, code) }))}
+                >
+                  {code}
+                </Pill>
+              ),
+            )}
           </Row>
 
           <div className="flex justify-end">
