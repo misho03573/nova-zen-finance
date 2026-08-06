@@ -9,7 +9,7 @@ import {
   CreditCard,
   LineChart,
   Bitcoin,
-  Filter,
+
   X,
   Pencil,
   ArrowLeftRight,
