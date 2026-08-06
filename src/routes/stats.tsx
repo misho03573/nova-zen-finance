@@ -33,7 +33,7 @@ import {
   monthlySpendByCategory,
   useDisplayState,
 } from "@/lib/nova-store";
-import { useCurrency, convertAmount } from "@/lib/currency";
+import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 type Range = "week" | "month" | "year";
@@ -63,13 +63,9 @@ function StatsPage() {
   const [budgetCat, setBudgetCat] = useState<string>("");
   const [budgetLimit, setBudgetLimit] = useState("");
 
-  // Budget limits are stored in the USD base unit so they stay stable when the
-  // display currency changes; convert on read and on write.
-  const toDisplay = (usd: number) => convertAmount(usd, "USD", currency.code);
-
   const openBudget = (category?: string, limit?: number) => {
     setBudgetCat(category ?? categories[0]?.id ?? "");
-    setBudgetLimit(limit != null ? toDisplay(limit).toFixed(2) : "");
+    setBudgetLimit(limit != null ? limit.toFixed(2) : "");
     setBudgetOpen(true);
   };
 
@@ -79,7 +75,8 @@ function StatsPage() {
       toast.error(tr("stats.budget.invalid"));
       return;
     }
-    setBudget(budgetCat, convertAmount(value, currency.code, "USD"));
+    // Stored in the currency it was entered in; converted once for display.
+    setBudget(budgetCat, value, currency.code);
     setBudgetOpen(false);
     toast.success(tr("stats.budget.saved"));
   };
@@ -237,17 +234,17 @@ function StatsPage() {
             {tr("stats.budget.add")}
           </button>
         </div>
-        {state.budgets.length === 0 ? (
+        {display.budgets.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card/40 p-5 text-center">
             <p className="text-sm font-semibold">{tr("stats.noBudgets")}</p>
             <p className="mt-1 text-xs text-muted-foreground">{tr("stats.noBudgetsDesc")}</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {state.budgets.map((b) => {
+            {display.budgets.map((b) => {
               const cat = categoryOf(b.category);
               const spent = catSpend[b.category] ?? 0;
-              const limitDisp = toDisplay(b.limit);
+              const limitDisp = b.limit;
               const pct = Math.min(1.2, limitDisp > 0 ? spent / limitDisp : 0);
               const near = pct >= 0.8 && pct < 1;
               const over = pct >= 1;
