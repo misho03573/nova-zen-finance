@@ -69,6 +69,8 @@ export type Budget = {
   id: string;
   category: string;
   limit: number;
+  /** Native currency the limit is denominated in. Legacy budgets = USD. */
+  currency?: CurrencyCode;
 };
 
 export type Frequency = "weekly" | "monthly" | "yearly";
