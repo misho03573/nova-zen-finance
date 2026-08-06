@@ -9,7 +9,6 @@ import {
   CreditCard,
   LineChart,
   Bitcoin,
-  Filter,
   X,
   Pencil,
   ArrowLeftRight,
@@ -30,7 +29,9 @@ import {
   txCurrency,
 } from "@/lib/nova-store";
 import type { Transaction } from "@/lib/nova-store";
-import { parseSearchQuery } from "@/lib/insights";
+import { useAuth } from "@/lib/auth";
+import { TxFilterPanel, Highlight } from "@/components/nova/TxFilterPanel";
+import { useTxFilters, matchesFilters, filtersActive, highlightParts } from "@/lib/tx-filters";
 import { useCurrency, CURRENCIES, convertAmount, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
@@ -59,11 +60,23 @@ export const Route = createFileRoute("/wallet")({
 });
 
 const TYPE_META: Record<AccountType, { icon: typeof Banknote; gradient: string }> = {
-  cash: { icon: Banknote, gradient: "linear-gradient(135deg, oklch(0.4 0.08 145), oklch(0.28 0.06 155))" },
+  cash: {
+    icon: Banknote,
+    gradient: "linear-gradient(135deg, oklch(0.4 0.08 145), oklch(0.28 0.06 155))",
+  },
   bank: { icon: Landmark, gradient: "var(--gradient-wallet)" },
-  revolut: { icon: CreditCard, gradient: "linear-gradient(135deg, oklch(0.35 0.12 200), oklch(0.25 0.1 260))" },
-  trading: { icon: LineChart, gradient: "linear-gradient(135deg, oklch(0.38 0.12 250), oklch(0.24 0.08 280))" },
-  crypto: { icon: Bitcoin, gradient: "linear-gradient(135deg, oklch(0.55 0.16 60), oklch(0.32 0.12 30))" },
+  revolut: {
+    icon: CreditCard,
+    gradient: "linear-gradient(135deg, oklch(0.35 0.12 200), oklch(0.25 0.1 260))",
+  },
+  trading: {
+    icon: LineChart,
+    gradient: "linear-gradient(135deg, oklch(0.38 0.12 250), oklch(0.24 0.08 280))",
+  },
+  crypto: {
+    icon: Bitcoin,
+    gradient: "linear-gradient(135deg, oklch(0.55 0.16 60), oklch(0.32 0.12 30))",
+  },
 };
 
 function WalletPage() {
@@ -72,21 +85,30 @@ function WalletPage() {
   const confirm = useConfirm();
   const hide = useHideBalances();
   const categoryOf = useCategoryLookup();
-  const categories = useCategories();
   const catName = useCategoryName();
   const tr = useT();
   const dateLabels = useDateLabels();
-  const [query, setQuery] = useState("");
-  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { filters, update, reset } = useTxFilters(user?.id);
   const [showSearch, setShowSearch] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const filtered = useMemo(() => {
-    const match = parseSearchQuery(query);
-    return state.transactions.filter((t) => {
-      if (filterCategory && t.category !== filterCategory) return false;
-      return match(t);
-    });
-  }, [state.transactions, query, filterCategory]);
+  const names = useMemo(
+    () => ({
+      categoryName: (id: string) => {
+        const c = categoryOf(id);
+        return catName(c.id, c.name, c.builtin);
+      },
+      accountName: (id: string) => state.accounts.find((a) => a.id === id)?.name ?? "",
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.accounts, state.categories],
+  );
+
+  const filtered = useMemo(
+    () => state.transactions.filter((t) => matchesFilters(t, filters, state.accounts, names)),
+    [state.transactions, state.accounts, filters, names],
+  );
   const groups = groupByBucket(filtered);
 
   return (
@@ -114,64 +136,33 @@ function WalletPage() {
           {state.accounts.map((c) => (
             <AccountCard key={c.id} account={c} />
           ))}
-          <AccountDialog trigger={
-            <button
-              className="grid aspect-[1.6/1] min-w-[280px] snap-center place-items-center rounded-3xl border border-dashed border-border bg-card/40 text-muted-foreground transition-colors hover:bg-card/60"
-              aria-label={tr("wallet.addAccount")}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <span className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card">
-                  <Plus className="h-4 w-4" />
-                </span>
-                <span className="text-xs">{tr("wallet.addAccount")}</span>
-              </div>
-            </button>
-          } />
-        </div>
-      </section>
-
-      {showSearch ? (
-        <section className="mt-3 px-5">
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card/70 px-3 py-2 backdrop-blur">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={tr("wallet.searchPlaceholder")}
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
-            {query ? (
+          <AccountDialog
+            trigger={
               <button
-                onClick={() => setQuery("")}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className="grid aspect-[1.6/1] min-w-[280px] snap-center place-items-center rounded-3xl border border-dashed border-border bg-card/40 text-muted-foreground transition-colors hover:bg-card/60"
+                aria-label={tr("wallet.addAccount")}
               >
-                {tr("ins.clear")}
+                <div className="flex flex-col items-center gap-2">
+                  <span className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card">
+                    <Plus className="h-4 w-4" />
+                  </span>
+                  <span className="text-xs">{tr("wallet.addAccount")}</span>
+                </div>
               </button>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="mt-4 px-5">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <span className="flex items-center gap-1 text-[11px] uppercase tracking-widest text-muted-foreground">
-            <Filter className="h-3 w-3" /> {tr("cat.filter") /* i18n-ignore */}
-          </span>
-          <Chip active={filterCategory === null} onClick={() => setFilterCategory(null)}>
-            {tr("cat.all") /* i18n-ignore */}
-          </Chip>
-          {categories.map((c) => (
-            <Chip
-              key={c.id}
-              active={filterCategory === c.id}
-              onClick={() => setFilterCategory(filterCategory === c.id ? null : c.id)}
-            >
-              {catName(c.id, c.name, c.builtin)}
-            </Chip>
-          ))}
+            }
+          />
         </div>
       </section>
+
+      {showSearch || filtersActive(filters) ? (
+        <TxFilterPanel
+          filters={filters}
+          update={update}
+          reset={reset}
+          open={showAdvanced}
+          onToggleOpen={() => setShowAdvanced((v) => !v)}
+        />
+      ) : null}
 
       <section className="mt-8 space-y-5 px-5">
         <div className="flex items-baseline justify-between">
@@ -208,7 +199,8 @@ function WalletPage() {
                       : tr("date.earlier")}
                 </h3>
                 <span className="text-[11px] text-muted-foreground">
-                  {group.items.length} {group.items.length === 1 ? tr("wallet.item") : tr("wallet.items")}
+                  {group.items.length}{" "}
+                  {group.items.length === 1 ? tr("wallet.item") : tr("wallet.items")}
                 </span>
               </div>
               <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
@@ -230,9 +222,18 @@ function WalletPage() {
                         <Icon className="h-4 w-4" style={{ color: cat.color }} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{t.title}</p>
+                        <p className="truncate text-sm font-medium">
+                          <Highlight parts={highlightParts(t.title, filters.query)} />
+                        </p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {catName(cat.id, cat.name, cat.builtin)} · {formatTxDate(t.date, dateLabels)}
+                          <Highlight
+                            parts={highlightParts(
+                              catName(cat.id, cat.name, cat.builtin),
+                              filters.query,
+                            )}
+                          />
+                          {" · "}
+                          {formatTxDate(t.date, dateLabels)}
                         </p>
                       </div>
                       <span
@@ -256,7 +257,10 @@ function WalletPage() {
                         onClick={async () => {
                           const ok = await confirm({
                             title: tr("wallet.deleteTx"),
-                            description: fmt(tr("wallet.deleteTxDesc"), { title: t.title, amt: formatIn(t.amount, txCurrency(t, state.accounts)) }),
+                            description: fmt(tr("wallet.deleteTxDesc"), {
+                              title: t.title,
+                              amt: formatIn(t.amount, txCurrency(t, state.accounts)),
+                            }),
                             confirmLabel: tr("common.delete") || "Delete",
                             destructive: true,
                           });
@@ -590,9 +594,7 @@ function AccountCardInner({ account }: { account: Account }) {
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              {tr("wallet.delete.reassignDesc")}
-            </p>
+            <p className="text-[11px] text-muted-foreground">{tr("wallet.delete.reassignDesc")}</p>
           </div>
           <DialogFooter>
             <button
@@ -613,11 +615,15 @@ function AccountCardInner({ account }: { account: Account }) {
         <p className="text-lg font-semibold tracking-widest">{account.number}</p>
         <div className="mt-2 flex items-end justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/60">{tr("wallet.holder") /* i18n-ignore */}</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/60">
+              {tr("wallet.holder") /* i18n-ignore */}
+            </p>
             <p className="text-xs font-medium">{account.holder}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-widest text-white/60">{tr("wallet.balanceField")}</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/60">
+              {tr("wallet.balanceField")}
+            </p>
             <p className="text-sm font-semibold">
               {maskAmount(hide, formatIn(account.balance, accountCurrency(account)), "md")}
             </p>
@@ -628,13 +634,7 @@ function AccountCardInner({ account }: { account: Account }) {
   );
 }
 
-function AccountDialog({
-  trigger,
-  account,
-}: {
-  trigger: React.ReactNode;
-  account?: Account;
-}) {
+function AccountDialog({ trigger, account }: { trigger: React.ReactNode; account?: Account }) {
   const { addAccount, updateAccount } = useNova();
   const tr = useT();
   const [open, setOpen] = useState(false);
@@ -686,7 +686,11 @@ function AccountDialog({
         <div className="space-y-3">
           <div>
             <Label className="text-xs">{tr("common.name") /* i18n-ignore */}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("wallet.namePlaceholder") /* i18n-ignore */} />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={tr("wallet.namePlaceholder") /* i18n-ignore */}
+            />
           </div>
           <div>
             <Label className="text-xs">{tr("common.type") /* i18n-ignore */}</Label>
@@ -715,7 +719,12 @@ function AccountDialog({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-xs">{tr("wallet.balanceField")}</Label>
-              <Input type="number" step="0.01" value={balance} onChange={(e) => setBalance(e.target.value)} />
+              <Input
+                type="number"
+                step="0.01"
+                value={balance}
+                onChange={(e) => setBalance(e.target.value)}
+              />
             </div>
             <div>
               <Label className="text-xs">{tr("wallet.identifier")}</Label>
@@ -846,13 +855,20 @@ function TransferDialog() {
             ) : null}
             {from && amount > from.balance ? (
               <p className="mt-1 text-[11px] text-destructive">
-                {fmt(tr("wallet.exceeds"), { name: from.name, bal: formatIn(from.balance, fromCur) })}
+                {fmt(tr("wallet.exceeds"), {
+                  name: from.name,
+                  bal: formatIn(from.balance, fromCur),
+                })}
               </p>
             ) : null}
           </div>
           <div>
             <Label className="text-xs">{tr("common.note") /* i18n-ignore */}</Label>
-            <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder={tr("common.optional") /* i18n-ignore */} />
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={tr("common.optional") /* i18n-ignore */}
+            />
           </div>
         </div>
         <DialogFooter>
