@@ -145,6 +145,11 @@ export function liabilityCurrency(l: Liability): CurrencyCode {
   return (l.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
 }
 
+/** Native currency of a budget limit (legacy budgets are USD-denominated). */
+export function budgetCurrency(b: Budget): CurrencyCode {
+  return (b.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
+}
+
 export type Subscription = {
   id: string;
   name: string;
