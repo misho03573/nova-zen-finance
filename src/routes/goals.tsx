@@ -4,7 +4,13 @@ import { Plus, Sparkles, Trash2, Pencil, PiggyBank } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useCurrency } from "@/lib/currency";
-import { useNova, estimateGoalETA, type Goal } from "@/lib/nova-store";
+import {
+  useNova,
+  useDisplayState,
+  accountCurrency,
+  estimateGoalETA,
+  type Goal,
+} from "@/lib/nova-store";
 import {
   Dialog,
   DialogContent,
@@ -33,12 +39,13 @@ export const Route = createFileRoute("/goals")({
 
 function GoalsPage() {
   const { format } = useCurrency();
-  const { state, deleteGoal, contributeGoal } = useNova();
+  const { deleteGoal } = useNova();
+  const display = useDisplayState();
   const confirm = useConfirm();
   const hide = useHideBalances();
   const tr = useT();
   const locale = useLocale();
-  const goals = state.goals;
+  const goals = display.goals;
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target, 0) || 1;
   const overall = totalSaved / totalTarget;
@@ -147,14 +154,14 @@ function GoalsPage() {
                 <button
                   onClick={async () => {
                     const ok = await confirm({
-                      title: `Delete "${g.name}"?`,
-                      description: "Your progress and monthly target will be lost.",
-                      confirmLabel: "Delete goal",
+                      title: tr("goals.delete.title"),
+                      description: tr("goals.delete.desc"),
+                      confirmLabel: tr("goals.deleteAria"),
                       destructive: true,
                     });
                     if (ok) {
                       deleteGoal(g.id);
-                      toast.message("Goal deleted");
+                      toast.message(tr("goals.deleted"));
                     }
                   }}
                   className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-destructive"
