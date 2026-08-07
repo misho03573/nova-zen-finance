@@ -63,6 +63,8 @@ export type Goal = {
   emoji: string;
   eta: string;
   monthly?: number;
+  /** Native currency the goal amounts are stored in. Legacy goals fall back to USD. */
+  currency?: CurrencyCode;
 };
 
 export type Budget = {
