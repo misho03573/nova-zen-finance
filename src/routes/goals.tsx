@@ -4,7 +4,13 @@ import { Plus, Sparkles, Trash2, Pencil, PiggyBank } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useCurrency } from "@/lib/currency";
-import { useNova, estimateGoalETA, type Goal } from "@/lib/nova-store";
+import {
+  useNova,
+  useDisplayState,
+  accountCurrency,
+  estimateGoalETA,
+  type Goal,
+} from "@/lib/nova-store";
 import {
   Dialog,
   DialogContent,
@@ -33,12 +39,13 @@ export const Route = createFileRoute("/goals")({
 
 function GoalsPage() {
   const { format } = useCurrency();
-  const { state, deleteGoal, contributeGoal } = useNova();
+  const { deleteGoal } = useNova();
+  const display = useDisplayState();
   const confirm = useConfirm();
   const hide = useHideBalances();
   const tr = useT();
   const locale = useLocale();
-  const goals = state.goals;
+  const goals = display.goals;
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target, 0) || 1;
   const overall = totalSaved / totalTarget;
@@ -147,14 +154,14 @@ function GoalsPage() {
                 <button
                   onClick={async () => {
                     const ok = await confirm({
-                      title: `Delete "${g.name}"?`,
-                      description: "Your progress and monthly target will be lost.",
-                      confirmLabel: "Delete goal",
+                      title: tr("goals.delete.title"),
+                      description: tr("goals.delete.desc"),
+                      confirmLabel: tr("goals.deleteAria"),
                       destructive: true,
                     });
                     if (ok) {
                       deleteGoal(g.id);
-                      toast.message("Goal deleted");
+                      toast.message(tr("goals.deleted"));
                     }
                   }}
                   className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-destructive"
@@ -172,10 +179,12 @@ function GoalsPage() {
 }
 
 function ContributeDialog({ goalId }: { goalId: string }) {
-  const { contributeGoal } = useNova();
+  const { state, contributeGoal } = useNova();
+  const { currency } = useCurrency();
   const tr = useT();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("50");
+  const [accountId, setAccountId] = useState<string>("");
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -194,13 +203,45 @@ function ContributeDialog({ goalId }: { goalId: string }) {
           placeholder="50"
           autoFocus
         />
+        <div className="space-y-1.5">
+          <Label className="text-xs">{tr("goals.fromAccount")}</Label>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setAccountId("")}
+              className={`rounded-full border px-3 py-1 text-xs ${
+                accountId === ""
+                  ? "border-primary/60 bg-primary/15 text-primary"
+                  : "border-border bg-card/60 text-muted-foreground"
+              }`}
+            >
+              {tr("goals.trackOnly")}
+            </button>
+            {state.accounts.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => setAccountId(a.id)}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  accountId === a.id
+                    ? "border-primary/60 bg-primary/15 text-primary"
+                    : "border-border bg-card/60 text-muted-foreground"
+                }`}
+              >
+                {a.name} · {accountCurrency(a)}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">{tr("goals.fromAccount.hint")}</p>
+        </div>
         <DialogFooter>
           <button
             onClick={() => {
               const n = Number.parseFloat(amount);
               if (!Number.isFinite(n) || n === 0) return;
-              contributeGoal(goalId, n);
-              toast.success(n > 0 ? "Contribution added" : "Amount withdrawn");
+              contributeGoal(goalId, n, {
+                currency: currency.code,
+                accountId: accountId || undefined,
+              });
+              toast.success(n > 0 ? tr("goals.contribution") : tr("goals.withdrawn"));
               setOpen(false);
             }}
             className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
@@ -216,6 +257,7 @@ function ContributeDialog({ goalId }: { goalId: string }) {
 
 function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }) {
   const { addGoal, updateGoal } = useNova();
+  const { currency } = useCurrency();
   const tr = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(goal?.name ?? "");
@@ -230,11 +272,27 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
     const s = Number.parseFloat(saved) || 0;
     const m = Number.parseFloat(monthly) || 0;
     if (goal) {
-      updateGoal({ ...goal, name: name.trim(), target: t, saved: s, monthly: m, emoji });
-      toast.success("Goal updated");
+      updateGoal({
+        ...goal,
+        name: name.trim(),
+        target: t,
+        saved: s,
+        monthly: m,
+        emoji,
+        currency: currency.code,
+      });
+      toast.success(tr("goals.updated"));
     } else {
-      addGoal({ name: name.trim(), target: t, saved: s, monthly: m, emoji, eta: "" });
-      toast.success("Goal created");
+      addGoal({
+        name: name.trim(),
+        target: t,
+        saved: s,
+        monthly: m,
+        emoji,
+        eta: "",
+        currency: currency.code,
+      });
+      toast.success(tr("goals.created"));
     }
     setOpen(false);
   };

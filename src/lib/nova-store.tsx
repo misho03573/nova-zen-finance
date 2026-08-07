@@ -63,6 +63,8 @@ export type Goal = {
   emoji: string;
   eta: string;
   monthly?: number;
+  /** Native currency the goal amounts are stored in. Legacy goals fall back to USD. */
+  currency?: CurrencyCode;
 };
 
 export type Budget = {
@@ -148,6 +150,11 @@ export function liabilityCurrency(l: Liability): CurrencyCode {
 /** Native currency of a budget limit (legacy budgets are USD-denominated). */
 export function budgetCurrency(b: Budget): CurrencyCode {
   return (b.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
+}
+
+/** Native currency of a savings goal (legacy rows are USD). */
+export function goalCurrency(g: Goal): CurrencyCode {
+  return (g.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
 }
 
 export type Subscription = {
@@ -361,7 +368,16 @@ type Action =
   | { type: "addGoal"; goal: Goal }
   | { type: "updateGoal"; goal: Goal }
   | { type: "deleteGoal"; id: string }
-  | { type: "contributeGoal"; id: string; amount: number }
+  | {
+      type: "contributeGoal";
+      id: string;
+      amount: number;
+      /** Currency `amount` is expressed in. Defaults to the goal's own currency. */
+      currency?: CurrencyCode;
+      /** When set, the money actually moves out of (or back into) this account. */
+      accountId?: string;
+      date?: string;
+    }
   | { type: "setBudget"; category: string; limit: number; currency: CurrencyCode }
   | { type: "deleteBudget"; id: string }
   | { type: "addRecurring"; rec: Recurring }
@@ -589,13 +605,55 @@ function reducer(state: NovaState, action: Action): NovaState {
       };
     case "deleteGoal":
       return { ...state, goals: state.goals.filter((g) => g.id !== action.id) };
-    case "contributeGoal":
+    case "contributeGoal": {
+      const goal = state.goals.find((g) => g.id === action.id);
+      if (!goal || !Number.isFinite(action.amount) || action.amount === 0) return state;
+      const gCur = goalCurrency(goal);
+      // Convert the entered amount into the goal's native currency exactly once.
+      const inGoal = round(
+        action.currency && action.currency !== gCur
+          ? convertAmount(action.amount, action.currency, gCur)
+          : action.amount,
+        gCur,
+      );
+      // Never let a goal go negative — clamp the withdrawal to what is saved.
+      const applied = round(Math.max(-goal.saved, inGoal), gCur);
+      if (applied === 0) return state;
+      const goals = state.goals.map((g) =>
+        g.id === goal.id ? { ...g, saved: round(Math.max(0, g.saved + applied), gCur) } : g,
+      );
+
+      const acc = action.accountId
+        ? state.accounts.find((a) => a.id === action.accountId)
+        : undefined;
+      if (!acc) return { ...state, goals };
+
+      // Funding a goal moves real money: debit the account in its own currency
+      // and log it as a transfer leg so spending stats stay clean.
+      const accCur = accountCurrency(acc);
+      const outAmt = round(convertAmount(applied, gCur, accCur), accCur);
+      if (outAmt === 0) return { ...state, goals };
+      const transferId = `goal_${goal.id}_${Date.now()}`;
+      const tx: Transaction = {
+        id: `t_${transferId}`,
+        title: `${goal.emoji} ${goal.name}`,
+        category: "transfer",
+        amount: -outAmt,
+        date: action.date ?? new Date().toISOString(),
+        accountId: acc.id,
+        currency: accCur,
+        transferId,
+        categoryLocked: true,
+      };
       return {
         ...state,
-        goals: state.goals.map((g) =>
-          g.id === action.id ? { ...g, saved: Math.max(0, g.saved + action.amount) } : g,
+        goals,
+        accounts: state.accounts.map((a) =>
+          a.id === acc.id ? { ...a, balance: round(a.balance - outAmt, accCur) } : a,
         ),
+        transactions: [tx, ...state.transactions],
       };
+    }
     case "setBudget": {
       const existing = state.budgets.find((b) => b.category === action.category);
       if (existing) {
@@ -869,7 +927,11 @@ type Ctx = {
   addGoal: (g: Omit<Goal, "id">) => void;
   updateGoal: (g: Goal) => void;
   deleteGoal: (id: string) => void;
-  contributeGoal: (id: string, amount: number) => void;
+  contributeGoal: (
+    id: string,
+    amount: number,
+    opts?: { currency?: CurrencyCode; accountId?: string },
+  ) => void;
   setBudget: (category: string, limit: number, currency?: CurrencyCode) => void;
   deleteBudget: (id: string) => void;
   addRecurring: (r: Omit<Recurring, "id">) => void;
@@ -1041,7 +1103,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   const updateGoal = useCallback((g: Goal) => dispatch({ type: "updateGoal", goal: g }), []);
   const deleteGoal = useCallback((id: string) => dispatch({ type: "deleteGoal", id }), []);
   const contributeGoal = useCallback(
-    (id: string, amount: number) => dispatch({ type: "contributeGoal", id, amount }),
+    (id: string, amount: number, opts?: { currency?: CurrencyCode; accountId?: string }) =>
+      dispatch({ type: "contributeGoal", id, amount, ...opts }),
     [],
   );
   const setBudget = useCallback(
@@ -1312,6 +1375,18 @@ export function useDisplayState() {
         limit: conv(b.limit, budgetCurrency(b)),
         currency: to,
       })),
+      // Goals also carry a native currency: convert once so progress bars,
+      // totals and the health score compare like with like.
+      goals: state.goals.map((g) => {
+        const from = goalCurrency(g);
+        return {
+          ...g,
+          saved: conv(g.saved, from),
+          target: conv(g.target, from),
+          monthly: g.monthly === undefined ? undefined : conv(g.monthly, from),
+          currency: to,
+        };
+      }),
     };
   }, [state, currency.code]);
 }
