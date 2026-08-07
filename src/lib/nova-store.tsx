@@ -605,13 +605,55 @@ function reducer(state: NovaState, action: Action): NovaState {
       };
     case "deleteGoal":
       return { ...state, goals: state.goals.filter((g) => g.id !== action.id) };
-    case "contributeGoal":
+    case "contributeGoal": {
+      const goal = state.goals.find((g) => g.id === action.id);
+      if (!goal || !Number.isFinite(action.amount) || action.amount === 0) return state;
+      const gCur = goalCurrency(goal);
+      // Convert the entered amount into the goal's native currency exactly once.
+      const inGoal = round(
+        action.currency && action.currency !== gCur
+          ? convertAmount(action.amount, action.currency, gCur)
+          : action.amount,
+        gCur,
+      );
+      // Never let a goal go negative — clamp the withdrawal to what is saved.
+      const applied = round(Math.max(-goal.saved, inGoal), gCur);
+      if (applied === 0) return state;
+      const goals = state.goals.map((g) =>
+        g.id === goal.id ? { ...g, saved: round(Math.max(0, g.saved + applied), gCur) } : g,
+      );
+
+      const acc = action.accountId
+        ? state.accounts.find((a) => a.id === action.accountId)
+        : undefined;
+      if (!acc) return { ...state, goals };
+
+      // Funding a goal moves real money: debit the account in its own currency
+      // and log it as a transfer leg so spending stats stay clean.
+      const accCur = accountCurrency(acc);
+      const outAmt = round(convertAmount(applied, gCur, accCur), accCur);
+      if (outAmt === 0) return { ...state, goals };
+      const transferId = `goal_${goal.id}_${Date.now()}`;
+      const tx: Transaction = {
+        id: `t_${transferId}`,
+        title: `${goal.emoji} ${goal.name}`,
+        category: "transfer",
+        amount: -outAmt,
+        date: action.date ?? new Date().toISOString(),
+        accountId: acc.id,
+        currency: accCur,
+        transferId,
+        categoryLocked: true,
+      };
       return {
         ...state,
-        goals: state.goals.map((g) =>
-          g.id === action.id ? { ...g, saved: Math.max(0, g.saved + action.amount) } : g,
+        goals,
+        accounts: state.accounts.map((a) =>
+          a.id === acc.id ? { ...a, balance: round(a.balance - outAmt, accCur) } : a,
         ),
+        transactions: [tx, ...state.transactions],
       };
+    }
     case "setBudget": {
       const existing = state.budgets.find((b) => b.category === action.category);
       if (existing) {
