@@ -368,7 +368,16 @@ type Action =
   | { type: "addGoal"; goal: Goal }
   | { type: "updateGoal"; goal: Goal }
   | { type: "deleteGoal"; id: string }
-  | { type: "contributeGoal"; id: string; amount: number }
+  | {
+      type: "contributeGoal";
+      id: string;
+      amount: number;
+      /** Currency `amount` is expressed in. Defaults to the goal's own currency. */
+      currency?: CurrencyCode;
+      /** When set, the money actually moves out of (or back into) this account. */
+      accountId?: string;
+      date?: string;
+    }
   | { type: "setBudget"; category: string; limit: number; currency: CurrencyCode }
   | { type: "deleteBudget"; id: string }
   | { type: "addRecurring"; rec: Recurring }
