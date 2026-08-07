@@ -1375,6 +1375,18 @@ export function useDisplayState() {
         limit: conv(b.limit, budgetCurrency(b)),
         currency: to,
       })),
+      // Goals also carry a native currency: convert once so progress bars,
+      // totals and the health score compare like with like.
+      goals: state.goals.map((g) => {
+        const from = goalCurrency(g);
+        return {
+          ...g,
+          saved: conv(g.saved, from),
+          target: conv(g.target, from),
+          monthly: g.monthly === undefined ? undefined : conv(g.monthly, from),
+          currency: to,
+        };
+      }),
     };
   }, [state, currency.code]);
 }
