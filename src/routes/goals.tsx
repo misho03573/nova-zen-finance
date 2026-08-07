@@ -257,6 +257,7 @@ function ContributeDialog({ goalId }: { goalId: string }) {
 
 function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }) {
   const { addGoal, updateGoal } = useNova();
+  const { currency } = useCurrency();
   const tr = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(goal?.name ?? "");
@@ -271,11 +272,27 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
     const s = Number.parseFloat(saved) || 0;
     const m = Number.parseFloat(monthly) || 0;
     if (goal) {
-      updateGoal({ ...goal, name: name.trim(), target: t, saved: s, monthly: m, emoji });
-      toast.success("Goal updated");
+      updateGoal({
+        ...goal,
+        name: name.trim(),
+        target: t,
+        saved: s,
+        monthly: m,
+        emoji,
+        currency: currency.code,
+      });
+      toast.success(tr("goals.updated"));
     } else {
-      addGoal({ name: name.trim(), target: t, saved: s, monthly: m, emoji, eta: "" });
-      toast.success("Goal created");
+      addGoal({
+        name: name.trim(),
+        target: t,
+        saved: s,
+        monthly: m,
+        emoji,
+        eta: "",
+        currency: currency.code,
+      });
+      toast.success(tr("goals.created"));
     }
     setOpen(false);
   };
