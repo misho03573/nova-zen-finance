@@ -927,7 +927,11 @@ type Ctx = {
   addGoal: (g: Omit<Goal, "id">) => void;
   updateGoal: (g: Goal) => void;
   deleteGoal: (id: string) => void;
-  contributeGoal: (id: string, amount: number) => void;
+  contributeGoal: (
+    id: string,
+    amount: number,
+    opts?: { currency?: CurrencyCode; accountId?: string },
+  ) => void;
   setBudget: (category: string, limit: number, currency?: CurrencyCode) => void;
   deleteBudget: (id: string) => void;
   addRecurring: (r: Omit<Recurring, "id">) => void;
@@ -1099,7 +1103,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   const updateGoal = useCallback((g: Goal) => dispatch({ type: "updateGoal", goal: g }), []);
   const deleteGoal = useCallback((id: string) => dispatch({ type: "deleteGoal", id }), []);
   const contributeGoal = useCallback(
-    (id: string, amount: number) => dispatch({ type: "contributeGoal", id, amount }),
+    (id: string, amount: number, opts?: { currency?: CurrencyCode; accountId?: string }) =>
+      dispatch({ type: "contributeGoal", id, amount, ...opts }),
     [],
   );
   const setBudget = useCallback(
