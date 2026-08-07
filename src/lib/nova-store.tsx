@@ -152,6 +152,11 @@ export function budgetCurrency(b: Budget): CurrencyCode {
   return (b.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
 }
 
+/** Native currency of a savings goal (legacy rows are USD). */
+export function goalCurrency(g: Goal): CurrencyCode {
+  return (g.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
+}
+
 export type Subscription = {
   id: string;
   name: string;
