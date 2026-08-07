@@ -179,10 +179,12 @@ function GoalsPage() {
 }
 
 function ContributeDialog({ goalId }: { goalId: string }) {
-  const { contributeGoal } = useNova();
+  const { state, contributeGoal } = useNova();
+  const { currency } = useCurrency();
   const tr = useT();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("50");
+  const [accountId, setAccountId] = useState<string>("");
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -201,13 +203,45 @@ function ContributeDialog({ goalId }: { goalId: string }) {
           placeholder="50"
           autoFocus
         />
+        <div className="space-y-1.5">
+          <Label className="text-xs">{tr("goals.fromAccount")}</Label>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setAccountId("")}
+              className={`rounded-full border px-3 py-1 text-xs ${
+                accountId === ""
+                  ? "border-primary/60 bg-primary/15 text-primary"
+                  : "border-border bg-card/60 text-muted-foreground"
+              }`}
+            >
+              {tr("goals.trackOnly")}
+            </button>
+            {state.accounts.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => setAccountId(a.id)}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  accountId === a.id
+                    ? "border-primary/60 bg-primary/15 text-primary"
+                    : "border-border bg-card/60 text-muted-foreground"
+                }`}
+              >
+                {a.name} · {accountCurrency(a)}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">{tr("goals.fromAccount.hint")}</p>
+        </div>
         <DialogFooter>
           <button
             onClick={() => {
               const n = Number.parseFloat(amount);
               if (!Number.isFinite(n) || n === 0) return;
-              contributeGoal(goalId, n);
-              toast.success(n > 0 ? "Contribution added" : "Amount withdrawn");
+              contributeGoal(goalId, n, {
+                currency: currency.code,
+                accountId: accountId || undefined,
+              });
+              toast.success(n > 0 ? tr("goals.contribution") : tr("goals.withdrawn"));
               setOpen(false);
             }}
             className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
