@@ -8,6 +8,7 @@ import {
   netWorthBreakdown,
   useDisplayState,
   liabilityCurrency,
+  type Liability,
   type LiabilityType,
 } from "@/lib/nova-store";
 import { useCurrency, CURRENCIES, type CurrencyCode } from "@/lib/currency";
@@ -37,12 +38,13 @@ export const Route = createFileRoute("/networth")({
 });
 
 function NetWorthPage() {
-  const { state, addLiability, deleteLiability } = useNova();
+  const { state, addLiability, updateLiability, deleteLiability } = useNova();
   const display = useDisplayState();
   const { format, formatIn, currency } = useCurrency();
   const confirm = useConfirm();
   const hide = useHideBalances();
   const t = useT();
+  const [editing, setEditing] = useState<Liability | null>(null);
   // Everything in `display` is already converted exactly once into the active
   // display currency — accounts AND liabilities. Net = assets − liabilities.
   const b = useMemo(() => netWorthBreakdown(display), [display]);
@@ -125,9 +127,9 @@ function NetWorthPage() {
       <section className="mt-8 px-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("nw.liabilities")}</h2>
-          <AddLiability
+          <LiabilityDialog
             defaultCurrency={currency.code as CurrencyCode}
-            onAdd={(l) => { addLiability(l); toast.success(t("nw.added")); }}
+            onSave={(l) => { addLiability(l); toast.success(t("nw.added")); }}
           />
         </div>
         {state.liabilities.length === 0 ? (
@@ -139,19 +141,27 @@ function NetWorthPage() {
           <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
             {state.liabilities.map((l) => (
               <li key={l.id} className="flex items-center gap-3 px-4 py-3">
-                <div className="grid h-10 w-10 place-items-center rounded-2xl bg-destructive/15 text-destructive">
-                  {l.type === "credit_card" ? <CreditCard className="h-4 w-4" /> : l.type === "mortgage" ? <Building2 className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{l.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {l.apr != null ? `${l.apr}% APR` : ""}
-                    {l.minPayment != null ? ` · Min ${format(l.minPayment)}/mo` : ""}
-                  </p>
-                </div>
-                <span className="shrink-0 text-sm font-semibold text-destructive">
-                  −{maskAmount(hide, formatIn(l.balance, liabilityCurrency(l)), "md")}
-                </span>
+                <button
+                  onClick={() => setEditing(l)}
+                  aria-label={t("nw.edit")}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-destructive/15 text-destructive">
+                    {l.type === "credit_card" ? <CreditCard className="h-4 w-4" /> : l.type === "mortgage" ? <Building2 className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{l.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {l.apr != null ? `${l.apr}% APR` : ""}
+                      {l.minPayment != null
+                        ? `${l.apr != null ? " · " : ""}${t("nw.minPayment")}: ${formatIn(l.minPayment, liabilityCurrency(l))}`
+                        : ""}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-destructive">
+                    −{maskAmount(hide, formatIn(l.balance, liabilityCurrency(l)), "md")}
+                  </span>
+                </button>
                 <button
                   onClick={async () => {
                     const ok = await confirm({
@@ -175,6 +185,20 @@ function NetWorthPage() {
           </ul>
         )}
       </section>
+
+      {editing ? (
+        <LiabilityDialog
+          key={editing.id}
+          defaultCurrency={currency.code as CurrencyCode}
+          initial={editing}
+          openExternally
+          onClose={() => setEditing(null)}
+          onSave={(l) => {
+            updateLiability({ ...editing, ...l });
+            toast.success(t("nw.updated"));
+          }}
+        />
+      ) : null}
     </AppShell>
   );
 }
@@ -208,38 +232,56 @@ function AssetTile({
   );
 }
 
-function AddLiability({
-  onAdd,
+type LiabilityDraft = {
+  name: string;
+  type: LiabilityType;
+  balance: number;
+  currency: CurrencyCode;
+  apr?: number;
+  minPayment?: number;
+};
+
+function LiabilityDialog({
+  onSave,
   defaultCurrency,
+  initial,
+  openExternally,
+  onClose,
 }: {
   defaultCurrency: CurrencyCode;
-  onAdd: (l: {
-    name: string;
-    type: LiabilityType;
-    balance: number;
-    currency: CurrencyCode;
-    apr?: number;
-    minPayment?: number;
-  }) => void;
+  initial?: Liability;
+  openExternally?: boolean;
+  onClose?: () => void;
+  onSave: (l: LiabilityDraft) => void;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [type, setType] = useState<LiabilityType>("loan");
-  const [balance, setBalance] = useState("");
-  const [apr, setApr] = useState("");
-  const [cur, setCur] = useState<CurrencyCode>(defaultCurrency);
+  const [open, setOpen] = useState(!!openExternally);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [type, setType] = useState<LiabilityType>(initial?.type ?? "loan");
+  const [balance, setBalance] = useState(initial ? String(initial.balance) : "");
+  const [apr, setApr] = useState(initial?.apr != null ? String(initial.apr) : "");
+  const [minPay, setMinPay] = useState(initial?.minPayment != null ? String(initial.minPayment) : "");
+  const [cur, setCur] = useState<CurrencyCode>(
+    initial ? liabilityCurrency(initial) : defaultCurrency,
+  );
+
+  const change = (next: boolean) => {
+    setOpen(next);
+    if (!next) onClose?.();
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button className="flex items-center gap-1 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs font-medium">
-          <Plus className="h-3.5 w-3.5" /> {t("action.add")}
-        </button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={change}>
+      {openExternally ? null : (
+        <DialogTrigger asChild>
+          <button className="flex items-center gap-1 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs font-medium">
+            <Plus className="h-3.5 w-3.5" /> {t("action.add")}
+          </button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>{t("nw.new")}</DialogTitle>
+          <DialogTitle>{initial ? t("nw.edit") : t("nw.new")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
@@ -288,13 +330,29 @@ function AddLiability({
             <Label>{t("nw.apr")}</Label>
             <Input value={apr} onChange={(e) => setApr(e.target.value)} inputMode="decimal" placeholder={t("nw.aprPlaceholder")} />
           </div>
+          <div>
+            <Label>{t("nw.minPayment")}</Label>
+            <Input
+              value={minPay}
+              onChange={(e) => setMinPay(e.target.value)}
+              inputMode="decimal"
+              placeholder={t("nw.minPaymentPlaceholder")}
+            />
+          </div>
           <Button
             onClick={() => {
               const bal = parseFloat(balance);
               if (!name || !isFinite(bal)) return;
-              onAdd({ name, type, balance: bal, currency: cur, apr: parseFloat(apr) || undefined });
-              setOpen(false);
-              setName(""); setBalance(""); setApr("");
+              onSave({
+                name,
+                type,
+                balance: bal,
+                currency: cur,
+                apr: parseFloat(apr) || undefined,
+                minPayment: parseFloat(minPay) || undefined,
+              });
+              change(false);
+              if (!initial) { setName(""); setBalance(""); setApr(""); setMinPay(""); }
             }}
             className="w-full"
           >
