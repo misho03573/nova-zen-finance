@@ -160,20 +160,52 @@ function ImportPage() {
         </div>
       </section>
 
+      {csv.trim() && drafts.length === 0 ? (
+        <section className="mt-4 px-5">
+          <EmptyState
+            icon={<FileWarning className="h-6 w-6" />}
+            title={tr("imp.noRows")}
+            description={tr("imp.noRowsDesc")}
+          />
+        </section>
+      ) : null}
+
       {drafts.length > 0 && (
         <section className="mt-4 px-5">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-semibold">{fmt(tr("imp.preview"), { n: drafts.length })}</p>
             <p className="text-xs text-muted-foreground">
-              {fmt(tr("imp.counts"), { newCount: toImport.length, dupCount: drafts.length - toImport.length })}
+              {fmt(tr("imp.counts"), { newCount: toImport.length, dupCount })}
             </p>
           </div>
+          {parsed.columns ? (
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              {fmt(tr("imp.detected"), {
+                date: parsed.columns.date,
+                description: parsed.columns.description,
+                amount: parsed.columns.amount,
+              })}
+            </p>
+          ) : null}
+          {parsed.skipped > 0 ? (
+            <p className="mb-2 text-[11px] text-amber-500">
+              {fmt(tr("imp.skippedRows"), { n: parsed.skipped })}
+            </p>
+          ) : null}
           <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
             {drafts.slice(0, 30).map((d, i) => {
               const cat = categoryOf(d.category);
               const Icon = cat.icon;
+              const on = included(i, d);
               return (
-                <li key={i} className={`flex items-center gap-3 px-4 py-2.5 ${d.dupe ? "opacity-50" : ""}`}>
+                <li key={i} className={`flex items-center gap-3 px-4 py-2.5 ${on ? "" : "opacity-50"}`}>
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() => setOverrides((p) => ({ ...p, [i]: !on }))}
+                    aria-label={tr("imp.include")}
+                    className="h-4 w-4 shrink-0 accent-[hsl(var(--primary))]"
+                  />
                   <div
                     className="grid h-8 w-8 place-items-center rounded-xl"
                     style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
@@ -186,9 +218,10 @@ function ImportPage() {
                       {new Date(d.date).toLocaleDateString()} · {catName(cat.id, cat.name, cat.builtin)}
                     </p>
                   </div>
-                  {d.dupe ? (
+                  {d.dupe !== "none" ? (
                     <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-amber-500">
-                      <AlertTriangle className="h-3 w-3" /> {tr("imp.dupe")}
+                      <AlertTriangle className="h-3 w-3" />
+                      {d.dupe === "file" ? tr("imp.dupeInFile") : tr("imp.dupe")}
                     </span>
                   ) : null}
                   <span className={`shrink-0 text-sm font-semibold ${d.amount > 0 ? "text-primary" : ""}`}>
@@ -198,6 +231,11 @@ function ImportPage() {
               );
             })}
           </ul>
+          {drafts.length > 30 ? (
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              {fmt(tr("imp.showingFirst"), { n: 30, total: drafts.length })}
+            </p>
+          ) : null}
 
           <button
             disabled={toImport.length === 0}
