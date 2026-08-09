@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { ArrowLeft, Upload, FileText, Check, AlertTriangle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Upload, FileText, Check, AlertTriangle, FileWarning } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova, type Transaction } from "@/lib/nova-store";
 import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { toast } from "sonner";
 import { useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, fmt } from "@/lib/i18n";
+import { parseBankCsv, buildExistingIndex, isDuplicate, dupeKey } from "@/lib/csv-import";
+import { EmptyState } from "@/components/nova/EmptyState";
 
 export const Route = createFileRoute("/import")({
   head: () => ({
@@ -18,7 +20,8 @@ export const Route = createFileRoute("/import")({
   component: ImportPage,
 });
 
-type Draft = Omit<Transaction, "id"> & { dupe: boolean };
+type DupeKind = "none" | "existing" | "file";
+type Draft = Omit<Transaction, "id"> & { dupe: DupeKind };
 
 const SAMPLE = `date,description,amount
 2026-07-18,Blue Bottle Coffee,-6.50
@@ -59,38 +62,33 @@ function ImportPage() {
 
   const drafts: Draft[] = useMemo(() => {
     if (!csv.trim()) return [];
-    const lines = csv.trim().split(/\r?\n/);
-    const header = lines[0].toLowerCase();
-    const hasHeader = /date|amount|description/.test(header);
-    const rows = hasHeader ? lines.slice(1) : lines;
-    const existing = new Set(
-      state.transactions.map((t) => `${t.date.slice(0, 10)}|${t.title}|${t.amount.toFixed(2)}`),
-    );
-    return rows
-      .map((line): Draft | null => {
-        const parts = line.split(",").map((s) => s.trim());
-        if (parts.length < 3) return null;
-        const [d, desc, amt] = parts;
-        const amount = parseFloat(amt);
-        if (!isFinite(amount)) return null;
-        const parsed = new Date(d);
-        if (isNaN(+parsed)) return null;
-        const iso = parsed.toISOString();
-        const key = `${iso.slice(0, 10)}|${desc}|${amount.toFixed(2)}`;
-        return {
-          title: desc,
-          category: guessCategory(desc),
-          amount,
-          date: iso,
-          accountId: account,
-          currency: accountCur,
-          dupe: existing.has(key),
-        };
-      })
-      .filter((x): x is Draft => x !== null);
-  }, [csv, account, accountCur, state.transactions]);
+    const existing = buildExistingIndex(state.transactions);
+    const seen = new Map<string, number[]>();
+    return parsed.rows.map((r): Draft => {
+      let dupe: DupeKind = "none";
+      if (isDuplicate(r, existing)) dupe = "existing";
+      else if (isDuplicate(r, seen)) dupe = "file";
+      const k = dupeKey(r.title, r.amount);
+      seen.set(k, [...(seen.get(k) ?? []), +new Date(r.date)]);
+      return {
+        title: r.title,
+        category: guessCategory(r.title),
+        amount: r.amount,
+        date: r.date,
+        accountId: account,
+        currency: accountCur,
+        dupe,
+      };
+    });
+  }, [csv, parsed, account, accountCur, state.transactions]);
 
-  const toImport = drafts.filter((d) => !d.dupe);
+  // Rows the user explicitly re-enabled (duplicates) or disabled (clean rows).
+  const [overrides, setOverrides] = useState<Record<number, boolean>>({});
+  useEffect(() => setOverrides({}), [csv, account]);
+
+  const included = (i: number, d: Draft) => overrides[i] ?? d.dupe === "none";
+  const toImport = drafts.filter((d, i) => included(i, d));
+  const dupCount = drafts.filter((d) => d.dupe !== "none").length;
 
   const onFile = async (f: File | null) => {
     if (!f) return;
@@ -101,7 +99,7 @@ function ImportPage() {
   const doImport = () => {
     if (toImport.length === 0) return;
     importTransactions(toImport.map(({ dupe: _d, ...rest }) => rest));
-    toast.success(`Imported ${toImport.length} transactions`);
+    toast.success(fmt(tr("imp.imported"), { n: toImport.length }));
     navigate({ to: "/wallet" });
   };
 
