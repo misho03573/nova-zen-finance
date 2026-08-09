@@ -60,6 +60,8 @@ function ImportPage() {
   const accountCur: CurrencyCode =
     (state.accounts.find((a) => a.id === account)?.currency ?? "USD") as CurrencyCode;
 
+  const parsed = useMemo(() => parseBankCsv(csv), [csv]);
+
   const drafts: Draft[] = useMemo(() => {
     if (!csv.trim()) return [];
     const existing = buildExistingIndex(state.transactions);
