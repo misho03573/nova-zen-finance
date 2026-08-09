@@ -204,7 +204,7 @@ function ImportPage() {
                     checked={on}
                     onChange={() => setOverrides((p) => ({ ...p, [i]: !on }))}
                     aria-label={tr("imp.include")}
-                    className="h-4 w-4 shrink-0 accent-[hsl(var(--primary))]"
+                    className="h-4 w-4 shrink-0 accent-[var(--primary)]"
                   />
                   <div
                     className="grid h-8 w-8 place-items-center rounded-xl"
