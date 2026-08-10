@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Landmark, Coins, TrendingUp, Bitcoin, Home, Car, CreditCard, Building2, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  filterByRange,
+  monthChange,
+  NW_RANGES,
+  SNAPSHOT_BASE,
+  type NwRange,
+} from "@/lib/networth-history";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import {
@@ -40,7 +47,7 @@ export const Route = createFileRoute("/networth")({
 function NetWorthPage() {
   const { state, addLiability, updateLiability, deleteLiability } = useNova();
   const display = useDisplayState();
-  const { format, formatIn, currency } = useCurrency();
+  const { format, formatIn, currency, convert } = useCurrency();
   const confirm = useConfirm();
   const hide = useHideBalances();
   const t = useT();
@@ -49,28 +56,24 @@ function NetWorthPage() {
   // display currency — accounts AND liabilities. Net = assets − liabilities.
   const b = useMemo(() => netWorthBreakdown(display), [display]);
 
-  // Build a smooth 12-month animated line from cashflow monthly net movement
-  const points = useMemo(() => {
-    const now = new Date();
-    const start = b.net - Math.round(Math.abs(b.net) * 0.18);
-    const arr: number[] = [];
-    let v = start;
-    for (let i = 0; i < 12; i++) {
-      v += (b.net - start) / 11 + (Math.sin((i + now.getMonth()) * 0.9) * b.net) / 90;
-      arr.push(v);
-    }
-    arr[11] = b.net;
-    return arr;
-  }, [b.net]);
+  const [range, setRange] = useState<NwRange>("3M");
+  // History is stored in USD base; convert exactly once for display.
+  const history = useMemo(() => {
+    const rows = filterByRange(state.netWorthHistory ?? [], range);
+    return rows.map((s) => ({
+      date: s.date,
+      assets: convert(s.assets, SNAPSHOT_BASE),
+      liabilities: convert(s.liabilities, SNAPSHOT_BASE),
+      net: convert(s.net, SNAPSHOT_BASE),
+    }));
+  }, [state.netWorthHistory, range, convert]);
 
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const pad = (max - min) * 0.15 || 1;
-  const norm = (v: number) => 1 - (v - (min - pad)) / (max - min + pad * 2);
-  const path = points
-    .map((p, i) => `${i === 0 ? "M" : "L"}${(i / 11) * 300},${norm(p) * 120}`)
-    .join(" ");
-  const area = `${path} L300,120 L0,120 Z`;
+  const change = useMemo(() => {
+    const m = monthChange(state.netWorthHistory ?? []);
+    return { delta: convert(m.delta, SNAPSHOT_BASE), pct: m.pct, hasBaseline: m.hasBaseline };
+  }, [state.netWorthHistory, convert]);
+
+  const [active, setActive] = useState<number | null>(null);
 
   return (
     <AppShell>
