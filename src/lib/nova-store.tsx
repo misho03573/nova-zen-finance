@@ -1097,6 +1097,21 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     }, 600);
   }, [state, userId]);
 
+  // Daily Net Worth snapshot. Recomputed whenever accounts/liabilities change
+  // and upserted under today's local date, so there is never more than one
+  // snapshot per day. Transfers net to zero across accounts, so they cannot
+  // move the recorded value.
+  useEffect(() => {
+    if (!hydratedRef.current || typeof window === "undefined") return;
+    const snap = computeSnapshot(state);
+    const list = state.netWorthHistory ?? [];
+    const existing = list.find((s) => s.date === snap.date);
+    if (sameSnapshot(existing, snap)) return;
+    // Never fabricate history for a brand-new, completely empty account.
+    if (list.length === 0 && state.accounts.length === 0 && state.liabilities.length === 0) return;
+    dispatch({ type: "snapshotNetWorth", snap });
+  }, [state]);
+
   const rid = (p: string) => `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
   const addTransaction = useCallback((tx: Omit<Transaction, "id">) => {
