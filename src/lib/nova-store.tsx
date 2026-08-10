@@ -1610,6 +1610,28 @@ export function totalLiabilities(ls: Liability[]) {
   return ls.reduce((s, l) => s + l.balance, 0);
 }
 
+/**
+ * Today's Net Worth snapshot computed from RAW state (native currencies),
+ * converted exactly once into the USD snapshot base.
+ */
+export function computeSnapshot(state: NovaState): NetWorthSnapshot {
+  const assets = state.accounts.reduce(
+    (s, a) => s + convertAmount(a.balance, accountCurrency(a), SNAPSHOT_BASE),
+    0,
+  );
+  const liabilities = state.liabilities.reduce(
+    (s, l) => s + convertAmount(l.balance, liabilityCurrency(l), SNAPSHOT_BASE),
+    0,
+  );
+  return {
+    date: dayKey(),
+    assets,
+    liabilities,
+    net: assets - liabilities,
+    base: SNAPSHOT_BASE,
+  };
+}
+
 export function netWorthBreakdown(state: NovaState) {
   const cash = state.accounts.filter((a) => a.type === "cash").reduce((s, a) => s + a.balance, 0);
   const bank = state.accounts.filter((a) => a.type === "bank" || a.type === "revolut").reduce((s, a) => s + a.balance, 0);
