@@ -350,6 +350,7 @@ const seed: NovaState = {
   ],
   categories: defaultCategories,
   categoryRules: [],
+  netWorthHistory: [],
 };
 
 const emptyState: NovaState = {
@@ -364,6 +365,7 @@ const emptyState: NovaState = {
   automationRules: [],
   categories: defaultCategories,
   categoryRules: [],
+  netWorthHistory: [],
 };
 
 type Action =
