@@ -14,6 +14,13 @@ import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
 import { defaultCategories, type UserCategory } from "@/lib/categories";
 import { resolveRuleCategory, type CategoryRule } from "@/lib/category-rules";
+import {
+  dayKey,
+  sameSnapshot,
+  upsertSnapshot,
+  SNAPSHOT_BASE,
+  type NetWorthSnapshot,
+} from "@/lib/networth-history";
 
 export type { CategoryRule } from "@/lib/category-rules";
 
@@ -116,6 +123,8 @@ export type NovaState = {
   automationRules: AutomationRule[];
   categories: UserCategory[];
   categoryRules: CategoryRule[];
+  /** Daily Net Worth snapshots, stored in USD base. One row per calendar day. */
+  netWorthHistory: NetWorthSnapshot[];
 };
 
 export type LiabilityType = "loan" | "credit_card" | "mortgage";
@@ -359,6 +368,7 @@ const emptyState: NovaState = {
 
 type Action =
   | { type: "hydrate"; state: NovaState }
+  | { type: "snapshotNetWorth"; snap: NetWorthSnapshot }
   | { type: "addTransaction"; tx: Transaction }
   | { type: "updateTransaction"; tx: Transaction }
   | { type: "deleteTransaction"; id: string }
