@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Landmark, Coins, TrendingUp, Bitcoin, Home, Car, CreditCard, Building2, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  filterByRange,
+  monthChange,
+  NW_RANGES,
+  SNAPSHOT_BASE,
+  type NwRange,
+} from "@/lib/networth-history";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import {
@@ -40,7 +47,7 @@ export const Route = createFileRoute("/networth")({
 function NetWorthPage() {
   const { state, addLiability, updateLiability, deleteLiability } = useNova();
   const display = useDisplayState();
-  const { format, formatIn, currency } = useCurrency();
+  const { format, formatIn, currency, convert } = useCurrency();
   const confirm = useConfirm();
   const hide = useHideBalances();
   const t = useT();
@@ -49,28 +56,24 @@ function NetWorthPage() {
   // display currency — accounts AND liabilities. Net = assets − liabilities.
   const b = useMemo(() => netWorthBreakdown(display), [display]);
 
-  // Build a smooth 12-month animated line from cashflow monthly net movement
-  const points = useMemo(() => {
-    const now = new Date();
-    const start = b.net - Math.round(Math.abs(b.net) * 0.18);
-    const arr: number[] = [];
-    let v = start;
-    for (let i = 0; i < 12; i++) {
-      v += (b.net - start) / 11 + (Math.sin((i + now.getMonth()) * 0.9) * b.net) / 90;
-      arr.push(v);
-    }
-    arr[11] = b.net;
-    return arr;
-  }, [b.net]);
+  const [range, setRange] = useState<NwRange>("3M");
+  // History is stored in USD base; convert exactly once for display.
+  const history = useMemo(() => {
+    const rows = filterByRange(state.netWorthHistory ?? [], range);
+    return rows.map((s) => ({
+      date: s.date,
+      assets: convert(s.assets, SNAPSHOT_BASE),
+      liabilities: convert(s.liabilities, SNAPSHOT_BASE),
+      net: convert(s.net, SNAPSHOT_BASE),
+    }));
+  }, [state.netWorthHistory, range, convert]);
 
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const pad = (max - min) * 0.15 || 1;
-  const norm = (v: number) => 1 - (v - (min - pad)) / (max - min + pad * 2);
-  const path = points
-    .map((p, i) => `${i === 0 ? "M" : "L"}${(i / 11) * 300},${norm(p) * 120}`)
-    .join(" ");
-  const area = `${path} L300,120 L0,120 Z`;
+  const change = useMemo(() => {
+    const m = monthChange(state.netWorthHistory ?? []);
+    return { delta: convert(m.delta, SNAPSHOT_BASE), pct: m.pct, hasBaseline: m.hasBaseline };
+  }, [state.netWorthHistory, convert]);
+
+  const [active, setActive] = useState<number | null>(null);
 
   return (
     <AppShell>
@@ -91,24 +94,42 @@ function NetWorthPage() {
           <p className="mt-1 text-[11px] uppercase tracking-widest text-white/60">
             {t("nw.assets")} {maskAmount(hide, format(b.assets), "md")} · {t("nw.debt")} {maskAmount(hide, format(-b.liab), "md")}
           </p>
-          <svg viewBox="0 0 300 120" className="mt-4 h-28 w-full">
-            <defs>
-              <linearGradient id="nwFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.35)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-              </linearGradient>
-            </defs>
-            <path d={area} fill="url(#nwFill)" />
-            <path
-              d={path}
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="animate-fade-in"
-            />
-          </svg>
+          <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-white/90">
+            <span>
+              {change.delta >= 0 ? "+" : ""}
+              {maskAmount(hide, format(change.delta), "md")} {t("nw.thisMonth")}
+            </span>
+            <span className="text-white/60">
+              {change.pct >= 0 ? "+" : ""}
+              {change.pct.toFixed(1)}%
+            </span>
+          </div>
+
+          <div className="mt-4 flex gap-1.5">
+            {NW_RANGES.map((r) => (
+              <button
+                key={r}
+                onClick={() => { setRange(r); setActive(null); }}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                  range === r ? "bg-white/25 text-white" : "bg-white/10 text-white/70"
+                }`}
+              >
+                {t(`nw.range.${r}`)}
+              </button>
+            ))}
+          </div>
+
+          <NetWorthChart
+            points={history}
+            active={active}
+            onActive={setActive}
+            format={format}
+            hide={hide}
+            emptyTitle={t("nw.noHistory")}
+            emptyDesc={t("nw.noHistoryDesc")}
+            labels={{ assets: t("nw.assets"), liabilities: t("nw.liabilities"), net: t("nw.total") }}
+            locale={currency.locale}
+          />
         </div>
       </section>
 
@@ -200,6 +221,101 @@ function NetWorthPage() {
         />
       ) : null}
     </AppShell>
+  );
+}
+
+
+type HistPoint = { date: string; assets: number; liabilities: number; net: number };
+
+function NetWorthChart({
+  points,
+  active,
+  onActive,
+  format,
+  hide,
+  emptyTitle,
+  emptyDesc,
+  labels,
+  locale,
+}: {
+  points: HistPoint[];
+  active: number | null;
+  onActive: (i: number | null) => void;
+  format: (n: number) => string;
+  hide: boolean;
+  emptyTitle: string;
+  emptyDesc: string;
+  labels: { assets: string; liabilities: string; net: string };
+  locale: string;
+}) {
+  if (points.length < 2) {
+    return (
+      <div className="mt-4 rounded-2xl border border-dashed border-white/25 bg-white/5 px-4 py-6 text-center">
+        <p className="text-sm font-semibold text-white">{emptyTitle}</p>
+        <p className="mt-1 text-xs text-white/70">{emptyDesc}</p>
+      </div>
+    );
+  }
+
+  const W = 300;
+  const H = 120;
+  const vals = points.map((p) => p.net);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const pad = (max - min) * 0.15 || 1;
+  const x = (i: number) => (i / (points.length - 1)) * W;
+  const y = (v: number) => (1 - (v - (min - pad)) / (max - min + pad * 2)) * H;
+  const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(p.net)}`).join(" ");
+  const area = `${path} L${W},${H} L0,${H} Z`;
+  const sel = active != null && points[active] ? points[active] : null;
+
+  const pick = (clientX: number, el: SVGSVGElement) => {
+    const rect = el.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    onActive(Math.round(ratio * (points.length - 1)));
+  };
+
+  return (
+    <div className="mt-3">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="h-28 w-full touch-none"
+        onPointerDown={(e) => pick(e.clientX, e.currentTarget)}
+        onPointerMove={(e) => { if (e.buttons || e.pointerType === "mouse") pick(e.clientX, e.currentTarget); }}
+        onPointerLeave={() => onActive(null)}
+      >
+        <defs>
+          <linearGradient id="nwFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.35)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#nwFill)" />
+        <path d={path} fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {sel && active != null ? (
+          <g>
+            <line x1={x(active)} y1={0} x2={x(active)} y2={H} stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
+            <circle cx={x(active)} cy={y(sel.net)} r="4" fill="white" />
+          </g>
+        ) : null}
+      </svg>
+      {sel ? (
+        <div className="mt-2 rounded-2xl bg-white/15 px-3 py-2 text-[11px] text-white">
+          <p className="font-semibold">
+            {new Date(`${sel.date}T00:00:00`).toLocaleDateString(locale, {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+          <p className="mt-0.5 text-white/80">
+            {labels.assets} {maskAmount(hide, format(sel.assets), "md")} · {labels.liabilities}{" "}
+            {maskAmount(hide, format(sel.liabilities), "md")} · {labels.net}{" "}
+            {maskAmount(hide, format(sel.net), "md")}
+          </p>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

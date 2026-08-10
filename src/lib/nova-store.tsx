@@ -14,6 +14,13 @@ import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
 import { defaultCategories, type UserCategory } from "@/lib/categories";
 import { resolveRuleCategory, type CategoryRule } from "@/lib/category-rules";
+import {
+  dayKey,
+  sameSnapshot,
+  upsertSnapshot,
+  SNAPSHOT_BASE,
+  type NetWorthSnapshot,
+} from "@/lib/networth-history";
 
 export type { CategoryRule } from "@/lib/category-rules";
 
@@ -116,6 +123,8 @@ export type NovaState = {
   automationRules: AutomationRule[];
   categories: UserCategory[];
   categoryRules: CategoryRule[];
+  /** Daily Net Worth snapshots, stored in USD base. One row per calendar day. */
+  netWorthHistory: NetWorthSnapshot[];
 };
 
 export type LiabilityType = "loan" | "credit_card" | "mortgage";
@@ -341,6 +350,7 @@ const seed: NovaState = {
   ],
   categories: defaultCategories,
   categoryRules: [],
+  netWorthHistory: [],
 };
 
 const emptyState: NovaState = {
@@ -355,10 +365,12 @@ const emptyState: NovaState = {
   automationRules: [],
   categories: defaultCategories,
   categoryRules: [],
+  netWorthHistory: [],
 };
 
 type Action =
   | { type: "hydrate"; state: NovaState }
+  | { type: "snapshotNetWorth"; snap: NetWorthSnapshot }
   | { type: "addTransaction"; tx: Transaction }
   | { type: "updateTransaction"; tx: Transaction }
   | { type: "deleteTransaction"; id: string }
@@ -420,6 +432,12 @@ function reducer(state: NovaState, action: Action): NovaState {
         automationRules: action.state.automationRules ?? [],
         categories: mergeCategories(action.state.categories),
         categoryRules: action.state.categoryRules ?? [],
+        netWorthHistory: action.state.netWorthHistory ?? [],
+      };
+    case "snapshotNetWorth":
+      return {
+        ...state,
+        netWorthHistory: upsertSnapshot(state.netWorthHistory ?? [], action.snap),
       };
     case "addTransaction": {
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
@@ -1079,6 +1097,21 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     }, 600);
   }, [state, userId]);
 
+  // Daily Net Worth snapshot. Recomputed whenever accounts/liabilities change
+  // and upserted under today's local date, so there is never more than one
+  // snapshot per day. Transfers net to zero across accounts, so they cannot
+  // move the recorded value.
+  useEffect(() => {
+    if (!hydratedRef.current || typeof window === "undefined") return;
+    const snap = computeSnapshot(state);
+    const list = state.netWorthHistory ?? [];
+    const existing = list.find((s) => s.date === snap.date);
+    if (sameSnapshot(existing, snap)) return;
+    // Never fabricate history for a brand-new, completely empty account.
+    if (list.length === 0 && state.accounts.length === 0 && state.liabilities.length === 0) return;
+    dispatch({ type: "snapshotNetWorth", snap });
+  }, [state]);
+
   const rid = (p: string) => `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
   const addTransaction = useCallback((tx: Omit<Transaction, "id">) => {
@@ -1575,6 +1608,28 @@ export function accountTypeLabel(t: AccountType, tr?: (k: string) => string): st
 
 export function totalLiabilities(ls: Liability[]) {
   return ls.reduce((s, l) => s + l.balance, 0);
+}
+
+/**
+ * Today's Net Worth snapshot computed from RAW state (native currencies),
+ * converted exactly once into the USD snapshot base.
+ */
+export function computeSnapshot(state: NovaState): NetWorthSnapshot {
+  const assets = state.accounts.reduce(
+    (s, a) => s + convertAmount(a.balance, accountCurrency(a), SNAPSHOT_BASE),
+    0,
+  );
+  const liabilities = state.liabilities.reduce(
+    (s, l) => s + convertAmount(l.balance, liabilityCurrency(l), SNAPSHOT_BASE),
+    0,
+  );
+  return {
+    date: dayKey(),
+    assets,
+    liabilities,
+    net: assets - liabilities,
+    base: SNAPSHOT_BASE,
+  };
 }
 
 export function netWorthBreakdown(state: NovaState) {
