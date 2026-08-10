@@ -432,6 +432,12 @@ function reducer(state: NovaState, action: Action): NovaState {
         automationRules: action.state.automationRules ?? [],
         categories: mergeCategories(action.state.categories),
         categoryRules: action.state.categoryRules ?? [],
+        netWorthHistory: action.state.netWorthHistory ?? [],
+      };
+    case "snapshotNetWorth":
+      return {
+        ...state,
+        netWorthHistory: upsertSnapshot(state.netWorthHistory ?? [], action.snap),
       };
     case "addTransaction": {
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
