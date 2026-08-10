@@ -3,6 +3,15 @@ import { useNova } from "@/lib/nova-store";
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  "nw.thisMonth": "this month",
+  "nw.history": "History",
+  "nw.noHistory": "Not enough history yet",
+  "nw.noHistoryDesc": "Net worth is recorded once a day. Your trend appears after a second day of data.",
+  "nw.range.1M": "1M",
+  "nw.range.3M": "3M",
+  "nw.range.6M": "6M",
+  "nw.range.1Y": "1Y",
+  "nw.range.ALL": "ALL",
   "filt.title": "Filters",
   "filt.search": "Search transactions",
   "filt.searchPlaceholder": "Search merchant, note, category, account…",
@@ -864,6 +873,15 @@ const en: Dict = {
 };
 
 const bg: Dict = {
+  "nw.thisMonth": "този месец",
+  "nw.history": "История",
+  "nw.noHistory": "Все още няма достатъчно история",
+  "nw.noHistoryDesc": "Нетната стойност се записва веднъж дневно. Графиката се появява след втори ден с данни.",
+  "nw.range.1M": "1М",
+  "nw.range.3M": "3М",
+  "nw.range.6M": "6М",
+  "nw.range.1Y": "1Г",
+  "nw.range.ALL": "ВСИЧКИ",
   "filt.title": "Филтри",
   "filt.search": "Търсене на транзакции",
   "filt.searchPlaceholder": "Търси търговец, бележка, категория, сметка…",
@@ -1688,6 +1706,15 @@ const bg: Dict = {
 };
 
 const de: Dict = {
+  "nw.thisMonth": "diesen Monat",
+  "nw.history": "Verlauf",
+  "nw.noHistory": "Noch nicht genug Verlauf",
+  "nw.noHistoryDesc": "Das Nettovermögen wird einmal täglich erfasst. Der Trend erscheint nach dem zweiten Tag mit Daten.",
+  "nw.range.1M": "1M",
+  "nw.range.3M": "3M",
+  "nw.range.6M": "6M",
+  "nw.range.1Y": "1J",
+  "nw.range.ALL": "ALLE",
   "filt.title": "Filter",
   "filt.search": "Transaktionen suchen",
   "filt.searchPlaceholder": "Händler, Notiz, Kategorie, Konto suchen…",
@@ -2518,6 +2545,15 @@ const de: Dict = {
 };
 
 const fr: Dict = {
+  "nw.thisMonth": "ce mois-ci",
+  "nw.history": "Historique",
+  "nw.noHistory": "Historique insuffisant",
+  "nw.noHistoryDesc": "Le patrimoine net est enregistré une fois par jour. La tendance apparaît après un deuxième jour de données.",
+  "nw.range.1M": "1M",
+  "nw.range.3M": "3M",
+  "nw.range.6M": "6M",
+  "nw.range.1Y": "1A",
+  "nw.range.ALL": "TOUT",
   "filt.title": "Filtres",
   "filt.search": "Rechercher des transactions",
   "filt.searchPlaceholder": "Commerçant, note, catégorie, compte…",
@@ -3348,6 +3384,15 @@ const fr: Dict = {
 };
 
 const es: Dict = {
+  "nw.thisMonth": "este mes",
+  "nw.history": "Historial",
+  "nw.noHistory": "Aún no hay suficiente historial",
+  "nw.noHistoryDesc": "El patrimonio neto se registra una vez al día. La tendencia aparece tras un segundo día con datos.",
+  "nw.range.1M": "1M",
+  "nw.range.3M": "3M",
+  "nw.range.6M": "6M",
+  "nw.range.1Y": "1A",
+  "nw.range.ALL": "TODO",
   "filt.title": "Filtros",
   "filt.search": "Buscar transacciones",
   "filt.searchPlaceholder": "Comercio, nota, categoría, cuenta…",
