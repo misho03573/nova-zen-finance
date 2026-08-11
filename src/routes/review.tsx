@@ -255,7 +255,7 @@ function ReviewPage() {
                       return (
                         <li key={b.id}>
                           <div className="flex items-center justify-between text-xs">
-                            <span className="truncate">{catName(cat.id, cat.name)}</span>
+                            <span className="truncate">{catName(cat.id, cat.name, cat.builtin)}</span>
                             <span className={cn(b.over ? "text-rose-400" : "text-muted-foreground")}>
                               {format(b.spent)} / {format(b.limit)}
                             </span>
