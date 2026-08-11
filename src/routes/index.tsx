@@ -7,6 +7,8 @@ import {
   Settings as SettingsIcon,
   CalendarClock,
   CalendarDays,
+  CalendarRange,
+  ChevronRight,
   PiggyBank,
   TrendingUp,
 } from "lucide-react";
@@ -176,6 +178,24 @@ function Home() {
       </section>
 
       <section className="animate-rise-in mt-6 px-5" style={{ animationDelay: "260ms" }}>
+        <Link
+          to="/review"
+          className="press mb-3 flex items-center gap-3 rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]"
+        >
+          <span
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-primary"
+            style={{ background: "var(--gradient-card)" }}
+          >
+            <CalendarRange className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold">{tr("rev.open")}</span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {tr("rev.openDesc")}
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
         <div className="grid grid-cols-2 gap-3">
           <MiniCard
             icon={<PiggyBank className="h-4 w-4" />}
