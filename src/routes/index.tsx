@@ -7,6 +7,8 @@ import {
   Settings as SettingsIcon,
   CalendarClock,
   CalendarDays,
+  CalendarRange,
+  ChevronRight,
   PiggyBank,
   TrendingUp,
 } from "lucide-react";
