@@ -21,6 +21,7 @@ import { Route as NetworthRouteImport } from './routes/networth'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as ForecastRouteImport } from './routes/forecast'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -90,6 +91,11 @@ const GoalsRoute = GoalsRouteImport.update({
   path: '/goals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForecastRoute = ForecastRouteImport.update({
+  id: '/forecast',
+  path: '/forecast',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DiagnosticsRoute = DiagnosticsRouteImport.update({
   id: '/diagnostics',
   path: '/diagnostics',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/categories': typeof CategoriesRoute
   '/diagnostics': typeof DiagnosticsRoute
+  '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/categories': typeof CategoriesRoute
   '/diagnostics': typeof DiagnosticsRoute
+  '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/categories': typeof CategoriesRoute
   '/diagnostics': typeof DiagnosticsRoute
+  '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/categories'
     | '/diagnostics'
+    | '/forecast'
     | '/goals'
     | '/import'
     | '/insights'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/categories'
     | '/diagnostics'
+    | '/forecast'
     | '/goals'
     | '/import'
     | '/insights'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/categories'
     | '/diagnostics'
+    | '/forecast'
     | '/goals'
     | '/import'
     | '/insights'
@@ -276,6 +288,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   CategoriesRoute: typeof CategoriesRoute
   DiagnosticsRoute: typeof DiagnosticsRoute
+  ForecastRoute: typeof ForecastRoute
   GoalsRoute: typeof GoalsRoute
   ImportRoute: typeof ImportRoute
   InsightsRoute: typeof InsightsRoute
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GoalsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forecast': {
+      id: '/forecast'
+      path: '/forecast'
+      fullPath: '/forecast'
+      preLoaderRoute: typeof ForecastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/diagnostics': {
       id: '/diagnostics'
       path: '/diagnostics'
@@ -444,6 +464,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   CategoriesRoute: CategoriesRoute,
   DiagnosticsRoute: DiagnosticsRoute,
+  ForecastRoute: ForecastRoute,
   GoalsRoute: GoalsRoute,
   ImportRoute: ImportRoute,
   InsightsRoute: InsightsRoute,
@@ -460,3 +481,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

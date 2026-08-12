@@ -108,6 +108,8 @@ export type Settings = {
   hideBalances?: boolean;
   cloudSync?: boolean;
   accent?: string; // hex or oklch string, applied to --primary
+  /** Cash-flow safety buffer, persisted in the neutral USD base. */
+  forecastBuffer?: number;
   language?: string; // "en" | "bg" | "de" | "fr" | "es"
 };
 
