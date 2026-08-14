@@ -119,7 +119,7 @@ export function buildPayoffPlan(
     }
 
     // 2. Minimum payments.
-    let pool = extra;
+    let pool = strategy === "minimum" ? 0 : extra;
     for (const d of state.values()) {
       if (d.done) continue;
       const pay = Math.min(d.min, d.bal);
@@ -141,7 +141,6 @@ export function buildPayoffPlan(
         const pay = Math.min(pool, d.bal);
         d.bal -= pay;
         pool -= pay;
-        if (strategy === "minimum") break; // extra goes to one target only
       }
     }
 
