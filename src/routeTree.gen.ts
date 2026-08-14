@@ -23,6 +23,7 @@ import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ForecastRouteImport } from './routes/forecast'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
+import { Route as DebtRouteImport } from './routes/debt'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AutomationRouteImport } from './routes/automation'
@@ -101,6 +102,11 @@ const DiagnosticsRoute = DiagnosticsRouteImport.update({
   path: '/diagnostics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DebtRoute = DebtRouteImport.update({
+  id: '/debt',
+  path: '/debt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoriesRoute = CategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
   '/categories': typeof CategoriesRoute
+  '/debt': typeof DebtRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
   '/categories': typeof CategoriesRoute
+  '/debt': typeof DebtRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/automation': typeof AutomationRoute
   '/calendar': typeof CalendarRoute
   '/categories': typeof CategoriesRoute
+  '/debt': typeof DebtRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/automation'
     | '/calendar'
     | '/categories'
+    | '/debt'
     | '/diagnostics'
     | '/forecast'
     | '/goals'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/automation'
     | '/calendar'
     | '/categories'
+    | '/debt'
     | '/diagnostics'
     | '/forecast'
     | '/goals'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/automation'
     | '/calendar'
     | '/categories'
+    | '/debt'
     | '/diagnostics'
     | '/forecast'
     | '/goals'
@@ -287,6 +299,7 @@ export interface RootRouteChildren {
   AutomationRoute: typeof AutomationRoute
   CalendarRoute: typeof CalendarRoute
   CategoriesRoute: typeof CategoriesRoute
+  DebtRoute: typeof DebtRoute
   DiagnosticsRoute: typeof DiagnosticsRoute
   ForecastRoute: typeof ForecastRoute
   GoalsRoute: typeof GoalsRoute
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagnosticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/debt': {
+      id: '/debt'
+      path: '/debt'
+      fullPath: '/debt'
+      preLoaderRoute: typeof DebtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/categories': {
       id: '/categories'
       path: '/categories'
@@ -463,6 +483,7 @@ const rootRouteChildren: RootRouteChildren = {
   AutomationRoute: AutomationRoute,
   CalendarRoute: CalendarRoute,
   CategoriesRoute: CategoriesRoute,
+  DebtRoute: DebtRoute,
   DiagnosticsRoute: DiagnosticsRoute,
   ForecastRoute: ForecastRoute,
   GoalsRoute: GoalsRoute,
