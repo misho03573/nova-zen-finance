@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Landmark, Coins, TrendingUp, Bitcoin, Home, Car, CreditCard, Building2, Plus, Trash2 } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Landmark, Coins, TrendingUp, Bitcoin, Home, Car, CreditCard, Building2, Plus, Trash2, TrendingDown, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   filterByRange,
@@ -153,6 +153,21 @@ function NetWorthPage() {
             onSave={(l) => { addLiability(l); toast.success(t("nw.added")); }}
           />
         </div>
+        {state.liabilities.some((l) => l.balance > 0) ? (
+          <Link
+            to="/debt"
+            className="mb-3 flex items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 transition-colors hover:bg-card"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
+              <TrendingDown className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">{t("dp.open")}</span>
+              <span className="block truncate text-xs text-muted-foreground">{t("dp.openDesc")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
+        ) : null}
         {state.liabilities.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card/40 p-6 text-center">
             <p className="text-sm font-semibold">{t("nw.debtFree")}</p>
