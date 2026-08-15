@@ -398,6 +398,14 @@ type Action =
   | { type: "hydrate"; state: NovaState }
   | { type: "snapshotNetWorth"; snap: NetWorthSnapshot }
   | { type: "addTransaction"; tx: Transaction }
+  | {
+      type: "adjustBalance";
+      id: string;
+      accountId: string;
+      actual: number;
+      date: string;
+      note?: string;
+    }
   | { type: "updateTransaction"; tx: Transaction }
   | { type: "deleteTransaction"; id: string }
   | { type: "addAccount"; account: Account }
@@ -466,6 +474,7 @@ function reducer(state: NovaState, action: Action): NovaState {
         netWorthHistory: upsertSnapshot(state.netWorthHistory ?? [], action.snap),
       };
     case "addTransaction": {
+      // (see adjustBalance below for reconciliation records)
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
       const ruled = action.tx.categoryLocked
         ? null
@@ -484,9 +493,39 @@ function reducer(state: NovaState, action: Action): NovaState {
         transactions: [tx, ...state.transactions],
       };
     }
+    case "adjustBalance": {
+      const acc = state.accounts.find((a) => a.id === action.accountId);
+      if (!acc) return state;
+      const cur = accountCurrency(acc);
+      const actual = round(action.actual, cur);
+      const diff = round(actual - acc.balance, cur);
+      // Already reconciled → never write an empty audit record.
+      if (diff === 0) return state;
+      const tx: Transaction = {
+        id: `adj_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        title: "Balance correction",
+        category: ADJUSTMENT_CATEGORY,
+        amount: diff,
+        date: action.date,
+        accountId: acc.id,
+        note: action.note,
+        currency: cur,
+        // Smart rules must never re-categorize a reconciliation record.
+        categoryLocked: true,
+        kind: "adjustment",
+        resultingBalance: actual,
+        createdAt: new Date().toISOString(),
+      };
+      return {
+        ...state,
+        accounts: state.accounts.map((a) => (a.id === acc.id ? { ...a, balance: actual } : a)),
+        transactions: [tx, ...state.transactions],
+      };
+    }
     case "updateTransaction": {
       const prev = state.transactions.find((t) => t.id === action.tx.id);
-      if (!prev) return state;
+      // Adjustments are immutable: reconcile again instead of editing.
+      if (!prev || isAdjustment(prev) || isAdjustment(action.tx)) return state;
       const nextAcc = state.accounts.find((a) => a.id === action.tx.accountId);
       // Re-denominate amount into the new account's currency if the account
       // changed. Amount is preserved in value terms via FX conversion.
