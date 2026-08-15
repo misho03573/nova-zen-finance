@@ -25,7 +25,7 @@ export const emptyFilters: TxFilters = {
 };
 
 export function kindOf(t: Transaction): TxKind {
-  if (t.transferId) return "transfer";
+  if (t.transferId || t.kind === "adjustment") return "transfer";
   return t.amount >= 0 ? "income" : "expense";
 }
 
