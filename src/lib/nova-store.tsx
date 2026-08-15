@@ -60,7 +60,31 @@ export type Transaction = {
   transferId?: string;
   /** True when the user picked the category by hand — rules must not override it. */
   categoryLocked?: boolean;
+  /**
+   * Special record kinds. `adjustment` = balance reconciliation: it moves the
+   * account balance (and therefore Net Worth) but is never income, expense,
+   * spending, budget usage or Health-Score activity, and smart rules never
+   * touch it. Adjustments are immutable — reconcile again instead of editing.
+   */
+  kind?: "adjustment";
+  /** Account balance immediately after an adjustment (audit trail). */
+  resultingBalance?: number;
+  /** Creation timestamp of the record (audit trail). */
+  createdAt?: string;
 };
+
+/** True for balance-reconciliation records, which analytics must skip. */
+export function isAdjustment(t: Transaction): boolean {
+  return t.kind === "adjustment";
+}
+
+/** Category id used by reconciliation records. */
+export const ADJUSTMENT_CATEGORY = "adjustment";
+
+/** Drops adjustment records before any income/expense aggregation. */
+export function analyticsTxs(txs: Transaction[]): Transaction[] {
+  return txs.filter((t) => !isAdjustment(t));
+}
 
 export type Goal = {
   id: string;
