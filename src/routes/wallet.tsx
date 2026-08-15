@@ -542,6 +542,7 @@ function AccountCardInner({ account }: { account: Account }) {
           <p className="text-sm font-semibold">{account.name}</p>
         </div>
         <div className="flex items-center gap-1">
+          <AdjustBalanceDialog account={account} />
           <AccountDialog
             account={account}
             trigger={
