@@ -13,6 +13,7 @@ import {
   Pencil,
   ArrowLeftRight,
   Wand2,
+  Scale,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -27,6 +28,7 @@ import {
   type Account,
   accountCurrency,
   txCurrency,
+  isAdjustment,
 } from "@/lib/nova-store";
 import type { Transaction } from "@/lib/nova-store";
 import { useAuth } from "@/lib/auth";
