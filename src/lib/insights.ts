@@ -15,7 +15,13 @@ function inMonthOffset(d: Date, offset: number) {
   return d.getFullYear() === target.getFullYear() && d.getMonth() === target.getMonth();
 }
 
-function spendByCategory(txs: Transaction[], offset = 0) {
+/** Reconciliation records never count as income, expense or spending. */
+function real(txs: Transaction[]): Transaction[] {
+  return txs.filter((t) => t.kind !== "adjustment");
+}
+
+function spendByCategory(all: Transaction[], offset = 0) {
+  const txs = real(all);
   const map: Record<string, number> = {};
   for (const t of txs) {
     const d = new Date(t.date);
@@ -26,7 +32,8 @@ function spendByCategory(txs: Transaction[], offset = 0) {
   return map;
 }
 
-function monthTotals(txs: Transaction[], offset: number) {
+function monthTotals(all: Transaction[], offset: number) {
+  const txs = real(all);
   let income = 0;
   let expenses = 0;
   for (const t of txs) {
@@ -125,10 +132,11 @@ export function generateInsights(txs: Transaction[], goals: Goal[]): Insight[] {
 export type ForecastPoint = { label: string; days: number; value: number; confidence: number };
 
 export function cashflowForecast(
-  txs: Transaction[],
+  allTxs: Transaction[],
   recurring: Recurring[],
   startBalance: number,
 ): { today: number; points: ForecastPoint[] } {
+  const txs = real(allTxs);
   const now = Date.now();
   const day = 86400000;
   const thirty = now - 30 * day;
@@ -167,7 +175,8 @@ export function cashflowForecast(
   return { today: startBalance, points };
 }
 
-export function recommendBudget(txs: Transaction[], category: string): number {
+export function recommendBudget(allTxs: Transaction[], category: string): number {
+  const txs = real(allTxs);
   const now = new Date();
   const totals: number[] = [];
   for (let i = 0; i < 6; i++) {
@@ -196,10 +205,11 @@ export type Achievement = {
 };
 
 export function computeAchievements(
-  txs: Transaction[],
+  allTxs: Transaction[],
   goals: Goal[],
   score: number,
 ): Achievement[] {
+  const txs = real(allTxs);
   const distinctDays = new Set(txs.map((t) => new Date(t.date).toDateString())).size;
   const anyGoalDone = goals.some((g) => g.saved >= g.target);
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
