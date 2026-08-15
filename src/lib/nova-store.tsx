@@ -1003,6 +1003,8 @@ type Ctx = {
   addTransaction: (tx: Omit<Transaction, "id">) => void;
   updateTransaction: (tx: Transaction) => void;
   deleteTransaction: (id: string) => void;
+  /** Reconcile an account to its real-world balance (creates an audit record). */
+  adjustBalance: (accountId: string, actual: number, opts?: { date?: string; note?: string }) => void;
   addAccount: (a: Omit<Account, "id">) => void;
   updateAccount: (a: Account) => void;
   deleteAccount: (id: string, reassignTo?: string) => void;
@@ -1184,6 +1186,18 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   }, []);
   const updateTransaction = useCallback((tx: Transaction) => dispatch({ type: "updateTransaction", tx }), []);
   const deleteTransaction = useCallback((id: string) => dispatch({ type: "deleteTransaction", id }), []);
+  const adjustBalance = useCallback(
+    (accountId: string, actual: number, opts?: { date?: string; note?: string }) =>
+      dispatch({
+        type: "adjustBalance",
+        id: rid("adj"),
+        accountId,
+        actual,
+        date: opts?.date ?? new Date().toISOString(),
+        note: opts?.note,
+      }),
+    [],
+  );
   const addAccount = useCallback(
     (a: Omit<Account, "id">) => dispatch({ type: "addAccount", account: { ...a, id: rid("a") } }),
     [],
@@ -1331,6 +1345,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       deleteRecurring,
       setSettings,
       exportData,
+      adjustBalance,
       importData,
       addLiability,
       updateLiability,
@@ -1371,6 +1386,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       deleteBudget,
       addRecurring,
       deleteRecurring,
+      adjustBalance,
       setSettings,
       exportData,
       importData,
