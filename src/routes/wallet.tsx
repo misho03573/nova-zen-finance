@@ -657,9 +657,140 @@ function AccountCardInner({ account }: { account: Account }) {
   );
 }
 
+/**
+ * Balance reconciliation. The user types the real-world balance; NOVA derives
+ * the difference and writes an immutable `adjustment` record in the account's
+ * NATIVE currency (never converted before storage).
+ */
+function AdjustBalanceDialog({ account }: { account: Account }) {
+  const { adjustBalance } = useNova();
+  const { formatIn } = useCurrency();
+  const tr = useT();
+  const cur = accountCurrency(account);
+  const [open, setOpen] = useState(false);
+  const [actual, setActual] = useState(String(account.balance));
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [note, setNote] = useState("");
+
+  const parsed = Number.parseFloat(actual.replace(",", "."));
+  const valid = Number.isFinite(parsed);
+  const diff = valid ? parsed - account.balance : 0;
+  const reconciled = valid && Math.abs(diff) < (cur === "JPY" ? 1 : 0.005);
+
+  function save() {
+    if (!valid) {
+      toast.error(tr("adjust.invalid"));
+      return;
+    }
+    if (reconciled) {
+      toast.message(tr("adjust.reconciled"));
+      setOpen(false);
+      return;
+    }
+    adjustBalance(account.id, parsed, {
+      date: new Date(`${date}T12:00:00`).toISOString(),
+      note: note.trim() || undefined,
+    });
+    setOpen(false);
+    toast.success(tr("adjust.done"));
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (v) {
+          setActual(String(account.balance));
+          setDate(new Date().toISOString().slice(0, 10));
+          setNote("");
+        }
+        setOpen(v);
+      }}
+    >
+      <DialogTrigger asChild>
+        <button
+          aria-label={tr("adjust.cta")}
+          title={tr("adjust.cta")}
+          className="grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+        >
+          <Scale className="h-3.5 w-3.5" />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{tr("adjust.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
+              {tr("adjust.current")}
+            </p>
+            <p className="text-lg font-semibold">{formatIn(account.balance, cur)}</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`adj-actual-${account.id}`}>
+              {tr("adjust.actual")} · {cur}
+            </Label>
+            <Input
+              id={`adj-actual-${account.id}`}
+              inputMode="decimal"
+              value={actual}
+              onChange={(e) => setActual(e.target.value)}
+            />
+          </div>
+          <div className="flex items-baseline justify-between rounded-2xl border border-border bg-card/40 px-4 py-2">
+            <span className="text-xs text-muted-foreground">{tr("adjust.difference")}</span>
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground",
+              )}
+            >
+              {valid ? formatIn(diff, cur) : "—"}
+            </span>
+          </div>
+          {reconciled ? (
+            <p className="text-xs text-muted-foreground">{tr("adjust.reconciled")}</p>
+          ) : null}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label htmlFor={`adj-date-${account.id}`}>{tr("adjust.date")}</Label>
+              <Input
+                id={`adj-date-${account.id}`}
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`adj-note-${account.id}`}>{tr("adjust.note")}</Label>
+              <Input
+                id={`adj-note-${account.id}`}
+                value={note}
+                placeholder={tr("adjust.note.placeholder")}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground">{tr("adjust.excluded")}</p>
+        </div>
+        <DialogFooter>
+          <button
+            onClick={save}
+            disabled={!valid || reconciled}
+            className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] disabled:opacity-50"
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            {tr("adjust.confirm")}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AccountDialog({ trigger, account }: { trigger: React.ReactNode; account?: Account }) {
   const { addAccount, updateAccount } = useNova();
-
   const tr = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(account?.name ?? "");
