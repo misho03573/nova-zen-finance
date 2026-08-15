@@ -210,6 +210,7 @@ function WalletPage() {
                   const cat = categoryOf(t.category);
                   const Icon = cat.icon;
                   const positive = t.amount > 0;
+                  const adj = isAdjustment(t);
                   return (
                     <li
                       key={t.id}
@@ -225,15 +226,23 @@ function WalletPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
-                          <Highlight parts={highlightParts(t.title, filters.query)} />
+                          {adj ? (
+                            tr("adjust.record")
+                          ) : (
+                            <Highlight parts={highlightParts(t.title, filters.query)} />
+                          )}
                         </p>
                         <p className="truncate text-xs text-muted-foreground">
-                          <Highlight
-                            parts={highlightParts(
-                              catName(cat.id, cat.name, cat.builtin),
-                              filters.query,
-                            )}
-                          />
+                          {adj ? (
+                            tr("adjust.category")
+                          ) : (
+                            <Highlight
+                              parts={highlightParts(
+                                catName(cat.id, cat.name, cat.builtin),
+                                filters.query,
+                              )}
+                            />
+                          )}
                           {" · "}
                           {formatTxDate(t.date, dateLabels)}
                         </p>
@@ -245,6 +254,15 @@ function WalletPage() {
                       >
                         {maskAmount(hide, formatIn(t.amount, txCurrency(t, state.accounts)), "md")}
                       </span>
+                      {adj ? (
+                        <span
+                          title={tr("adjust.immutable")}
+                          className="ml-1 text-[10px] uppercase tracking-widest text-muted-foreground"
+                        >
+                          {tr("adjust.title")}
+                        </span>
+                      ) : (
+                      <>
                       <Link
                         to="/rules"
                         search={{ merchant: t.title, category: t.category }}
@@ -276,6 +294,8 @@ function WalletPage() {
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
+                      </>
+                      )}
                     </li>
                   );
                 })}
