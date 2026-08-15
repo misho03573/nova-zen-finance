@@ -1555,7 +1555,7 @@ export function monthlyTotals(txs: Transaction[]) {
   const now = new Date();
   let income = 0;
   let expenses = 0;
-  for (const t of txs) {
+  for (const t of analyticsTxs(txs)) {
     const d = new Date(t.date);
     if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) {
       if (t.amount > 0) income += t.amount;
@@ -1577,7 +1577,7 @@ export function savingsRate(income: number, expenses: number) {
 export function monthlySpendByCategory(txs: Transaction[]) {
   const now = new Date();
   const map: Record<string, number> = {};
-  for (const t of txs) {
+  for (const t of analyticsTxs(txs)) {
     const d = new Date(t.date);
     if (
       d.getFullYear() === now.getFullYear() &&
@@ -1597,14 +1597,15 @@ export function filterTxsByRange(txs: Transaction[], range: "week" | "month" | "
   else if (range === "month") start.setDate(1);
   else start.setMonth(0, 1);
   start.setHours(0, 0, 0, 0);
-  return txs.filter((t) => new Date(t.date) >= start);
+  return analyticsTxs(txs).filter((t) => new Date(t.date) >= start);
 }
 
 export function cashflowByRange(
-  txs: Transaction[],
+  allTxs: Transaction[],
   range: "week" | "month" | "year",
   locale = "en-US",
 ) {
+  const txs = analyticsTxs(allTxs);
   const now = new Date();
   if (range === "week") {
     const days = Array.from({ length: 7 }).map((_, i) => {
