@@ -659,6 +659,7 @@ function AccountCardInner({ account }: { account: Account }) {
 
 function AccountDialog({ trigger, account }: { trigger: React.ReactNode; account?: Account }) {
   const { addAccount, updateAccount } = useNova();
+
   const tr = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(account?.name ?? "");
