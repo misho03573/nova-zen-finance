@@ -23,9 +23,9 @@ export function recentMonthKeys(count = 12, from = new Date()): string[] {
   return out;
 }
 
-/** A transfer leg never counts as income or expense. */
+/** A transfer leg, or a balance-reconciliation record, never counts as income or expense. */
 export function isTransfer(t: Transaction): boolean {
-  return Boolean(t.transferId) || t.category === "transfer";
+  return Boolean(t.transferId) || t.category === "transfer" || t.kind === "adjustment";
 }
 
 function inMonth(isoStr: string, key: string): boolean {

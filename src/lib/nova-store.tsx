@@ -60,7 +60,31 @@ export type Transaction = {
   transferId?: string;
   /** True when the user picked the category by hand — rules must not override it. */
   categoryLocked?: boolean;
+  /**
+   * Special record kinds. `adjustment` = balance reconciliation: it moves the
+   * account balance (and therefore Net Worth) but is never income, expense,
+   * spending, budget usage or Health-Score activity, and smart rules never
+   * touch it. Adjustments are immutable — reconcile again instead of editing.
+   */
+  kind?: "adjustment";
+  /** Account balance immediately after an adjustment (audit trail). */
+  resultingBalance?: number;
+  /** Creation timestamp of the record (audit trail). */
+  createdAt?: string;
 };
+
+/** True for balance-reconciliation records, which analytics must skip. */
+export function isAdjustment(t: Transaction): boolean {
+  return t.kind === "adjustment";
+}
+
+/** Category id used by reconciliation records. */
+export const ADJUSTMENT_CATEGORY = "adjustment";
+
+/** Drops adjustment records before any income/expense aggregation. */
+export function analyticsTxs(txs: Transaction[]): Transaction[] {
+  return txs.filter((t) => !isAdjustment(t));
+}
 
 export type Goal = {
   id: string;
@@ -374,6 +398,14 @@ type Action =
   | { type: "hydrate"; state: NovaState }
   | { type: "snapshotNetWorth"; snap: NetWorthSnapshot }
   | { type: "addTransaction"; tx: Transaction }
+  | {
+      type: "adjustBalance";
+      id: string;
+      accountId: string;
+      actual: number;
+      date: string;
+      note?: string;
+    }
   | { type: "updateTransaction"; tx: Transaction }
   | { type: "deleteTransaction"; id: string }
   | { type: "addAccount"; account: Account }
@@ -442,6 +474,7 @@ function reducer(state: NovaState, action: Action): NovaState {
         netWorthHistory: upsertSnapshot(state.netWorthHistory ?? [], action.snap),
       };
     case "addTransaction": {
+      // (see adjustBalance below for reconciliation records)
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
       const ruled = action.tx.categoryLocked
         ? null
@@ -460,9 +493,39 @@ function reducer(state: NovaState, action: Action): NovaState {
         transactions: [tx, ...state.transactions],
       };
     }
+    case "adjustBalance": {
+      const acc = state.accounts.find((a) => a.id === action.accountId);
+      if (!acc) return state;
+      const cur = accountCurrency(acc);
+      const actual = round(action.actual, cur);
+      const diff = round(actual - acc.balance, cur);
+      // Already reconciled → never write an empty audit record.
+      if (diff === 0) return state;
+      const tx: Transaction = {
+        id: `adj_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        title: "Balance correction",
+        category: ADJUSTMENT_CATEGORY,
+        amount: diff,
+        date: action.date,
+        accountId: acc.id,
+        note: action.note,
+        currency: cur,
+        // Smart rules must never re-categorize a reconciliation record.
+        categoryLocked: true,
+        kind: "adjustment",
+        resultingBalance: actual,
+        createdAt: new Date().toISOString(),
+      };
+      return {
+        ...state,
+        accounts: state.accounts.map((a) => (a.id === acc.id ? { ...a, balance: actual } : a)),
+        transactions: [tx, ...state.transactions],
+      };
+    }
     case "updateTransaction": {
       const prev = state.transactions.find((t) => t.id === action.tx.id);
-      if (!prev) return state;
+      // Adjustments are immutable: reconcile again instead of editing.
+      if (!prev || isAdjustment(prev) || isAdjustment(action.tx)) return state;
       const nextAcc = state.accounts.find((a) => a.id === action.tx.accountId);
       // Re-denominate amount into the new account's currency if the account
       // changed. Amount is preserved in value terms via FX conversion.
@@ -940,6 +1003,8 @@ type Ctx = {
   addTransaction: (tx: Omit<Transaction, "id">) => void;
   updateTransaction: (tx: Transaction) => void;
   deleteTransaction: (id: string) => void;
+  /** Reconcile an account to its real-world balance (creates an audit record). */
+  adjustBalance: (accountId: string, actual: number, opts?: { date?: string; note?: string }) => void;
   addAccount: (a: Omit<Account, "id">) => void;
   updateAccount: (a: Account) => void;
   deleteAccount: (id: string, reassignTo?: string) => void;
@@ -1121,6 +1186,18 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   }, []);
   const updateTransaction = useCallback((tx: Transaction) => dispatch({ type: "updateTransaction", tx }), []);
   const deleteTransaction = useCallback((id: string) => dispatch({ type: "deleteTransaction", id }), []);
+  const adjustBalance = useCallback(
+    (accountId: string, actual: number, opts?: { date?: string; note?: string }) =>
+      dispatch({
+        type: "adjustBalance",
+        id: rid("adj"),
+        accountId,
+        actual,
+        date: opts?.date ?? new Date().toISOString(),
+        note: opts?.note,
+      }),
+    [],
+  );
   const addAccount = useCallback(
     (a: Omit<Account, "id">) => dispatch({ type: "addAccount", account: { ...a, id: rid("a") } }),
     [],
@@ -1268,6 +1345,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       deleteRecurring,
       setSettings,
       exportData,
+      adjustBalance,
       importData,
       addLiability,
       updateLiability,
@@ -1308,6 +1386,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       deleteBudget,
       addRecurring,
       deleteRecurring,
+      adjustBalance,
       setSettings,
       exportData,
       importData,
@@ -1476,7 +1555,7 @@ export function monthlyTotals(txs: Transaction[]) {
   const now = new Date();
   let income = 0;
   let expenses = 0;
-  for (const t of txs) {
+  for (const t of analyticsTxs(txs)) {
     const d = new Date(t.date);
     if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) {
       if (t.amount > 0) income += t.amount;
@@ -1498,7 +1577,7 @@ export function savingsRate(income: number, expenses: number) {
 export function monthlySpendByCategory(txs: Transaction[]) {
   const now = new Date();
   const map: Record<string, number> = {};
-  for (const t of txs) {
+  for (const t of analyticsTxs(txs)) {
     const d = new Date(t.date);
     if (
       d.getFullYear() === now.getFullYear() &&
@@ -1518,14 +1597,15 @@ export function filterTxsByRange(txs: Transaction[], range: "week" | "month" | "
   else if (range === "month") start.setDate(1);
   else start.setMonth(0, 1);
   start.setHours(0, 0, 0, 0);
-  return txs.filter((t) => new Date(t.date) >= start);
+  return analyticsTxs(txs).filter((t) => new Date(t.date) >= start);
 }
 
 export function cashflowByRange(
-  txs: Transaction[],
+  allTxs: Transaction[],
   range: "week" | "month" | "year",
   locale = "en-US",
 ) {
+  const txs = analyticsTxs(allTxs);
   const now = new Date();
   if (range === "week") {
     const days = Array.from({ length: 7 }).map((_, i) => {
