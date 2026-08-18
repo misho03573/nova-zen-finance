@@ -94,7 +94,7 @@ function RunwayPage() {
             icon={<WalletIcon className="h-6 w-6" />}
             title={tr("ef.noAccounts")}
             description={tr("ef.noAccountsDesc")}
-            ctaLabel={tr("shell.wallet")}
+            ctaLabel={tr("nav.wallet")}
             ctaTo="/wallet"
           />
         </section>
