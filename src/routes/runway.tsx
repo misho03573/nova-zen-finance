@@ -247,7 +247,7 @@ function RunwayPage() {
                 >
                   <IconFor name={c.icon} className="h-4 w-4" style={{ color: c.color }} />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">{catName(c.id)}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{catName(c.id, c.name, c.builtin)}</span>
                 {avg > 0 ? (
                   <span className="shrink-0 text-[11px] text-muted-foreground">
                     {fmt(tr("ef.avgPerMonth"), { amount: format(avg) })}
