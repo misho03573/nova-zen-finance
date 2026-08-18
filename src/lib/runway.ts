@@ -131,12 +131,11 @@ export function computeRunway(args: {
     monthsUsed,
     limitedHistory: monthsUsed > 0 && monthsUsed < PREFERRED_MONTHS,
     totalRunway,
-    avgEssentialRunwayPlaceholder: undefined,
     essentialRunway,
     target,
     remaining,
     progress,
     state: runwayState(essentialRunway ?? totalRunway),
     byCategory,
-  } as RunwayResult;
+  };
 }
