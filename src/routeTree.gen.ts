@@ -14,6 +14,7 @@ import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScanRouteImport } from './routes/scan'
+import { Route as RunwayRouteImport } from './routes/runway'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -55,6 +56,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RunwayRoute = RunwayRouteImport.update({
+  id: '/runway',
+  path: '/runway',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RulesRoute = RulesRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
+  '/runway': typeof RunwayRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
+  '/runway': typeof RunwayRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
+  '/runway': typeof RunwayRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -236,6 +245,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/review'
     | '/rules'
+    | '/runway'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/review'
     | '/rules'
+    | '/runway'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/review'
     | '/rules'
+    | '/runway'
     | '/scan'
     | '/settings'
     | '/stats'
@@ -309,6 +321,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ReviewRoute: typeof ReviewRoute
   RulesRoute: typeof RulesRoute
+  RunwayRoute: typeof RunwayRoute
   ScanRoute: typeof ScanRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/scan'
       preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/runway': {
+      id: '/runway'
+      path: '/runway'
+      fullPath: '/runway'
+      preLoaderRoute: typeof RunwayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rules': {
@@ -493,6 +513,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   ReviewRoute: ReviewRoute,
   RulesRoute: RulesRoute,
+  RunwayRoute: RunwayRoute,
   ScanRoute: ScanRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
