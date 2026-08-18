@@ -16,6 +16,7 @@ type CtaTo =
   | "/networth"
   | "/import"
   | "/automation"
+  | "/runway"
   | "/subscriptions";
 
 export function EmptyState({

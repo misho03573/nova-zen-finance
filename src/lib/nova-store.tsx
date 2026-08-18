@@ -134,6 +134,10 @@ export type Settings = {
   accent?: string; // hex or oklch string, applied to --primary
   /** Cash-flow safety buffer, persisted in the neutral USD base. */
   forecastBuffer?: number;
+  /** Category ids the user marked as essential for emergency-fund math. */
+  essentialCategories?: string[];
+  /** Emergency fund target, in months of essential spending. */
+  emergencyTargetMonths?: number;
   language?: string; // "en" | "bg" | "de" | "fr" | "es"
 };
 
