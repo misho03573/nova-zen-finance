@@ -97,11 +97,24 @@ export function analyticsTxs(txs: Transaction[]): Transaction[] {
 export type Goal = {
   id: string;
   name: string;
+  /**
+   * Money allocated to this goal. This is an EARMARK, never an asset of its
+   * own: either it still sits in a real account (unlinked goal) or it sits in
+   * the linked account below. Net Worth never adds `saved` — doing so would
+   * double-count it.
+   */
   saved: number;
   target: number;
   emoji: string;
   eta: string;
   monthly?: number;
+  /**
+   * Optional real savings account this goal is funded into. When set,
+   * contributing moves money source → linked account as a normal transfer,
+   * so Net Worth is unchanged. When unset, contributing only earmarks money
+   * that stays where it is (no transaction, no balance change).
+   */
+  accountId?: string;
   /** Native currency the goal amounts are stored in. Legacy goals fall back to USD. */
   currency?: CurrencyCode;
 };
@@ -205,6 +218,12 @@ export function budgetCurrency(b: Budget): CurrencyCode {
 export function goalCurrency(g: Goal): CurrencyCode {
   return (g.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
 }
+
+/** Automation rules that fund a given goal (used to guard goal deletion). */
+export function automationsForGoal(rules: AutomationRule[], goalId: string): AutomationRule[] {
+  return rules.filter((r) => r.goalId === goalId);
+}
+
 
 export type Subscription = {
   id: string;
@@ -403,7 +422,7 @@ const seed: NovaState = {
   netWorthHistory: [],
 };
 
-const emptyState: NovaState = {
+export const emptyState: NovaState = {
   accounts: [],
   transactions: [],
   goals: [],
@@ -437,7 +456,12 @@ type Action =
   | { type: "deleteAccount"; id: string; reassignTo?: string }
   | { type: "addGoal"; goal: Goal }
   | { type: "updateGoal"; goal: Goal }
-  | { type: "deleteGoal"; id: string }
+  | {
+      type: "deleteGoal";
+      id: string;
+      /** Move automation rules that fund this goal to another goal instead. */
+      reassignTo?: string;
+    }
   | {
       type: "contributeGoal";
       id: string;
@@ -474,7 +498,7 @@ type Action =
   | { type: "deleteCategoryRule"; id: string }
   | { type: "toggleCategoryRule"; id: string };
 
-function reducer(state: NovaState, action: Action): NovaState {
+export function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
     case "hydrate":
       return {
@@ -600,16 +624,15 @@ function reducer(state: NovaState, action: Action): NovaState {
         ? state.goals.map((g) => {
             if (g.id !== goalId) return g;
             const gCur = goalCurrency(g);
-            const back = legs.reduce(
-              (s, l) =>
-                s +
-                convertAmount(
-                  Math.abs(l.amount),
-                  (l.currency ?? "USD") as CurrencyCode,
-                  gCur,
-                ),
-              0,
-            );
+            // Only the outgoing leg represents the contributed value; a linked
+            // goal also has an incoming leg that must not be counted twice.
+            const back = legs
+              .filter((l) => l.amount < 0)
+              .reduce(
+                (s, l) =>
+                  s + convertAmount(-l.amount, (l.currency ?? "USD") as CurrencyCode, gCur),
+                0,
+              );
             return { ...g, saved: round(Math.max(0, g.saved - back), gCur) };
           })
         : state.goals;
@@ -699,7 +722,11 @@ function reducer(state: NovaState, action: Action): NovaState {
       // reassigned to another account first.
       if (hasHistory && !action.reassignTo) return state;
       if (!hasHistory && !action.reassignTo) {
-        return { ...state, accounts: state.accounts.filter((a) => a.id !== action.id) };
+        return {
+          ...state,
+          accounts: state.accounts.filter((a) => a.id !== action.id),
+          goals: state.goals.map((g) => (g.accountId === action.id ? { ...g, accountId: undefined } : g)),
+        };
       }
       const target = state.accounts.find((a) => a.id === action.reassignTo);
       if (!target || target.id === action.id) return state;
@@ -734,6 +761,8 @@ function reducer(state: NovaState, action: Action): NovaState {
             ? { ...s, accountId: target.id, amount: re(s.amount, s.currency), currency: toCur }
             : s,
         ),
+        // Goals linked to the deleted account follow the money.
+        goals: state.goals.map((g) => (g.accountId === action.id ? { ...g, accountId: target.id } : g)),
       };
     }
     case "addGoal":
@@ -743,8 +772,25 @@ function reducer(state: NovaState, action: Action): NovaState {
         ...state,
         goals: state.goals.map((g) => (g.id === action.goal.id ? action.goal : g)),
       };
-    case "deleteGoal":
-      return { ...state, goals: state.goals.filter((g) => g.id !== action.id) };
+    case "deleteGoal": {
+      const target = action.reassignTo
+        ? state.goals.find((g) => g.id === action.reassignTo && g.id !== action.id)
+        : undefined;
+      // Never leave an enabled automation funding a goal that no longer exists:
+      // either point it at another goal, or disable it and drop the reference.
+      const automationRules = state.automationRules.map((r) =>
+        r.goalId === action.id
+          ? target
+            ? { ...r, goalId: target.id }
+            : { ...r, goalId: undefined, enabled: false }
+          : r,
+      );
+      return {
+        ...state,
+        automationRules,
+        goals: state.goals.filter((g) => g.id !== action.id),
+      };
+    }
     case "contributeGoal": {
       const goal = state.goals.find((g) => g.id === action.id);
       if (!goal || !Number.isFinite(action.amount) || action.amount === 0) return state;
@@ -763,35 +809,62 @@ function reducer(state: NovaState, action: Action): NovaState {
         g.id === goal.id ? { ...g, saved: round(Math.max(0, g.saved + applied), gCur) } : g,
       );
 
-      const acc = action.accountId
+      const from = action.accountId
         ? state.accounts.find((a) => a.id === action.accountId)
         : undefined;
-      if (!acc) return { ...state, goals };
+      const to = goal.accountId
+        ? state.accounts.find((a) => a.id === goal.accountId)
+        : undefined;
 
-      // Funding a goal moves real money: debit the account in its own currency
-      // and log it as a transfer leg so spending stats stay clean.
-      const accCur = accountCurrency(acc);
-      const outAmt = round(convertAmount(applied, gCur, accCur), accCur);
-      if (outAmt === 0) return { ...state, goals };
+      // No linked destination (or funding the linked account from itself):
+      // the money never leaves the account it already sits in, so this is a
+      // pure earmark. No transaction, no balance change, Net Worth unchanged.
+      if (!from || !to || from.id === to.id) return { ...state, goals };
+
+      // Linked goal: a real internal transfer between two of the user's own
+      // accounts. Both legs share a transferId, so analytics ignore it and
+      // Net Worth stays flat.
+      const fromCur = accountCurrency(from);
+      const toCur = accountCurrency(to);
+      const outAmt = round(convertAmount(applied, gCur, fromCur), fromCur);
+      const inAmt = round(convertAmount(applied, gCur, toCur), toCur);
+      if (outAmt === 0 || inAmt === 0) return { ...state, goals };
       const transferId = `goal_${goal.id}_${Date.now()}`;
-      const tx: Transaction = {
-        id: `t_${transferId}`,
-        title: `${goal.emoji} ${goal.name}`,
-        category: "transfer",
-        amount: -outAmt,
-        date: action.date ?? new Date().toISOString(),
-        accountId: acc.id,
-        currency: accCur,
-        transferId,
-        categoryLocked: true,
-      };
+      const title = `${goal.emoji} ${goal.name}`;
+      const date = action.date ?? new Date().toISOString();
+      const legs: Transaction[] = [
+        {
+          id: `t_${transferId}_out`,
+          title,
+          category: "transfer",
+          amount: -outAmt,
+          date,
+          accountId: from.id,
+          currency: fromCur,
+          transferId,
+          categoryLocked: true,
+        },
+        {
+          id: `t_${transferId}_in`,
+          title,
+          category: "transfer",
+          amount: inAmt,
+          date,
+          accountId: to.id,
+          currency: toCur,
+          transferId,
+          categoryLocked: true,
+        },
+      ];
       return {
         ...state,
         goals,
-        accounts: state.accounts.map((a) =>
-          a.id === acc.id ? { ...a, balance: round(a.balance - outAmt, accCur) } : a,
-        ),
-        transactions: [tx, ...state.transactions],
+        accounts: state.accounts.map((a) => {
+          if (a.id === from.id) return { ...a, balance: round(a.balance - outAmt, fromCur) };
+          if (a.id === to.id) return { ...a, balance: round(a.balance + inAmt, toCur) };
+          return a;
+        }),
+        transactions: [...legs, ...state.transactions],
       };
     }
     case "setBudget": {
@@ -1068,7 +1141,7 @@ type Ctx = {
   accountUsageOf: (id: string) => { transactions: number; recurring: number; subscriptions: number };
   addGoal: (g: Omit<Goal, "id">) => void;
   updateGoal: (g: Goal) => void;
-  deleteGoal: (id: string) => void;
+  deleteGoal: (id: string, reassignTo?: string) => void;
   contributeGoal: (
     id: string,
     amount: number,
@@ -1273,7 +1346,10 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     [],
   );
   const updateGoal = useCallback((g: Goal) => dispatch({ type: "updateGoal", goal: g }), []);
-  const deleteGoal = useCallback((id: string) => dispatch({ type: "deleteGoal", id }), []);
+  const deleteGoal = useCallback(
+    (id: string, reassignTo?: string) => dispatch({ type: "deleteGoal", id, reassignTo }),
+    [],
+  );
   const contributeGoal = useCallback(
     (id: string, amount: number, opts?: { currency?: CurrencyCode; accountId?: string }) =>
       dispatch({ type: "contributeGoal", id, amount, ...opts }),

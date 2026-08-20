@@ -8,6 +8,7 @@ import {
   useNova,
   useDisplayState,
   accountCurrency,
+  automationsForGoal,
   estimateGoalETA,
   type Goal,
 } from "@/lib/nova-store";
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/goals")({
 
 function GoalsPage() {
   const { format } = useCurrency();
-  const { deleteGoal } = useNova();
+  const { deleteGoal, state } = useNova();
   const display = useDisplayState();
   const confirm = useConfirm();
   const hide = useHideBalances();
@@ -153,15 +154,22 @@ function GoalsPage() {
                 />
                 <button
                   onClick={async () => {
+                    const linked = automationsForGoal(state.automationRules, g.id);
                     const ok = await confirm({
                       title: tr("goals.delete.title"),
-                      description: tr("goals.delete.desc"),
+                      description: linked.length
+                        ? `${tr("goals.delete.desc")} ${fmt(tr("goals.delete.automations"), { n: linked.length })}`
+                        : tr("goals.delete.desc"),
                       confirmLabel: tr("goals.deleteAria"),
                       destructive: true,
                     });
                     if (ok) {
                       deleteGoal(g.id);
-                      toast.message(tr("goals.deleted"));
+                      toast.message(
+                        linked.length
+                          ? fmt(tr("goals.deleted.automations"), { n: linked.length })
+                          : tr("goals.deleted"),
+                      );
                     }
                   }}
                   className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-destructive"
@@ -179,12 +187,20 @@ function GoalsPage() {
 }
 
 function ContributeDialog({ goalId }: { goalId: string }) {
-  const { state, contributeGoal } = useNova();
+  const { state, contributeGoal, updateGoal } = useNova();
   const { currency } = useCurrency();
   const tr = useT();
+  const goal = state.goals.find((g) => g.id === goalId);
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("50");
   const [accountId, setAccountId] = useState<string>("");
+  const [destId, setDestId] = useState<string>(goal?.accountId ?? "");
+  const chip = (active: boolean) =>
+    `rounded-full border px-3 py-1 text-xs ${
+      active
+        ? "border-primary/60 bg-primary/15 text-primary"
+        : "border-border bg-card/60 text-muted-foreground"
+    }`;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -206,37 +222,41 @@ function ContributeDialog({ goalId }: { goalId: string }) {
         <div className="space-y-1.5">
           <Label className="text-xs">{tr("goals.fromAccount")}</Label>
           <div className="flex flex-wrap gap-1.5">
-            <button
-              onClick={() => setAccountId("")}
-              className={`rounded-full border px-3 py-1 text-xs ${
-                accountId === ""
-                  ? "border-primary/60 bg-primary/15 text-primary"
-                  : "border-border bg-card/60 text-muted-foreground"
-              }`}
-            >
+            <button onClick={() => setAccountId("")} className={chip(accountId === "")}>
               {tr("goals.trackOnly")}
             </button>
             {state.accounts.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => setAccountId(a.id)}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  accountId === a.id
-                    ? "border-primary/60 bg-primary/15 text-primary"
-                    : "border-border bg-card/60 text-muted-foreground"
-                }`}
-              >
+              <button key={a.id} onClick={() => setAccountId(a.id)} className={chip(accountId === a.id)}>
                 {a.name} · {accountCurrency(a)}
               </button>
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground">{tr("goals.fromAccount.hint")}</p>
         </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">{tr("goals.toAccount")}</Label>
+          <div className="flex flex-wrap gap-1.5">
+            <button onClick={() => setDestId("")} className={chip(destId === "")}>
+              {tr("goals.noLinkedAccount")}
+            </button>
+            {state.accounts
+              .filter((a) => a.id !== accountId)
+              .map((a) => (
+                <button key={a.id} onClick={() => setDestId(a.id)} className={chip(destId === a.id)}>
+                  {a.name} · {accountCurrency(a)}
+                </button>
+              ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">{tr("goals.toAccount.hint")}</p>
+        </div>
         <DialogFooter>
           <button
             onClick={() => {
               const n = Number.parseFloat(amount);
               if (!Number.isFinite(n) || n === 0) return;
+              if (goal && (goal.accountId ?? "") !== destId) {
+                updateGoal({ ...goal, accountId: destId || undefined });
+              }
               contributeGoal(goalId, n, {
                 currency: currency.code,
                 accountId: accountId || undefined,

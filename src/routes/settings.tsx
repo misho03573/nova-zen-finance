@@ -17,7 +17,7 @@ import {
   Languages,
   Sparkles,
   LogOut,
-  UserCircle, Wand2, Repeat, TrendingUp, Zap } from "lucide-react";
+  UserCircle, Wand2, Repeat, TrendingUp, Zap, Camera } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { Tag } from "lucide-react";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -74,7 +74,7 @@ function SettingsPage() {
   const saveName = async () => {
     const name = nameDraft.trim();
     if (name.length < 2) {
-      toast.error("Enter your full name");
+      toast.error(t("settings.err.name"));
       return;
     }
     setSavingName(true);
@@ -84,7 +84,7 @@ function SettingsPage() {
       toast.error(res.error);
       return;
     }
-    toast.success("Name updated");
+    toast.success(t("settings.ok.name"));
     setNameOpen(false);
   };
 
@@ -108,9 +108,9 @@ function SettingsPage() {
       a.download = `nova-export-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("Data exported");
+      toast.success(t("settings.ok.export"));
     } catch {
-      toast.error("Could not export");
+      toast.error(t("settings.err.export"));
     }
   };
 
@@ -134,8 +134,8 @@ function SettingsPage() {
     if (!f) return;
     const text = await f.text();
     const ok = importData(text);
-    if (ok) toast.success("Backup restored");
-    else toast.error("Invalid backup file");
+    if (ok) toast.success(t("settings.ok.restore"));
+    else toast.error(t("settings.err.restore"));
   };
 
   const ACCENTS: { key: string; label: string; grad: string }[] = [
@@ -241,7 +241,7 @@ function SettingsPage() {
               {ACCENTS.map((a) => (
                 <button
                   key={a.key}
-                  onClick={() => { setSettings({ accent: a.key }); toast.success(`Accent · ${a.label}`); }}
+                  onClick={() => { setSettings({ accent: a.key }); toast.success(`${t("settings.accent")} · ${a.label}`); }}
                   className={cn(
                     "h-7 w-7 rounded-full border-2 transition-transform",
                     (s.accent ?? "default") === a.key ? "border-foreground scale-110" : "border-transparent",
@@ -397,6 +397,45 @@ function SettingsPage() {
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Link>
+          <Link
+            to="/import"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Upload className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("imp.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("imp.subtitle")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/scan"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Camera className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("scan.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("scan.subtitle")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/ai"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("ai.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("ai.subtitle")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
           <button
             onClick={handleExport}
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
@@ -470,11 +509,11 @@ function SettingsPage() {
             />
             <Button
               onClick={() => {
-                if (pin.length !== 6) { toast.error("Enter 6 digits"); return; }
+                if (pin.length !== 6) { toast.error(t("settings.err.pin")); return; }
                 setSettings({ pin, pinEnabled: true });
                 setPin("");
                 setPinOpen(false);
-                toast.success("PIN set");
+                toast.success(t("settings.ok.pin"));
               }}
               className="w-full"
             >
@@ -482,7 +521,7 @@ function SettingsPage() {
             </Button>
             {s.pinEnabled && (
               <button
-                onClick={() => { setSettings({ pinEnabled: false, pin: undefined }); setPinOpen(false); toast.message("PIN disabled"); }}
+                onClick={() => { setSettings({ pinEnabled: false, pin: undefined }); setPinOpen(false); toast.message(t("settings.ok.pinOff")); }}
                 className="w-full text-xs text-muted-foreground"
               >
                 {t("set.pinDisable")}

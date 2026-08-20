@@ -8,6 +8,7 @@
  * Flags:
  *   - JSXText nodes containing alphabetic characters that are not wrapped
  *     in a `{t(...)}` / `{tCat(...)}` / equivalent call.
+ *   - Hardcoded string / template literals passed to `toast(...)` calls.
  *   - String literal values on user-visible JSX attributes
  *     (placeholder, title, aria-label, alt) that are not `{t(...)}` calls.
  *
@@ -178,6 +179,30 @@ function checkFile(file) {
               file, line, kind: `attr:${attr}`,
               text: literal.slice(0, 80),
             });
+          }
+        }
+      }
+    }
+
+    // Toast messages are user-facing prose too: toast("..."), toast.success(...),
+    // toast.error(...), toast.message(...) must go through the dictionary.
+    if (node.type === "CallExpression") {
+      const c = node.callee;
+      const isToast =
+        (c.type === "Identifier" && c.name === "toast") ||
+        (c.type === "MemberExpression" &&
+          c.object.type === "Identifier" &&
+          c.object.name === "toast");
+      if (isToast) {
+        const arg = node.arguments[0];
+        let literal = null;
+        if (arg?.type === "StringLiteral") literal = arg.value;
+        else if (arg?.type === "TemplateLiteral")
+          literal = arg.quasis.map((q) => q.value.cooked).join(" ");
+        if (literal !== null && !isAllowlisted(literal)) {
+          const line = node.loc?.start.line ?? 0;
+          if (!hasIgnoreComment(src, line)) {
+            violations.push({ file, line, kind: "toast", text: literal.slice(0, 80) });
           }
         }
       }

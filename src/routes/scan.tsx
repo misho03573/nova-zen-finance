@@ -7,7 +7,7 @@ import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 import { useCategoryLookup, useCategories } from "@/lib/categories";
 import { iconRegistry } from "@/lib/categories";
-import { useCategoryName, useT } from "@/lib/i18n";
+import { useCategoryName, useT, fmt } from "@/lib/i18n";
 
 export const Route = createFileRoute("/scan")({
   head: () => ({
@@ -66,7 +66,7 @@ function ScanPage() {
       accountId: state.accounts[0]?.id ?? "c1",
       note: `VAT ${format(receipt.vat)} · ${receipt.paymentMethod}`,
     });
-    toast.success(`Saved ${format(receipt.total)} from ${receipt.merchant}`);
+    toast.success(fmt(tr("scan.saved"), { amount: format(receipt.total), merchant: receipt.merchant }));
     navigate({ to: "/wallet" });
   };
 
