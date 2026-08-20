@@ -716,7 +716,11 @@ function reducer(state: NovaState, action: Action): NovaState {
       // reassigned to another account first.
       if (hasHistory && !action.reassignTo) return state;
       if (!hasHistory && !action.reassignTo) {
-        return { ...state, accounts: state.accounts.filter((a) => a.id !== action.id) };
+        return {
+          ...state,
+          accounts: state.accounts.filter((a) => a.id !== action.id),
+          goals: state.goals.map((g) => (g.accountId === action.id ? { ...g, accountId: undefined } : g)),
+        };
       }
       const target = state.accounts.find((a) => a.id === action.reassignTo);
       if (!target || target.id === action.id) return state;
