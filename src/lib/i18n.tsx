@@ -1015,6 +1015,18 @@ const en: Dict = {
   "ef.noHistoryDesc": "NOVA needs at least one full month of expenses before it can estimate a runway.",
   "ef.noEssential": "No essential categories selected",
   "ef.planningNote": "Planning only — NOVA never moves or reserves money.",
+  "rd.section": "Detected recurring payments",
+  "rd.desc": "Patterns found in your history. Nothing is created until you confirm.",
+  "rd.empty.title": "No recurring payments detected yet",
+  "rd.empty.desc": "NOVA will spot patterns as more transaction history builds up.",
+  "rd.conf.high": "High confidence",
+  "rd.conf.possible": "Possible",
+  "rd.matches": "{n} matching payments",
+  "rd.next": "Next ~{date}",
+  "rd.add": "Add",
+  "rd.edit": "Edit",
+  "rd.ignore": "Ignore",
+  "rd.ignored": "Suggestion ignored",
 };
 
 const bg: Dict = {
@@ -1993,6 +2005,18 @@ const bg: Dict = {
   "ef.noHistoryDesc": "NOVA се нуждае от поне един пълен месец разходи, за да изчисли запас.",
   "ef.noEssential": "Няма избрани основни категории",
   "ef.planningNote": "Само планиране — NOVA не мести и не запазва пари.",
+  "rd.section": "Открити повтарящи се плащания",
+  "rd.desc": "Модели, намерени в историята ти. Нищо не се създава без потвърждение.",
+  "rd.empty.title": "Още няма открити повтарящи се плащания",
+  "rd.empty.desc": "NOVA ще открие модели, когато се натрупа повече история.",
+  "rd.conf.high": "Висока увереност",
+  "rd.conf.possible": "Възможно",
+  "rd.matches": "{n} съвпадащи плащания",
+  "rd.next": "Следващо ~{date}",
+  "rd.add": "Добави",
+  "rd.edit": "Редактирай",
+  "rd.ignore": "Игнорирай",
+  "rd.ignored": "Предложението е игнорирано",
 };
 
 const de: Dict = {
@@ -2977,6 +3001,18 @@ const de: Dict = {
   "ef.noHistoryDesc": "NOVA braucht mindestens einen vollen Monat mit Ausgaben für eine Schätzung.",
   "ef.noEssential": "Keine notwendigen Kategorien gewählt",
   "ef.planningNote": "Nur Planung — NOVA verschiebt oder reserviert kein Geld.",
+  "rd.section": "Erkannte wiederkehrende Zahlungen",
+  "rd.desc": "In deinem Verlauf gefundene Muster. Nichts wird ohne Bestätigung erstellt.",
+  "rd.empty.title": "Noch keine wiederkehrenden Zahlungen erkannt",
+  "rd.empty.desc": "NOVA erkennt Muster, sobald mehr Verlauf vorhanden ist.",
+  "rd.conf.high": "Hohe Sicherheit",
+  "rd.conf.possible": "Möglich",
+  "rd.matches": "{n} passende Zahlungen",
+  "rd.next": "Nächste ~{date}",
+  "rd.add": "Hinzufügen",
+  "rd.edit": "Bearbeiten",
+  "rd.ignore": "Ignorieren",
+  "rd.ignored": "Vorschlag ignoriert",
 };
 
 const fr: Dict = {
@@ -3961,6 +3997,18 @@ const fr: Dict = {
   "ef.noHistoryDesc": "NOVA a besoin d'au moins un mois complet de dépenses pour estimer l'autonomie.",
   "ef.noEssential": "Aucune catégorie essentielle sélectionnée",
   "ef.planningNote": "Planification uniquement — NOVA ne déplace ni ne réserve d'argent.",
+  "rd.section": "Paiements récurrents détectés",
+  "rd.desc": "Motifs trouvés dans votre historique. Rien n'est créé sans confirmation.",
+  "rd.empty.title": "Aucun paiement récurrent détecté",
+  "rd.empty.desc": "NOVA repérera des motifs à mesure que l'historique s'étoffe.",
+  "rd.conf.high": "Confiance élevée",
+  "rd.conf.possible": "Possible",
+  "rd.matches": "{n} paiements correspondants",
+  "rd.next": "Prochain ~{date}",
+  "rd.add": "Ajouter",
+  "rd.edit": "Modifier",
+  "rd.ignore": "Ignorer",
+  "rd.ignored": "Suggestion ignorée",
 };
 
 const es: Dict = {
@@ -4945,6 +4993,18 @@ const es: Dict = {
   "ef.noHistoryDesc": "NOVA necesita al menos un mes completo de gastos para estimar la autonomía.",
   "ef.noEssential": "No hay categorías esenciales seleccionadas",
   "ef.planningNote": "Solo planificación: NOVA no mueve ni reserva dinero.",
+  "rd.section": "Pagos recurrentes detectados",
+  "rd.desc": "Patrones encontrados en tu historial. No se crea nada sin confirmar.",
+  "rd.empty.title": "Aún no se detectan pagos recurrentes",
+  "rd.empty.desc": "NOVA detectará patrones a medida que crezca el historial.",
+  "rd.conf.high": "Confianza alta",
+  "rd.conf.possible": "Posible",
+  "rd.matches": "{n} pagos coincidentes",
+  "rd.next": "Próximo ~{date}",
+  "rd.add": "Añadir",
+  "rd.edit": "Editar",
+  "rd.ignore": "Ignorar",
+  "rd.ignored": "Sugerencia ignorada",
 };
 
 const DICTS: Record<string, Dict> = { en, bg, de, fr, es };
