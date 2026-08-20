@@ -60,6 +60,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error?.message };
     },
     async signOut() {
+      // Never leave financial data cached on a shared device.
+      const uid = user?.id;
+      try {
+        if (typeof window !== "undefined") {
+          if (uid) window.localStorage.removeItem(`nova.store.v3.${uid}`);
+          window.localStorage.removeItem("nova.store.v3");
+        }
+      } catch {
+        /* ignore */
+      }
       await supabase.auth.signOut();
     },
   };
