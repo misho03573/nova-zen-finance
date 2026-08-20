@@ -29,6 +29,7 @@ import {
   accountCurrency,
   txCurrency,
   isAdjustment,
+  isTransferTx,
 } from "@/lib/nova-store";
 import type { Transaction } from "@/lib/nova-store";
 import { useAuth } from "@/lib/auth";
@@ -263,16 +264,20 @@ function WalletPage() {
                         </span>
                       ) : (
                       <>
-                      <Link
-                        to="/rules"
-                        search={{ merchant: t.title, category: t.category }}
-                        aria-label={tr("rules.fromTx")}
-                        title={tr("rules.fromTx")}
-                        className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
-                      >
-                        <Wand2 className="h-3.5 w-3.5" />
-                      </Link>
-                      <EditTxDialog tx={t} />
+                      {isTransferTx(t) ? null : (
+                        <>
+                          <Link
+                            to="/rules"
+                            search={{ merchant: t.title, category: t.category }}
+                            aria-label={tr("rules.fromTx")}
+                            title={tr("rules.fromTx")}
+                            className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                          >
+                            <Wand2 className="h-3.5 w-3.5" />
+                          </Link>
+                          <EditTxDialog tx={t} />
+                        </>
+                      )}
                       <button
                         onClick={async () => {
                           const ok = await confirm({

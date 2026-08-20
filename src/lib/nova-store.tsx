@@ -78,12 +78,20 @@ export function isAdjustment(t: Transaction): boolean {
   return t.kind === "adjustment";
 }
 
+/** Internal money movement: both legs cancel out, so it is never income/expense. */
+export function isTransferTx(t: Transaction): boolean {
+  return Boolean(t.transferId) || t.category === "transfer";
+}
+
 /** Category id used by reconciliation records. */
 export const ADJUSTMENT_CATEGORY = "adjustment";
 
-/** Drops adjustment records before any income/expense aggregation. */
+/**
+ * Drops reconciliation records AND internal transfers before any
+ * income/expense aggregation (totals, savings rate, budgets, cash flow).
+ */
 export function analyticsTxs(txs: Transaction[]): Transaction[] {
-  return txs.filter((t) => !isAdjustment(t));
+  return txs.filter((t) => !isAdjustment(t) && !isTransferTx(t));
 }
 
 export type Goal = {
@@ -232,6 +240,16 @@ export type AutomationRule = {
 };
 
 const GUEST_KEY = "nova.store.v3";
+/** Removes a signed-in user's cached financial data from this device. */
+export function clearLocalNovaData(userId?: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (userId) window.localStorage.removeItem(`nova.store.v3.${userId}`);
+    window.localStorage.removeItem(GUEST_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 function keyFor(userId: string | null) {
   return userId ? `nova.store.v3.${userId}` : GUEST_KEY;
 }
@@ -531,7 +549,10 @@ function reducer(state: NovaState, action: Action): NovaState {
     case "updateTransaction": {
       const prev = state.transactions.find((t) => t.id === action.tx.id);
       // Adjustments are immutable: reconcile again instead of editing.
+      // Transfer legs are immutable too: editing one leg would desync the pair
+      // and silently move Net Worth. Delete the transfer and redo it instead.
       if (!prev || isAdjustment(prev) || isAdjustment(action.tx)) return state;
+      if (isTransferTx(prev) || isTransferTx(action.tx)) return state;
       const nextAcc = state.accounts.find((a) => a.id === action.tx.accountId);
       // Re-denominate amount into the new account's currency if the account
       // changed. Amount is preserved in value terms via FX conversion.
@@ -560,13 +581,43 @@ function reducer(state: NovaState, action: Action): NovaState {
     case "deleteTransaction": {
       const tx = state.transactions.find((t) => t.id === action.id);
       if (!tx) return state;
+      // A transfer is one atomic movement: removing a single leg would create
+      // or destroy money. Reverse every leg that shares the transfer id.
+      const legs = tx.transferId
+        ? state.transactions.filter((t) => t.transferId === tx.transferId)
+        : [tx];
+      const byId = new Map(legs.map((l) => [l.id, l]));
+      const delta = new Map<string, number>();
+      for (const l of legs) delta.set(l.accountId, (delta.get(l.accountId) ?? 0) - l.amount);
       const accounts = state.accounts.map((a) =>
-        a.id === tx.accountId ? { ...a, balance: round(a.balance - tx.amount, a.currency) } : a,
+        delta.has(a.id) ? { ...a, balance: round(a.balance + (delta.get(a.id) ?? 0), a.currency) } : a,
       );
+      // Reversing a goal contribution must also give the money back to the goal.
+      const goalId = tx.transferId?.startsWith("goal_")
+        ? tx.transferId.slice("goal_".length).split("_")[0]
+        : undefined;
+      const goals = goalId
+        ? state.goals.map((g) => {
+            if (g.id !== goalId) return g;
+            const gCur = goalCurrency(g);
+            const back = legs.reduce(
+              (s, l) =>
+                s +
+                convertAmount(
+                  Math.abs(l.amount),
+                  (l.currency ?? "USD") as CurrencyCode,
+                  gCur,
+                ),
+              0,
+            );
+            return { ...g, saved: round(Math.max(0, g.saved - back), gCur) };
+          })
+        : state.goals;
       return {
         ...state,
         accounts,
-        transactions: state.transactions.filter((t) => t.id !== action.id),
+        goals,
+        transactions: state.transactions.filter((t) => !byId.has(t.id)),
       };
     }
     case "addAccount":
@@ -1121,8 +1172,11 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       if (error) {
         console.error("[nova] load failed", error);
+        // We never saw the server row, so the optimistic local cache may be
+        // stale. Stay read-only for this session instead of uploading it and
+        // clobbering data written from another device.
         hydratedRef.current = true;
-        remoteSyncRef.current = true;
+        remoteSyncRef.current = false;
         return;
       }
       if (data?.data && typeof data.data === "object" && (data.data as NovaState).accounts) {
