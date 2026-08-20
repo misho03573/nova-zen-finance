@@ -760,8 +760,25 @@ function reducer(state: NovaState, action: Action): NovaState {
         ...state,
         goals: state.goals.map((g) => (g.id === action.goal.id ? action.goal : g)),
       };
-    case "deleteGoal":
-      return { ...state, goals: state.goals.filter((g) => g.id !== action.id) };
+    case "deleteGoal": {
+      const target = action.reassignTo
+        ? state.goals.find((g) => g.id === action.reassignTo && g.id !== action.id)
+        : undefined;
+      // Never leave an enabled automation funding a goal that no longer exists:
+      // either point it at another goal, or disable it and drop the reference.
+      const automationRules = state.automationRules.map((r) =>
+        r.goalId === action.id
+          ? target
+            ? { ...r, goalId: target.id }
+            : { ...r, goalId: undefined, enabled: false }
+          : r,
+      );
+      return {
+        ...state,
+        automationRules,
+        goals: state.goals.filter((g) => g.id !== action.id),
+      };
+    }
     case "contributeGoal": {
       const goal = state.goals.find((g) => g.id === action.id);
       if (!goal || !Number.isFinite(action.amount) || action.amount === 0) return state;
@@ -780,35 +797,62 @@ function reducer(state: NovaState, action: Action): NovaState {
         g.id === goal.id ? { ...g, saved: round(Math.max(0, g.saved + applied), gCur) } : g,
       );
 
-      const acc = action.accountId
+      const from = action.accountId
         ? state.accounts.find((a) => a.id === action.accountId)
         : undefined;
-      if (!acc) return { ...state, goals };
+      const to = goal.accountId
+        ? state.accounts.find((a) => a.id === goal.accountId)
+        : undefined;
 
-      // Funding a goal moves real money: debit the account in its own currency
-      // and log it as a transfer leg so spending stats stay clean.
-      const accCur = accountCurrency(acc);
-      const outAmt = round(convertAmount(applied, gCur, accCur), accCur);
-      if (outAmt === 0) return { ...state, goals };
+      // No linked destination (or funding the linked account from itself):
+      // the money never leaves the account it already sits in, so this is a
+      // pure earmark. No transaction, no balance change, Net Worth unchanged.
+      if (!from || !to || from.id === to.id) return { ...state, goals };
+
+      // Linked goal: a real internal transfer between two of the user's own
+      // accounts. Both legs share a transferId, so analytics ignore it and
+      // Net Worth stays flat.
+      const fromCur = accountCurrency(from);
+      const toCur = accountCurrency(to);
+      const outAmt = round(convertAmount(applied, gCur, fromCur), fromCur);
+      const inAmt = round(convertAmount(applied, gCur, toCur), toCur);
+      if (outAmt === 0 || inAmt === 0) return { ...state, goals };
       const transferId = `goal_${goal.id}_${Date.now()}`;
-      const tx: Transaction = {
-        id: `t_${transferId}`,
-        title: `${goal.emoji} ${goal.name}`,
-        category: "transfer",
-        amount: -outAmt,
-        date: action.date ?? new Date().toISOString(),
-        accountId: acc.id,
-        currency: accCur,
-        transferId,
-        categoryLocked: true,
-      };
+      const title = `${goal.emoji} ${goal.name}`;
+      const date = action.date ?? new Date().toISOString();
+      const legs: Transaction[] = [
+        {
+          id: `t_${transferId}_out`,
+          title,
+          category: "transfer",
+          amount: -outAmt,
+          date,
+          accountId: from.id,
+          currency: fromCur,
+          transferId,
+          categoryLocked: true,
+        },
+        {
+          id: `t_${transferId}_in`,
+          title,
+          category: "transfer",
+          amount: inAmt,
+          date,
+          accountId: to.id,
+          currency: toCur,
+          transferId,
+          categoryLocked: true,
+        },
+      ];
       return {
         ...state,
         goals,
-        accounts: state.accounts.map((a) =>
-          a.id === acc.id ? { ...a, balance: round(a.balance - outAmt, accCur) } : a,
-        ),
-        transactions: [tx, ...state.transactions],
+        accounts: state.accounts.map((a) => {
+          if (a.id === from.id) return { ...a, balance: round(a.balance - outAmt, fromCur) };
+          if (a.id === to.id) return { ...a, balance: round(a.balance + inAmt, toCur) };
+          return a;
+        }),
+        transactions: [...legs, ...state.transactions],
       };
     }
     case "setBudget": {
