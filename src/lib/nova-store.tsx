@@ -422,7 +422,7 @@ const seed: NovaState = {
   netWorthHistory: [],
 };
 
-const emptyState: NovaState = {
+export const emptyState: NovaState = {
   accounts: [],
   transactions: [],
   goals: [],
