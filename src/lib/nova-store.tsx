@@ -751,6 +751,8 @@ function reducer(state: NovaState, action: Action): NovaState {
             ? { ...s, accountId: target.id, amount: re(s.amount, s.currency), currency: toCur }
             : s,
         ),
+        // Goals linked to the deleted account follow the money.
+        goals: state.goals.map((g) => (g.accountId === action.id ? { ...g, accountId: target.id } : g)),
       };
     }
     case "addGoal":
