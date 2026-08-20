@@ -78,12 +78,20 @@ export function isAdjustment(t: Transaction): boolean {
   return t.kind === "adjustment";
 }
 
+/** Internal money movement: both legs cancel out, so it is never income/expense. */
+export function isTransferTx(t: Transaction): boolean {
+  return Boolean(t.transferId) || t.category === "transfer";
+}
+
 /** Category id used by reconciliation records. */
 export const ADJUSTMENT_CATEGORY = "adjustment";
 
-/** Drops adjustment records before any income/expense aggregation. */
+/**
+ * Drops reconciliation records AND internal transfers before any
+ * income/expense aggregation (totals, savings rate, budgets, cash flow).
+ */
 export function analyticsTxs(txs: Transaction[]): Transaction[] {
-  return txs.filter((t) => !isAdjustment(t));
+  return txs.filter((t) => !isAdjustment(t) && !isTransferTx(t));
 }
 
 export type Goal = {
