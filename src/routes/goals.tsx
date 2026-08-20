@@ -8,6 +8,7 @@ import {
   useNova,
   useDisplayState,
   accountCurrency,
+  automationsForGoal,
   estimateGoalETA,
   type Goal,
 } from "@/lib/nova-store";
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/goals")({
 
 function GoalsPage() {
   const { format } = useCurrency();
-  const { deleteGoal } = useNova();
+  const { deleteGoal, state } = useNova();
   const display = useDisplayState();
   const confirm = useConfirm();
   const hide = useHideBalances();
