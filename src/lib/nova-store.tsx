@@ -240,6 +240,16 @@ export type AutomationRule = {
 };
 
 const GUEST_KEY = "nova.store.v3";
+/** Removes a signed-in user's cached financial data from this device. */
+export function clearLocalNovaData(userId?: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (userId) window.localStorage.removeItem(`nova.store.v3.${userId}`);
+    window.localStorage.removeItem(GUEST_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 function keyFor(userId: string | null) {
   return userId ? `nova.store.v3.${userId}` : GUEST_KEY;
 }
