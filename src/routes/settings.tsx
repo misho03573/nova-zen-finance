@@ -17,7 +17,7 @@ import {
   Languages,
   Sparkles,
   LogOut,
-  UserCircle, Wand2, Repeat, TrendingUp, Zap } from "lucide-react";
+  UserCircle, Wand2, Repeat, TrendingUp, Zap, Camera } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { Tag } from "lucide-react";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
@@ -394,6 +394,45 @@ function SettingsPage() {
             <span className="flex-1">
               <span className="block text-sm font-semibold">{t("rules.title")}</span>
               <span className="block text-xs text-muted-foreground">{t("rules.empty.desc")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/import"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Upload className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("imp.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("imp.subtitle")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/scan"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Camera className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("scan.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("scan.subtitle")}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/ai"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">{t("ai.title")}</span>
+              <span className="block text-xs text-muted-foreground">{t("ai.subtitle")}</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Link>
