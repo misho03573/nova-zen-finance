@@ -66,7 +66,7 @@ function ScanPage() {
       accountId: state.accounts[0]?.id ?? "c1",
       note: `VAT ${format(receipt.vat)} · ${receipt.paymentMethod}`,
     });
-    toast.success(`Saved ${format(receipt.total)} from ${receipt.merchant}`);
+    toast.success(fmt(tr("scan.saved"), { amount: format(receipt.total), merchant: receipt.merchant }));
     navigate({ to: "/wallet" });
   };
 

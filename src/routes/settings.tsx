@@ -74,7 +74,7 @@ function SettingsPage() {
   const saveName = async () => {
     const name = nameDraft.trim();
     if (name.length < 2) {
-      toast.error("Enter your full name");
+      toast.error(t("settings.err.name"));
       return;
     }
     setSavingName(true);
@@ -84,7 +84,7 @@ function SettingsPage() {
       toast.error(res.error);
       return;
     }
-    toast.success("Name updated");
+    toast.success(t("settings.ok.name"));
     setNameOpen(false);
   };
 
@@ -108,9 +108,9 @@ function SettingsPage() {
       a.download = `nova-export-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("Data exported");
+      toast.success(t("settings.ok.export"));
     } catch {
-      toast.error("Could not export");
+      toast.error(t("settings.err.export"));
     }
   };
 
@@ -134,8 +134,8 @@ function SettingsPage() {
     if (!f) return;
     const text = await f.text();
     const ok = importData(text);
-    if (ok) toast.success("Backup restored");
-    else toast.error("Invalid backup file");
+    if (ok) toast.success(t("settings.ok.restore"));
+    else toast.error(t("settings.err.restore"));
   };
 
   const ACCENTS: { key: string; label: string; grad: string }[] = [
@@ -509,11 +509,11 @@ function SettingsPage() {
             />
             <Button
               onClick={() => {
-                if (pin.length !== 6) { toast.error("Enter 6 digits"); return; }
+                if (pin.length !== 6) { toast.error(t("settings.err.pin")); return; }
                 setSettings({ pin, pinEnabled: true });
                 setPin("");
                 setPinOpen(false);
-                toast.success("PIN set");
+                toast.success(t("settings.ok.pin"));
               }}
               className="w-full"
             >
@@ -521,7 +521,7 @@ function SettingsPage() {
             </Button>
             {s.pinEnabled && (
               <button
-                onClick={() => { setSettings({ pinEnabled: false, pin: undefined }); setPinOpen(false); toast.message("PIN disabled"); }}
+                onClick={() => { setSettings({ pinEnabled: false, pin: undefined }); setPinOpen(false); toast.message(t("settings.ok.pinOff")); }}
                 className="w-full text-xs text-muted-foreground"
               >
                 {t("set.pinDisable")}

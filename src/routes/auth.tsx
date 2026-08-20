@@ -36,11 +36,11 @@ function AuthPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || password.length < 6) {
-      toast.error("Enter an email and a password (min 6 chars).");
+      toast.error(tr("auth.err.credentials"));
       return;
     }
     if (mode === "signup" && fullName.trim().length < 2) {
-      toast.error("Please enter your full name.");
+      toast.error(tr("auth.err.name"));
       return;
     }
     setBusy(true);
@@ -53,9 +53,9 @@ function AuthPage() {
       return;
     }
     if (mode === "signup") {
-      toast.success("Account created. Welcome to NOVA.");
+      toast.success(tr("auth.ok.signup"));
     } else {
-      toast.success("Welcome back.");
+      toast.success(tr("auth.ok.signin"));
     }
   }
 
