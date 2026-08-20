@@ -539,7 +539,10 @@ function reducer(state: NovaState, action: Action): NovaState {
     case "updateTransaction": {
       const prev = state.transactions.find((t) => t.id === action.tx.id);
       // Adjustments are immutable: reconcile again instead of editing.
+      // Transfer legs are immutable too: editing one leg would desync the pair
+      // and silently move Net Worth. Delete the transfer and redo it instead.
       if (!prev || isAdjustment(prev) || isAdjustment(action.tx)) return state;
+      if (isTransferTx(prev) || isTransferTx(action.tx)) return state;
       const nextAcc = state.accounts.find((a) => a.id === action.tx.accountId);
       // Re-denominate amount into the new account's currency if the account
       // changed. Amount is preserved in value terms via FX conversion.
@@ -568,13 +571,43 @@ function reducer(state: NovaState, action: Action): NovaState {
     case "deleteTransaction": {
       const tx = state.transactions.find((t) => t.id === action.id);
       if (!tx) return state;
+      // A transfer is one atomic movement: removing a single leg would create
+      // or destroy money. Reverse every leg that shares the transfer id.
+      const legs = tx.transferId
+        ? state.transactions.filter((t) => t.transferId === tx.transferId)
+        : [tx];
+      const byId = new Map(legs.map((l) => [l.id, l]));
+      const delta = new Map<string, number>();
+      for (const l of legs) delta.set(l.accountId, (delta.get(l.accountId) ?? 0) - l.amount);
       const accounts = state.accounts.map((a) =>
-        a.id === tx.accountId ? { ...a, balance: round(a.balance - tx.amount, a.currency) } : a,
+        delta.has(a.id) ? { ...a, balance: round(a.balance + (delta.get(a.id) ?? 0), a.currency) } : a,
       );
+      // Reversing a goal contribution must also give the money back to the goal.
+      const goalId = tx.transferId?.startsWith("goal_")
+        ? tx.transferId.slice("goal_".length).split("_")[0]
+        : undefined;
+      const goals = goalId
+        ? state.goals.map((g) => {
+            if (g.id !== goalId) return g;
+            const gCur = goalCurrency(g);
+            const back = legs.reduce(
+              (s, l) =>
+                s +
+                convertAmount(
+                  Math.abs(l.amount),
+                  (l.currency ?? "USD") as CurrencyCode,
+                  gCur,
+                ),
+              0,
+            );
+            return { ...g, saved: round(Math.max(0, g.saved - back), gCur) };
+          })
+        : state.goals;
       return {
         ...state,
         accounts,
-        transactions: state.transactions.filter((t) => t.id !== action.id),
+        goals,
+        transactions: state.transactions.filter((t) => !byId.has(t.id)),
       };
     }
     case "addAccount":
