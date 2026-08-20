@@ -241,7 +241,7 @@ function SettingsPage() {
               {ACCENTS.map((a) => (
                 <button
                   key={a.key}
-                  onClick={() => { setSettings({ accent: a.key }); toast.success(`Accent · ${a.label}`); }}
+                  onClick={() => { setSettings({ accent: a.key }); toast.success(`${t("settings.accent")} · ${a.label}`); }}
                   className={cn(
                     "h-7 w-7 rounded-full border-2 transition-transform",
                     (s.accent ?? "default") === a.key ? "border-foreground scale-110" : "border-transparent",
