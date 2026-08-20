@@ -450,7 +450,12 @@ type Action =
   | { type: "deleteAccount"; id: string; reassignTo?: string }
   | { type: "addGoal"; goal: Goal }
   | { type: "updateGoal"; goal: Goal }
-  | { type: "deleteGoal"; id: string }
+  | {
+      type: "deleteGoal";
+      id: string;
+      /** Move automation rules that fund this goal to another goal instead. */
+      reassignTo?: string;
+    }
   | {
       type: "contributeGoal";
       id: string;
@@ -613,16 +618,15 @@ function reducer(state: NovaState, action: Action): NovaState {
         ? state.goals.map((g) => {
             if (g.id !== goalId) return g;
             const gCur = goalCurrency(g);
-            const back = legs.reduce(
-              (s, l) =>
-                s +
-                convertAmount(
-                  Math.abs(l.amount),
-                  (l.currency ?? "USD") as CurrencyCode,
-                  gCur,
-                ),
-              0,
-            );
+            // Only the outgoing leg represents the contributed value; a linked
+            // goal also has an incoming leg that must not be counted twice.
+            const back = legs
+              .filter((l) => l.amount < 0)
+              .reduce(
+                (s, l) =>
+                  s + convertAmount(-l.amount, (l.currency ?? "USD") as CurrencyCode, gCur),
+                0,
+              );
             return { ...g, saved: round(Math.max(0, g.saved - back), gCur) };
           })
         : state.goals;
