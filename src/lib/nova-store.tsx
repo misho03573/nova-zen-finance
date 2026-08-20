@@ -498,7 +498,7 @@ type Action =
   | { type: "deleteCategoryRule"; id: string }
   | { type: "toggleCategoryRule"; id: string };
 
-function reducer(state: NovaState, action: Action): NovaState {
+export function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
     case "hydrate":
       return {
