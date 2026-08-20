@@ -219,6 +219,12 @@ export function goalCurrency(g: Goal): CurrencyCode {
   return (g.currency ?? LEGACY_LIABILITY_CURRENCY) as CurrencyCode;
 }
 
+/** Automation rules that fund a given goal (used to guard goal deletion). */
+export function automationsForGoal(rules: AutomationRule[], goalId: string): AutomationRule[] {
+  return rules.filter((r) => r.goalId === goalId);
+}
+
+
 export type Subscription = {
   id: string;
   name: string;
