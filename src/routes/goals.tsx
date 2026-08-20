@@ -153,15 +153,22 @@ function GoalsPage() {
                 />
                 <button
                   onClick={async () => {
+                    const linked = automationsForGoal(state.automationRules, g.id);
                     const ok = await confirm({
                       title: tr("goals.delete.title"),
-                      description: tr("goals.delete.desc"),
+                      description: linked.length
+                        ? `${tr("goals.delete.desc")} ${fmt(tr("goals.delete.automations"), { n: linked.length })}`
+                        : tr("goals.delete.desc"),
                       confirmLabel: tr("goals.deleteAria"),
                       destructive: true,
                     });
                     if (ok) {
                       deleteGoal(g.id);
-                      toast.message(tr("goals.deleted"));
+                      toast.message(
+                        linked.length
+                          ? fmt(tr("goals.deleted.automations"), { n: linked.length })
+                          : tr("goals.deleted"),
+                      );
                     }
                   }}
                   className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-destructive"
