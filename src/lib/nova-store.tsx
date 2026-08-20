@@ -97,11 +97,24 @@ export function analyticsTxs(txs: Transaction[]): Transaction[] {
 export type Goal = {
   id: string;
   name: string;
+  /**
+   * Money allocated to this goal. This is an EARMARK, never an asset of its
+   * own: either it still sits in a real account (unlinked goal) or it sits in
+   * the linked account below. Net Worth never adds `saved` — doing so would
+   * double-count it.
+   */
   saved: number;
   target: number;
   emoji: string;
   eta: string;
   monthly?: number;
+  /**
+   * Optional real savings account this goal is funded into. When set,
+   * contributing moves money source → linked account as a normal transfer,
+   * so Net Worth is unchanged. When unset, contributing only earmarks money
+   * that stays where it is (no transaction, no balance change).
+   */
+  accountId?: string;
   /** Native currency the goal amounts are stored in. Legacy goals fall back to USD. */
   currency?: CurrencyCode;
 };
