@@ -138,6 +138,8 @@ export type Settings = {
   essentialCategories?: string[];
   /** Emergency fund target, in months of essential spending. */
   emergencyTargetMonths?: number;
+  /** Pattern keys of recurring-payment suggestions the user dismissed. */
+  ignoredRecurring?: string[];
   language?: string; // "en" | "bg" | "de" | "fr" | "es"
 };
 

@@ -27,6 +27,7 @@ import {
   type SubscriptionStatus,
 } from "@/lib/nova-store";
 import { useCategories } from "@/lib/categories";
+import { detectRecurring, type DetectedRecurring } from "@/lib/recur-detect";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
 import { useT, useCategoryName, fmt } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -70,10 +71,12 @@ function SubscriptionsPage() {
     updateSubscription,
     deleteSubscription,
     setSubscriptionStatus,
+    setSettings,
   } = useNova();
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
+  const [prefill, setPrefill] = useState<Omit<Subscription, "id"> | null>(null);
 
   const subs = state.subscriptions;
   const fallback = (state.accounts[0]?.currency ?? "USD") as CurrencyCode;
@@ -96,6 +99,46 @@ function SubscriptionsPage() {
     [subs],
   );
   const totals = subscriptionTotals(activeSubs, currency.code, fallback);
+
+  const detected = useMemo(
+    () =>
+      detectRecurring({
+        transactions: state.transactions,
+        subscriptions: state.subscriptions,
+        recurring: state.recurring,
+        accounts: state.accounts,
+        ignored: state.settings.ignoredRecurring ?? [],
+        fallbackCurrency: fallback,
+      }),
+    [state.transactions, state.subscriptions, state.recurring, state.accounts, state.settings.ignoredRecurring, fallback],
+  );
+
+  const suggestionToSub = (d: DetectedRecurring): Omit<Subscription, "id"> => ({
+    name: d.name,
+    merchant: d.merchant,
+    amount: d.amount,
+    currency: d.currency,
+    accountId: d.accountId,
+    category: d.category,
+    frequency: d.frequency,
+    nextDate: d.nextDate,
+    status: "active",
+    color: "#3b82f6",
+    emoji: "🔁",
+  });
+
+  const openSuggestion = (d: DetectedRecurring) => {
+    setEditing(null);
+    setPrefill(suggestionToSub(d));
+    setOpen(true);
+  };
+
+  const ignoreSuggestion = (d: DetectedRecurring) => {
+    setSettings({
+      ignoredRecurring: [...(state.settings.ignoredRecurring ?? []), d.key],
+    });
+    toast.message(t("rd.ignored"));
+  };
 
   const onDelete = async (s: Subscription) => {
     const ok = await confirm({
@@ -285,10 +328,88 @@ function SubscriptionsPage() {
         </>
       )}
 
+      <section className="mt-6 space-y-2 px-5">
+        <h2 className="px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          {t("rd.section")}
+        </h2>
+        {detected.length === 0 ? (
+          <EmptyState
+            icon={<Repeat className="h-6 w-6" />}
+            title={t("rd.empty.title")}
+            description={t("rd.empty.desc")}
+          />
+        ) : (
+          <>
+            <p className="px-1 text-xs text-muted-foreground">{t("rd.desc")}</p>
+            {detected.map((d) => (
+              <article
+                key={d.key}
+                className="animate-rise-in rounded-3xl border border-dashed border-border bg-card/50 p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{d.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {t(`subs.freq.${d.frequency}`)} ·{" "}
+                      {fmt(t("rd.next"), {
+                        date: new Date(d.nextDate).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        }),
+                      })}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-semibold">
+                    {maskAmount(hide, formatFrom(d.amount, d.currency), "md")}
+                  </p>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest",
+                      d.level === "high"
+                        ? "border-primary/50 bg-primary/10 text-primary"
+                        : "border-border bg-muted/40 text-muted-foreground",
+                    )}
+                  >
+                    {t(d.level === "high" ? "rd.conf.high" : "rd.conf.possible")}
+                  </span>
+                  <span className="rounded-full border border-border px-2.5 py-1 text-[10px] text-muted-foreground">
+                    {fmt(t("rd.matches"), { n: d.count })}
+                  </span>
+                  <span className="ml-auto flex items-center gap-2">
+                    <button
+                      onClick={() => openSuggestion(d)}
+                      className="rounded-full px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                      style={{ background: "var(--gradient-primary)" }}
+                    >
+                      {t("rd.add")}
+                    </button>
+                    <button
+                      onClick={() => openSuggestion(d)}
+                      className="rounded-full border border-border px-3 py-1.5 text-xs font-medium"
+                    >
+                      {t("rd.edit")}
+                    </button>
+                    <button
+                      onClick={() => ignoreSuggestion(d)}
+                      className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      {t("rd.ignore")}
+                    </button>
+                  </span>
+                </div>
+              </article>
+            ))}
+          </>
+        )}
+      </section>
+
       <section className="mt-6 px-5">
         <button
           onClick={() => {
             setEditing(null);
+            setPrefill(null);
             setOpen(true);
           }}
           className="press flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
@@ -300,8 +421,12 @@ function SubscriptionsPage() {
 
       <SubscriptionDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(v) => {
+          setOpen(v);
+          if (!v) setPrefill(null);
+        }}
         editing={editing}
+        prefill={prefill}
         defaultCurrency={fallback}
         onSave={(payload) => {
           if (editing) {
@@ -322,12 +447,14 @@ function SubscriptionDialog({
   open,
   onOpenChange,
   editing,
+  prefill,
   defaultCurrency,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: Subscription | null;
+  prefill?: Omit<Subscription, "id"> | null;
   defaultCurrency: CurrencyCode;
   onSave: (s: Omit<Subscription, "id">) => void;
 }) {
@@ -350,7 +477,7 @@ function SubscriptionDialog({
 
   useEffect(() => {
     if (!open) return;
-    const s = editing;
+    const s = editing ?? prefill ?? null;
     setName(s?.name ?? "");
     setMerchant(s?.merchant ?? "");
     setAmount(s ? String(s.amount) : "");
@@ -363,7 +490,7 @@ function SubscriptionDialog({
     setNotes(s?.notes ?? "");
     setEmoji(s?.emoji ?? "✨");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editing]);
+  }, [open, editing, prefill]);
 
   // Keep the charge currency aligned with the linked account's native currency.
   useEffect(() => {
