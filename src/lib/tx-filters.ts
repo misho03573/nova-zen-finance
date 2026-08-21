@@ -53,6 +53,8 @@ export function toggle<T>(list: T[], v: T): T[] {
 export type NameLookup = {
   categoryName: (id: string) => string;
   accountName: (id: string) => string;
+  /** Normalized merchant label, so `lidl` finds `LIDL 1248 SOFIA`. */
+  merchantLabel?: (title: string) => string;
 };
 
 export function matchesFilters(
@@ -79,6 +81,7 @@ export function matchesFilters(
       t.note ?? "",
       names.categoryName(t.category),
       names.accountName(t.accountId),
+      names.merchantLabel?.(t.title) ?? "",
     ]
       .join(" ")
       .toLowerCase();

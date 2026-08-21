@@ -108,9 +108,10 @@ function SubscriptionsPage() {
         recurring: state.recurring,
         accounts: state.accounts,
         ignored: state.settings.ignoredRecurring ?? [],
+        merchants: state.merchants ?? [],
         fallbackCurrency: fallback,
       }),
-    [state.transactions, state.subscriptions, state.recurring, state.accounts, state.settings.ignoredRecurring, fallback],
+    [state.transactions, state.subscriptions, state.recurring, state.accounts, state.settings.ignoredRecurring, state.merchants, fallback],
   );
 
   const suggestionToSub = (d: DetectedRecurring): Omit<Subscription, "id"> => ({

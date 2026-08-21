@@ -36,6 +36,7 @@ import { useAuth } from "@/lib/auth";
 import { TxFilterPanel, Highlight } from "@/components/nova/TxFilterPanel";
 import { useTxFilters, matchesFilters, filtersActive, highlightParts } from "@/lib/tx-filters";
 import { useCurrency, CURRENCIES, convertAmount, type CurrencyCode } from "@/lib/currency";
+import { resolveMerchant } from "@/lib/merchant";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -103,9 +104,11 @@ function WalletPage() {
         return catName(c.id, c.name, c.builtin);
       },
       accountName: (id: string) => state.accounts.find((a) => a.id === id)?.name ?? "",
+      // Searching "lidl" also finds "LIDL 1248 SOFIA".
+      merchantLabel: (title: string) => resolveMerchant(title, state.merchants ?? []).label,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.accounts, state.categories],
+    [state.accounts, state.categories, state.merchants],
   );
 
   const filtered = useMemo(

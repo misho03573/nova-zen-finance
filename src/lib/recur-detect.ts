@@ -6,6 +6,7 @@ import type {
   Transaction,
 } from "@/lib/nova-store";
 import type { CurrencyCode } from "@/lib/currency";
+import { resolveMerchant, type MerchantAlias } from "@/lib/merchant";
 
 const DAY = 86400000;
 
@@ -103,6 +104,8 @@ export function detectRecurring(args: {
   recurring?: Recurring[];
   accounts?: Account[];
   ignored?: string[];
+  /** User merchant renames/merges, so descriptor variants group as one. */
+  merchants?: MerchantAlias[];
   fallbackCurrency?: CurrencyCode;
   now?: number;
 }): DetectedRecurring[] {
@@ -112,13 +115,19 @@ export function detectRecurring(args: {
   const ignored = new Set(args.ignored ?? []);
   const accCur = new Map((args.accounts ?? []).map((a) => [a.id, a.currency]));
   const fallback = (args.fallbackCurrency ?? "USD") as CurrencyCode;
+  const aliases = args.merchants ?? [];
+  const labels = new Map<string, string>();
 
   // Group by merchant/description + native currency — never mix currencies.
   const groups = new Map<string, Transaction[]>();
   for (const t of args.transactions) {
     if (!isCandidateTx(t)) continue;
-    const n = normName(t.title);
+    // Group on the normalized merchant identity, not the raw descriptor, so
+    // `LIDL 1248 SOFIA` and `LIDL*0820` count as the same pattern.
+    const id = resolveMerchant(t.title, aliases);
+    const n = id.key || normName(t.title);
     if (n.length < 3) continue;
+    labels.set(n, id.label || t.title);
     const cur = (t.currency ?? accCur.get(t.accountId) ?? fallback) as CurrencyCode;
     const k = `${n}|${cur}`;
     const list = groups.get(k);
@@ -150,7 +159,7 @@ export function detectRecurring(args: {
 
     const last = runTx[runTx.length - 1];
     const cur = k.split("|")[1] as CurrencyCode;
-    if (matchesExisting(last.title, amt, subs, recs)) continue;
+    if (matchesExisting(labels.get(k.split("|")[0]) ?? last.title, amt, subs, recs)) continue;
 
     let next = run[run.length - 1] + spec.days * DAY;
     let guard = 0;
@@ -162,13 +171,15 @@ export function detectRecurring(args: {
     const confidence =
       Math.round((0.4 * countScore + 0.35 * intervalScore + 0.25 * amountScore) * 100) / 100;
 
-    const key = `${normName(last.title)}|${cur}|${spec.freq}|${amountBucket(amt)}`;
+    const groupKey = k.split("|")[0];
+    const label = labels.get(groupKey) ?? last.title;
+    const key = `${groupKey}|${cur}|${spec.freq}|${amountBucket(amt)}`;
     if (ignored.has(key)) continue;
 
     out.push({
       key,
-      name: last.title,
-      merchant: last.title,
+      name: label,
+      merchant: label,
       amount: Math.round(amt * 100) / 100,
       currency: cur,
       accountId: last.accountId,

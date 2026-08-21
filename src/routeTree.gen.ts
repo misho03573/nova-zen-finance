@@ -18,7 +18,9 @@ import { Route as RunwayRouteImport } from './routes/runway'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NetworthRouteImport } from './routes/networth'
+import { Route as MerchantsRouteImport } from './routes/merchants'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
@@ -78,9 +80,19 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NetworthRoute = NetworthRouteImport.update({
   id: '/networth',
   path: '/networth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerchantsRoute = MerchantsRouteImport.update({
+  id: '/merchants',
+  path: '/merchants',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InsightsRoute = InsightsRouteImport.update({
@@ -163,7 +175,9 @@ export interface FileRoutesByFullPath {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
@@ -188,7 +202,9 @@ export interface FileRoutesByTo {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
@@ -214,7 +230,9 @@ export interface FileRoutesById {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
@@ -241,7 +259,9 @@ export interface FileRouteTypes {
     | '/goals'
     | '/import'
     | '/insights'
+    | '/merchants'
     | '/networth'
+    | '/notifications'
     | '/onboarding'
     | '/review'
     | '/rules'
@@ -266,7 +286,9 @@ export interface FileRouteTypes {
     | '/goals'
     | '/import'
     | '/insights'
+    | '/merchants'
     | '/networth'
+    | '/notifications'
     | '/onboarding'
     | '/review'
     | '/rules'
@@ -291,7 +313,9 @@ export interface FileRouteTypes {
     | '/goals'
     | '/import'
     | '/insights'
+    | '/merchants'
     | '/networth'
+    | '/notifications'
     | '/onboarding'
     | '/review'
     | '/rules'
@@ -317,7 +341,9 @@ export interface RootRouteChildren {
   GoalsRoute: typeof GoalsRoute
   ImportRoute: typeof ImportRoute
   InsightsRoute: typeof InsightsRoute
+  MerchantsRoute: typeof MerchantsRoute
   NetworthRoute: typeof NetworthRoute
+  NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
   ReviewRoute: typeof ReviewRoute
   RulesRoute: typeof RulesRoute
@@ -394,11 +420,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/networth': {
       id: '/networth'
       path: '/networth'
       fullPath: '/networth'
       preLoaderRoute: typeof NetworthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merchants': {
+      id: '/merchants'
+      path: '/merchants'
+      fullPath: '/merchants'
+      preLoaderRoute: typeof MerchantsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/insights': {
@@ -509,7 +549,9 @@ const rootRouteChildren: RootRouteChildren = {
   GoalsRoute: GoalsRoute,
   ImportRoute: ImportRoute,
   InsightsRoute: InsightsRoute,
+  MerchantsRoute: MerchantsRoute,
   NetworthRoute: NetworthRoute,
+  NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
   ReviewRoute: ReviewRoute,
   RulesRoute: RulesRoute,

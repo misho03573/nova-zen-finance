@@ -15,6 +15,12 @@ import { convertAmount, useCurrency } from "@/lib/currency";
 import { defaultCategories, type UserCategory } from "@/lib/categories";
 import { resolveRuleCategory, type CategoryRule } from "@/lib/category-rules";
 import {
+  mergeAliases,
+  renameMerchant as renameMerchantAlias,
+  resolveMerchant,
+  type MerchantAlias,
+} from "@/lib/merchant";
+import {
   dayKey,
   sameSnapshot,
   upsertSnapshot,
@@ -162,6 +168,10 @@ export type Settings = {
   /** Pattern keys of recurring-payment suggestions the user dismissed. */
   ignoredRecurring?: string[];
   language?: string; // "en" | "bg" | "de" | "fr" | "es"
+  /** Per-category switches for the Smart Notifications Center. */
+  notificationPrefs?: Partial<Record<"bills" | "budgets" | "goals" | "forecast" | "insights", boolean>>;
+  /** Deterministic ids of notifications the user has already seen. */
+  notificationsRead?: string[];
 };
 
 export type NovaState = {
@@ -176,6 +186,8 @@ export type NovaState = {
   automationRules: AutomationRule[];
   categories: UserCategory[];
   categoryRules: CategoryRule[];
+  /** User merchant renames and merges (see `@/lib/merchant`). */
+  merchants: MerchantAlias[];
   /** Daily Net Worth snapshots, stored in USD base. One row per calendar day. */
   netWorthHistory: NetWorthSnapshot[];
 };
@@ -419,6 +431,7 @@ const seed: NovaState = {
   ],
   categories: defaultCategories,
   categoryRules: [],
+  merchants: [],
   netWorthHistory: [],
 };
 
@@ -434,6 +447,7 @@ export const emptyState: NovaState = {
   automationRules: [],
   categories: defaultCategories,
   categoryRules: [],
+  merchants: [],
   netWorthHistory: [],
 };
 
@@ -496,7 +510,9 @@ type Action =
   | { type: "addCategoryRule"; rule: CategoryRule }
   | { type: "updateCategoryRule"; rule: CategoryRule }
   | { type: "deleteCategoryRule"; id: string }
-  | { type: "toggleCategoryRule"; id: string };
+  | { type: "toggleCategoryRule"; id: string }
+  | { type: "renameMerchant"; key: string; name: string }
+  | { type: "mergeMerchants"; targetKey: string; targetName: string; sourceKeys: string[] };
 
 export function reducer(state: NovaState, action: Action): NovaState {
   switch (action.type) {
@@ -514,6 +530,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
         automationRules: action.state.automationRules ?? [],
         categories: mergeCategories(action.state.categories),
         categoryRules: action.state.categoryRules ?? [],
+        merchants: action.state.merchants ?? [],
         netWorthHistory: action.state.netWorthHistory ?? [],
       };
     case "snapshotNetWorth":
@@ -526,7 +543,10 @@ export function reducer(state: NovaState, action: Action): NovaState {
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
       const ruled = action.tx.categoryLocked
         ? null
-        : resolveRuleCategory(state.categoryRules, action.tx);
+        : resolveRuleCategory(state.categoryRules, {
+            ...action.tx,
+            merchantLabel: resolveMerchant(action.tx.title, state.merchants ?? []).label,
+          });
       const tx: Transaction = {
         ...action.tx,
         category: ruled ?? action.tx.category,
@@ -947,7 +967,12 @@ export function reducer(state: NovaState, action: Action): NovaState {
         if (!a) continue;
         const cur = (tx.currency ?? a.currency) as CurrencyCode | undefined;
         const amt = round(tx.amount, cur);
-        const ruled = tx.categoryLocked ? null : resolveRuleCategory(state.categoryRules, tx);
+        const ruled = tx.categoryLocked
+          ? null
+          : resolveRuleCategory(state.categoryRules, {
+              ...tx,
+              merchantLabel: resolveMerchant(tx.title, state.merchants ?? []).label,
+            });
         stamped.push({
           ...tx,
           category: ruled ?? tx.category,
@@ -1067,6 +1092,21 @@ export function reducer(state: NovaState, action: Action): NovaState {
           r.id === action.id ? { ...r, enabled: !r.enabled } : r,
         ),
       };
+    case "renameMerchant":
+      return {
+        ...state,
+        merchants: renameMerchantAlias(state.merchants ?? [], action.key, action.name),
+      };
+    case "mergeMerchants":
+      return {
+        ...state,
+        merchants: mergeAliases(
+          state.merchants ?? [],
+          action.targetKey,
+          action.targetName,
+          action.sourceKeys,
+        ),
+      };
     case "addCategory":
       return { ...state, categories: [...state.categories, action.c] };
     case "updateCategory":
@@ -1175,6 +1215,10 @@ type Ctx = {
   updateCategoryRule: (r: CategoryRule) => void;
   deleteCategoryRule: (id: string) => void;
   toggleCategoryRule: (id: string) => void;
+  /** Set (or clear, with an empty name) a merchant's display name. */
+  renameMerchant: (key: string, name: string) => void;
+  /** Fold one or more merchant identities into a single canonical one. */
+  mergeMerchants: (targetKey: string, targetName: string, sourceKeys: string[]) => void;
 };
 
 const NovaContext = createContext<Ctx | null>(null);
@@ -1461,6 +1505,16 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   const deleteCategoryRule = useCallback((id: string) => dispatch({ type: "deleteCategoryRule", id }), []);
   const toggleCategoryRule = useCallback((id: string) => dispatch({ type: "toggleCategoryRule", id }), []);
 
+  const renameMerchant = useCallback(
+    (key: string, name: string) => dispatch({ type: "renameMerchant", key, name }),
+    [],
+  );
+  const mergeMerchants = useCallback(
+    (targetKey: string, targetName: string, sourceKeys: string[]) =>
+      dispatch({ type: "mergeMerchants", targetKey, targetName, sourceKeys }),
+    [],
+  );
+
   const value = useMemo<Ctx>(
     () => ({
       state,
@@ -1504,6 +1558,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       updateCategoryRule,
       deleteCategoryRule,
       toggleCategoryRule,
+      renameMerchant,
+      mergeMerchants,
     }),
     [
       state,
