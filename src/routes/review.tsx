@@ -147,7 +147,12 @@ function ReviewPage() {
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
+        {review.frozen ? (
+          <p className="px-1 pt-2 text-[11px] text-muted-foreground">{tr("hist.frozen")}</p>
+        ) : null}
       </section>
+
+
 
       {!hasData ? (
         <section className="px-5 pt-4">
