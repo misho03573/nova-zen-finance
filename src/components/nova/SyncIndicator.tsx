@@ -46,9 +46,9 @@ export function SyncIndicator() {
     <div
       role="status"
       aria-live="polite"
-      className="safe-top pointer-events-none fixed inset-x-0 top-0 z-[60] flex justify-center px-4"
+      className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-[60] flex justify-center px-4"
     >
-      <div className="mt-2 flex max-w-[min(26rem,100%)] items-center gap-2 rounded-full border border-border bg-card/95 px-3 py-2 text-xs font-medium text-foreground shadow-[var(--shadow-card)] backdrop-blur">
+      <div className="mb-1 flex max-w-[min(26rem,100%)] items-center gap-2 rounded-full border border-border bg-card/95 px-3 py-2 text-xs font-medium text-foreground shadow-[var(--shadow-card)] backdrop-blur">
         <Icon className="h-4 w-4 shrink-0 text-warning" aria-hidden />
         <span className="min-w-0">{offline ? tr("sync.offline") : tr("sync.error")}</span>
       </div>
