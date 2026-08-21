@@ -90,9 +90,9 @@ function SettingsPage() {
 
   const handleSignOut = async () => {
     const ok = await confirm({
-      title: "Sign out?",
-      description: "You'll need to sign in again to access your synced data.",
-      confirmLabel: "Sign out",
+      title: t("settings.signOut.title"),
+      description: t("settings.signOut.desc"),
+      confirmLabel: t("settings.signOut"),
     });
     if (!ok) return;
     await signOut();
@@ -116,18 +116,25 @@ function SettingsPage() {
 
   const handleReset = async () => {
     const ok = await confirm({
-      title: "Reset all NOVA data?",
-      description: "This deletes every account, transaction, goal, budget and setting. This can't be undone.",
-      confirmLabel: "Reset everything",
+      title: t("settings.reset.title"),
+      description: t("settings.reset.descLong"),
+      confirmLabel: t("settings.reset.confirm"),
       destructive: true,
     });
     if (!ok) return;
-    try {
-      localStorage.removeItem("nova.store.v3");
-      localStorage.removeItem("nova.store.v2");
-      localStorage.removeItem("nova.store.v1");
-      location.reload();
-    } catch {}
+    // Signed-in users must be reset in the cloud too, otherwise the next load
+    // simply re-hydrates the deleted data from `user_data`.
+    if (user) {
+      const ok2 = importData(JSON.stringify(emptyState));
+      if (!ok2) {
+        toast.error(t("settings.err.reset"));
+        return;
+      }
+      // Give the debounced cloud write time to land before reloading.
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    clearLocalNovaData(user?.id ?? null);
+    location.reload();
   };
 
   const handleRestore = async (f: File | null) => {
