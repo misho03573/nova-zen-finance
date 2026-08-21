@@ -37,10 +37,15 @@ export function SyncIndicator() {
   const status = useSyncExternalStore(subscribeSync, getSyncState, getSyncServerState);
 
   if (!mounted) return null;
-  if (status !== "offline" && status !== "error") return null;
+  if (status !== "offline" && status !== "load-error" && status !== "save-error") return null;
 
   const offline = status === "offline";
   const Icon = offline ? WifiOff : CloudOff;
+  const message = offline
+    ? tr("sync.offline")
+    : status === "load-error"
+      ? tr("sync.loadError")
+      : tr("sync.saveError");
 
   return (
     <div
@@ -50,7 +55,7 @@ export function SyncIndicator() {
     >
       <div className="mb-1 flex max-w-[min(26rem,100%)] items-center gap-2 rounded-full border border-border bg-card/95 px-3 py-2 text-xs font-medium text-foreground shadow-[var(--shadow-card)] backdrop-blur">
         <Icon className="h-4 w-4 shrink-0 text-warning" aria-hidden />
-        <span className="min-w-0">{offline ? tr("sync.offline") : tr("sync.error")}</span>
+        <span className="min-w-0">{message}</span>
       </div>
     </div>
   );
