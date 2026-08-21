@@ -104,6 +104,20 @@ function InsightsPage() {
         }
       />
 
+      <section className="px-5 pb-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          {tr("fi.section")}
+        </p>
+        <div className="space-y-2">
+          {smart.length === 0 ? (
+            <SmartEmpty title={tr("fi.empty")} desc={tr("fi.emptyDesc")} />
+          ) : (
+            smart.slice(0, 5).map((i) => <SmartCard key={i.id} item={i} />)
+          )}
+        </div>
+      </section>
+
+
       <section className="px-5 pb-3">
         <Link
           to="/review"
