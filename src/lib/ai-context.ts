@@ -166,7 +166,12 @@ export function suggestActions(ctx: FinancialContext, limit = 3): NovaAction[] {
   if (months != null && months < 3) out.push("open_runway");
   if (ctx.subscriptions.count > 0) out.push("open_subscriptions");
   if (ctx.goals.some((g) => g.pct < 1)) out.push("open_goals");
-  if (ctx.txCount === 0) out.unshift("add_transaction");
+  // An empty month is worth prompting about, but never ahead of a cash-flow
+  // risk the user needs to act on today.
+  if (ctx.txCount === 0) {
+    if (out.length === 0) out.unshift("add_transaction");
+    else out.splice(1, 0, "add_transaction");
+  }
   out.push("open_review");
   return [...new Set(out)].slice(0, limit).map(action);
 }
