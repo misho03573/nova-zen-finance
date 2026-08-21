@@ -19,6 +19,7 @@ import { Route as RulesRouteImport } from './routes/rules'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NetworthRouteImport } from './routes/networth'
+import { Route as MerchantsRouteImport } from './routes/merchants'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
@@ -81,6 +82,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const NetworthRoute = NetworthRouteImport.update({
   id: '/networth',
   path: '/networth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerchantsRoute = MerchantsRouteImport.update({
+  id: '/merchants',
+  path: '/merchants',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InsightsRoute = InsightsRouteImport.update({
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
+  '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/goals'
     | '/import'
     | '/insights'
+    | '/merchants'
     | '/networth'
     | '/onboarding'
     | '/review'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/goals'
     | '/import'
     | '/insights'
+    | '/merchants'
     | '/networth'
     | '/onboarding'
     | '/review'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/goals'
     | '/import'
     | '/insights'
+    | '/merchants'
     | '/networth'
     | '/onboarding'
     | '/review'
@@ -317,6 +329,7 @@ export interface RootRouteChildren {
   GoalsRoute: typeof GoalsRoute
   ImportRoute: typeof ImportRoute
   InsightsRoute: typeof InsightsRoute
+  MerchantsRoute: typeof MerchantsRoute
   NetworthRoute: typeof NetworthRoute
   OnboardingRoute: typeof OnboardingRoute
   ReviewRoute: typeof ReviewRoute
@@ -399,6 +412,13 @@ declare module '@tanstack/react-router' {
       path: '/networth'
       fullPath: '/networth'
       preLoaderRoute: typeof NetworthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merchants': {
+      id: '/merchants'
+      path: '/merchants'
+      fullPath: '/merchants'
+      preLoaderRoute: typeof MerchantsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/insights': {
@@ -509,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   GoalsRoute: GoalsRoute,
   ImportRoute: ImportRoute,
   InsightsRoute: InsightsRoute,
+  MerchantsRoute: MerchantsRoute,
   NetworthRoute: NetworthRoute,
   OnboardingRoute: OnboardingRoute,
   ReviewRoute: ReviewRoute,
