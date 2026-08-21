@@ -7,6 +7,7 @@ import { runIntegrityChecks, repairState, integrityScore } from "@/lib/integrity
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useT, fmt } from "@/lib/i18n";
+import { CAPABILITIES, type CapabilityStatus } from "@/lib/native";
 
 export const APP_VERSION = "1.0.0-rc.1";
 // Baked at file evaluation time. For a real build stamp, wire `define` in vite.config.ts.
@@ -53,6 +54,32 @@ const MODULES: ModuleRow[] = [
   { id: "i18n", name: "Translations", status: "preview", notes: "Nav + settings only; pages remain English" },
   { id: "recurring", name: "Recurring auto-advance", status: "complete" },
 ];
+
+
+const CAP_LABELS: Record<string, string> = {
+  storage: "Local data storage",
+  fileImport: "CSV / file import",
+  fileExport: "Data export",
+  camera: "Camera capture",
+  photoLibrary: "Photo library",
+  ocr: "Receipt OCR",
+  notifications: "Push / local notifications",
+  biometrics: "Face ID / Touch ID",
+  clipboard: "Clipboard",
+  share: "Share sheet",
+};
+
+const CAP_STATUS_LABELS: Record<CapabilityStatus, string> = {
+  web: "WEB",
+  "web-degraded": "WEB · LIMITED",
+  "native-required": "NATIVE REQUIRED",
+};
+
+const CAP_STATUS_COLORS: Record<CapabilityStatus, string> = {
+  web: "var(--primary)",
+  "web-degraded": "oklch(0.82 0.17 80)",
+  "native-required": "var(--muted-foreground)",
+};
 
 function statusIcon(s: ModuleStatus) {
   if (s === "complete") return <CheckCircle2 className="h-3.5 w-3.5 text-primary" />;
@@ -265,6 +292,29 @@ function Diagnostics() {
                 }}
               >
                 {statusLabel(m.status)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mt-6 px-5">
+        <SectionHeader>{t("diag.section.native")}</SectionHeader>
+        <p className="mt-1 text-xs text-muted-foreground">{t("diag.nativeNote")}</p>
+        <ul className="mt-2 divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card/70">
+          {Object.values(CAPABILITIES).map((c) => (
+            <li key={c.id} className="flex items-center gap-3 px-4 py-2.5">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">{CAP_LABELS[c.id] ?? c.id}</span>
+                {c.plugin ? (
+                  <span className="block truncate font-mono text-[11px] text-muted-foreground">{c.plugin}</span>
+                ) : null}
+              </span>
+              <span
+                className="shrink-0 text-[10px] font-semibold uppercase tracking-widest"
+                style={{ color: CAP_STATUS_COLORS[c.status] }}
+              >
+                {CAP_STATUS_LABELS[c.status]}
               </span>
             </li>
           ))}

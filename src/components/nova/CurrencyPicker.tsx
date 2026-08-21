@@ -28,7 +28,7 @@ export function CurrencyPicker({ variant = "icon" }: { variant?: "icon" | "chip"
           </button>
         ) : (
           <button
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
+            className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
             aria-label={t("cur.aria")}
           >
             <Coins className="h-4 w-4" />

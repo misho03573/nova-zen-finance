@@ -90,12 +90,12 @@ function Onboarding() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
+    <div className="relative min-h-dvh-screen safe-x bg-background text-foreground">
       <div
         className="pointer-events-none fixed inset-x-0 top-0 h-[520px] -z-0"
         style={{ background: "var(--gradient-hero)" }}
       />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-6 pb-8 pt-6">
+      <div className="safe-top relative mx-auto flex min-h-dvh-screen w-full max-w-[430px] flex-col px-6 pb-[calc(2rem+var(--safe-bottom))] pt-6">
         <header className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             NOVA

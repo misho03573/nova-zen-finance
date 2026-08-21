@@ -288,7 +288,7 @@ function StatsPage() {
                     <button
                       onClick={() => removeBudget(b.id)}
                       aria-label={tr("stats.budget.delete")}
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-foreground"
+                      className="tap grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-foreground"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

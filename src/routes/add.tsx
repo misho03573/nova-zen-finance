@@ -112,7 +112,7 @@ function AddPage() {
         right={
           <button
             onClick={() => navigate({ to: "/" })}
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+            className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
             aria-label={t("action.close")}
           >
             <X className="h-4 w-4" />

@@ -133,7 +133,7 @@ function ReviewPage() {
             aria-label={tr("rev.prevMonth")}
             disabled={idx >= months.length - 1}
             onClick={() => setMonth(months[Math.min(months.length - 1, idx + 1)])}
-            className="grid h-9 w-9 place-items-center rounded-full disabled:opacity-30"
+            className="tap grid h-9 w-9 place-items-center rounded-full disabled:opacity-30"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>

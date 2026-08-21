@@ -269,7 +269,7 @@ function SettingsPage() {
           <Row icon={<Fingerprint className="h-4 w-4" />} label={t("set.faceId")} description={t("set.faceIdDesc")} preview>
             <Switch
               checked={!!s.faceId}
-              onCheckedChange={(v) => { setSettings({ faceId: v }); toast.message(v ? "Face ID on" : "Face ID off"); }}
+              onCheckedChange={(v) => { setSettings({ faceId: v }); toast.message(v ? t("set.faceIdOn") : t("set.faceIdOff")); }}
             />
           </Row>
           <Row icon={<Fingerprint className="h-4 w-4" />} label={t("set.touchId")} description={t("set.touchIdDesc")} preview>
@@ -311,7 +311,7 @@ function SettingsPage() {
           <Row icon={<Cloud className="h-4 w-4" />} label={t("set.cloudSync")} description={t("set.cloudSyncDesc")} preview>
             <Switch
               checked={!!s.cloudSync}
-              onCheckedChange={(v) => { setSettings({ cloudSync: v }); toast.message(v ? "Cloud sync coming soon" : "Cloud sync off"); }}
+              onCheckedChange={(v) => { setSettings({ cloudSync: v }); toast.message(v ? t("set.cloudSyncOn") : t("set.cloudSyncOff")); }}
             />
           </Row>
         </Group>

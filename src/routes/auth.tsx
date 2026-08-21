@@ -72,12 +72,12 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh-screen safe-x bg-background text-foreground">
       <div
         className="pointer-events-none fixed inset-x-0 top-0 h-[420px] -z-0"
         style={{ background: "var(--gradient-hero)" }}
       />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-10 pt-16">
+      <div className="safe-top relative mx-auto flex min-h-dvh-screen w-full max-w-[430px] flex-col px-5 pb-[calc(2.5rem+var(--safe-bottom))] pt-16">
         <div className="mb-8 flex items-center gap-2">
           <div
             className="grid h-10 w-10 place-items-center rounded-2xl text-primary-foreground shadow-[var(--shadow-glow)]"

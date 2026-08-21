@@ -77,14 +77,14 @@ function CategoriesPage() {
           <div className="flex items-center gap-2">
             <Link
               to="/settings"
-              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+              className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
               aria-label={t("action.back")}
             >
               <ChevronLeft className="h-4 w-4" />
             </Link>
             <button
               onClick={openNew}
-              className="grid h-10 w-10 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
+              className="tap grid h-10 w-10 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
               style={{ background: "var(--gradient-primary)" }}
               aria-label={t("cat.new")}
             >
@@ -135,7 +135,7 @@ function CategoriesPage() {
                       </div>
                       <button
                         onClick={() => openEdit(c)}
-                        className="grid h-8 w-8 place-items-center rounded-full border border-border bg-background/60 text-muted-foreground hover:text-foreground"
+                        className="tap grid h-8 w-8 place-items-center rounded-full border border-border bg-background/60 text-muted-foreground hover:text-foreground"
                         aria-label={t("action.edit")}
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -143,7 +143,7 @@ function CategoriesPage() {
                       {!c.builtin ? (
                         <button
                           onClick={() => onDelete(c)}
-                          className="grid h-8 w-8 place-items-center rounded-full border border-border bg-background/60 text-muted-foreground hover:text-destructive"
+                          className="tap grid h-8 w-8 place-items-center rounded-full border border-border bg-background/60 text-muted-foreground hover:text-destructive"
                           aria-label={t("action.delete")}
                         >
                           <Trash2 className="h-3.5 w-3.5" />

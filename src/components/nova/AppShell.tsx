@@ -38,7 +38,7 @@ export function SettingsButton() {
   return (
     <Link
       to="/settings"
-      className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
+      className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
       aria-label={tr("shell.settings")}
     >
       <SettingsIcon className="h-4 w-4" />
@@ -51,20 +51,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   const tr = useT();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh-screen safe-x bg-background text-foreground">
       <div
         className="pointer-events-none fixed inset-x-0 top-0 h-[420px] -z-0"
         style={{ background: "var(--gradient-hero)" }}
       />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col pb-28">
+      <div className="safe-top relative mx-auto flex min-h-dvh-screen w-full max-w-[430px] flex-col pb-nav">
         {children}
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-around px-4 pb-5 pt-3"
+        className="safe-bottom fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-around px-4 pt-3"
         aria-label="Primary"
       >
-        <div className="flex w-full items-center justify-around rounded-full border border-border bg-card/80 px-2 py-2 shadow-[var(--shadow-elevated)] backdrop-blur-xl">
+        <div className="mb-3 flex w-full items-center justify-around rounded-full border border-border bg-card/80 px-2 py-2 shadow-[var(--shadow-elevated)] backdrop-blur-xl">
           {tabs.map((tab) => {
             const active = pathname === tab.to;
             const Icon = tab.icon;
@@ -75,7 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={tab.to}
                   to={tab.to}
                   aria-label={label}
-                  className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
+                  className="tap grid h-12 w-12 shrink-0 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
                   style={{ background: "var(--gradient-primary)" }}
                 >
                   <Icon className="h-5 w-5" strokeWidth={2.5} />
@@ -86,8 +86,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={tab.to}
                 to={tab.to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] font-medium transition-colors",
+                  "tap flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] font-medium transition-colors",
                   active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -101,6 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
 
 export function PageHeader({
   title,

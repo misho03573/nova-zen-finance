@@ -96,7 +96,7 @@ function CalendarPage() {
               setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1))
             }
             aria-label={tr("cal.prev")}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+            className="tap grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -108,7 +108,7 @@ function CalendarPage() {
               setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1))
             }
             aria-label={tr("cal.next")}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+            className="tap grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -208,7 +208,7 @@ function CalendarPage() {
               <button
                 onClick={() => setSelected(null)}
                 aria-label={tr("cal.close")}
-                className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card"
+                className="tap grid h-8 w-8 place-items-center rounded-full border border-border bg-card"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
