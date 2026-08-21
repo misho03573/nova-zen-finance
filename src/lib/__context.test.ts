@@ -7,15 +7,16 @@ import type { Account, Transaction, Budget, Goal, Liability, Subscription } from
 const NOW = Date.parse("2026-08-15T12:00:00.000Z");
 const iso = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d)).toISOString();
 
-const acc = (over: Partial<Account> = {}): Account => ({
-  id: "a1",
-  name: "Main",
-  type: "bank",
-  balance: 1000,
-  gradient: "",
-  currency: "USD",
-  ...(over as Account),
-});
+const acc = (over: Partial<Account> = {}): Account =>
+  ({
+    id: "a1",
+    name: "Main",
+    type: "bank",
+    balance: 1000,
+    gradient: "",
+    currency: "USD",
+    ...over,
+  }) as Account;
 
 const tx = (over: Partial<Transaction>): Transaction => ({
   id: Math.random().toString(36).slice(2),
