@@ -101,7 +101,7 @@ function CalendarPage() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <p className="text-sm font-semibold">
-            {cursor.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+            {cursor.toLocaleDateString(locale, { month: "long", year: "numeric" })}
           </p>
           <button
             onClick={() =>
@@ -194,12 +194,12 @@ function CalendarPage() {
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  {selectedInfo.date.toLocaleDateString("en-US", {
+                  {selectedInfo.date.toLocaleDateString(locale, {
                     weekday: "long",
                   })}
                 </p>
                 <p className="text-lg font-semibold">
-                  {selectedInfo.date.toLocaleDateString("en-US", {
+                  {selectedInfo.date.toLocaleDateString(locale, {
                     month: "long",
                     day: "numeric",
                   })}
