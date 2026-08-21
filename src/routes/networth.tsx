@@ -128,7 +128,11 @@ function NetWorthPage() {
             labels={{ assets: t("nw.assets"), liabilities: t("nw.liabilities"), net: t("nw.total") }}
             locale={currency.locale}
           />
+          {history.length > 1 ? (
+            <p className="mt-2 text-[11px] text-white/50">{t("hist.frozen")}</p>
+          ) : null}
         </div>
+
       </section>
 
       <section className="mt-6 px-5">
