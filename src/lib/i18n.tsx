@@ -1207,6 +1207,16 @@ const en: Dict = {
   "integrity.fix.badGoal": "Reset them to safe values",
   "integrity.badLiability": "Debts with an invalid balance",
   "integrity.fix.badLiability": "Reset the balance to zero",
+  "sync.offline": "You're offline. Changes are saved on this device only.",
+  "sync.error": "Cloud sync unavailable. Changes are saved on this device only.",
+  "scan.simulated": "Simulated scan",
+  "scan.simulatedDesc": "No camera is used. NOVA fills in a sample receipt so you can try the flow. Real camera capture and OCR need the native app.",
+  "native.required": "Needs native app",
+  "set.faceIdOn": "Face ID preference on",
+  "set.faceIdOff": "Face ID preference off",
+  "set.cloudSyncOn": "Cloud sync preference on",
+  "set.cloudSyncOff": "Cloud sync preference off",
+  "shell.back": "Back",
 };
 
 const bg: Dict = {
@@ -2377,6 +2387,16 @@ const bg: Dict = {
   "integrity.fix.badGoal": "Връщане към коректни стойности",
   "integrity.badLiability": "Задължения с невалиден баланс",
   "integrity.fix.badLiability": "Нулиране на баланса",
+  "sync.offline": "Няма връзка. Промените се запазват само на това устройство.",
+  "sync.error": "Облачната синхронизация е недостъпна. Промените се запазват само на това устройство.",
+  "scan.simulated": "Симулирано сканиране",
+  "scan.simulatedDesc": "Не се използва камера. NOVA попълва примерна бележка, за да изпробвате процеса. Реална камера и OCR изискват нативното приложение.",
+  "native.required": "Изисква нативно приложение",
+  "set.faceIdOn": "Face ID предпочитание включено",
+  "set.faceIdOff": "Face ID предпочитание изключено",
+  "set.cloudSyncOn": "Облачна синхронизация включена",
+  "set.cloudSyncOff": "Облачна синхронизация изключена",
+  "shell.back": "Назад",
 };
 
 const de: Dict = {
@@ -3553,6 +3573,16 @@ const de: Dict = {
   "integrity.fix.badGoal": "Auf sichere Werte zurücksetzen",
   "integrity.badLiability": "Schulden mit ungültigem Saldo",
   "integrity.fix.badLiability": "Saldo auf null setzen",
+  "sync.offline": "Du bist offline. Änderungen werden nur auf diesem Gerät gespeichert.",
+  "sync.error": "Cloud-Synchronisierung nicht verfügbar. Änderungen werden nur auf diesem Gerät gespeichert.",
+  "scan.simulated": "Simulierter Scan",
+  "scan.simulatedDesc": "Es wird keine Kamera verwendet. NOVA füllt einen Beispielbeleg aus, damit du den Ablauf testen kannst. Echte Kamera und OCR erfordern die native App.",
+  "native.required": "Native App nötig",
+  "set.faceIdOn": "Face-ID-Einstellung aktiviert",
+  "set.faceIdOff": "Face-ID-Einstellung deaktiviert",
+  "set.cloudSyncOn": "Cloud-Synchronisierung aktiviert",
+  "set.cloudSyncOff": "Cloud-Synchronisierung deaktiviert",
+  "shell.back": "Zurück",
 };
 
 const fr: Dict = {
@@ -4729,6 +4759,16 @@ const fr: Dict = {
   "integrity.fix.badGoal": "Rétablir des valeurs correctes",
   "integrity.badLiability": "Dettes avec un solde invalide",
   "integrity.fix.badLiability": "Remettre le solde à zéro",
+  "sync.offline": "Vous êtes hors ligne. Les modifications sont enregistrées uniquement sur cet appareil.",
+  "sync.error": "Synchronisation cloud indisponible. Les modifications sont enregistrées uniquement sur cet appareil.",
+  "scan.simulated": "Scan simulé",
+  "scan.simulatedDesc": "Aucune caméra n'est utilisée. NOVA remplit un reçu d'exemple pour tester le flux. La caméra réelle et l'OCR nécessitent l'application native.",
+  "native.required": "App native requise",
+  "set.faceIdOn": "Préférence Face ID activée",
+  "set.faceIdOff": "Préférence Face ID désactivée",
+  "set.cloudSyncOn": "Synchronisation cloud activée",
+  "set.cloudSyncOff": "Synchronisation cloud désactivée",
+  "shell.back": "Retour",
 };
 
 const es: Dict = {
@@ -5905,6 +5945,16 @@ const es: Dict = {
   "integrity.fix.badGoal": "Restablecer a valores seguros",
   "integrity.badLiability": "Deudas con saldo inválido",
   "integrity.fix.badLiability": "Restablecer el saldo a cero",
+  "sync.offline": "Estás sin conexión. Los cambios se guardan solo en este dispositivo.",
+  "sync.error": "Sincronización en la nube no disponible. Los cambios se guardan solo en este dispositivo.",
+  "scan.simulated": "Escaneo simulado",
+  "scan.simulatedDesc": "No se usa la cámara. NOVA rellena un recibo de ejemplo para probar el flujo. La cámara real y el OCR requieren la app nativa.",
+  "native.required": "Requiere app nativa",
+  "set.faceIdOn": "Preferencia de Face ID activada",
+  "set.faceIdOff": "Preferencia de Face ID desactivada",
+  "set.cloudSyncOn": "Sincronización en la nube activada",
+  "set.cloudSyncOff": "Sincronización en la nube desactivada",
+  "shell.back": "Atrás",
 };
 
 const DICTS: Record<string, Dict> = { en, bg, de, fr, es };
