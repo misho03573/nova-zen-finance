@@ -78,12 +78,10 @@ export function buildAiSnapshot(
       total: round(ctx.debt.total),
       highestAprPct: ctx.debt.highestApr ? ctx.debt.highestApr.apr : null,
     },
-    runwayMonths:
-      ctx.runway.essentialRunway ?? ctx.runway.totalRunway == null
-        ? ctx.runway.totalRunway == null
-          ? null
-          : round(ctx.runway.totalRunway)
-        : round((ctx.runway.essentialRunway ?? ctx.runway.totalRunway) as number),
+    runwayMonths: (() => {
+      const m = ctx.runway.essentialRunway ?? ctx.runway.totalRunway;
+      return m == null ? null : round(m);
+    })(),
     forecast30: {
       endBalance: round(ctx.forecast30.endBalance),
       lowest: round(ctx.forecast30.lowest),
