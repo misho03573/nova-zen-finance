@@ -1308,13 +1308,13 @@ export function NovaProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (cancelled) return;
       if (error) {
-        console.error("[nova] load failed", error);
+        if (import.meta.env.DEV) console.error("[nova] load failed", error.message);
         // We never saw the server row, so the optimistic local cache may be
         // stale. Stay read-only for this session instead of uploading it and
         // clobbering data written from another device.
         hydratedRef.current = true;
         remoteSyncRef.current = false;
-        setSyncState("error");
+        setSyncState("load-error");
         return;
       }
       if (data?.data && typeof data.data === "object" && (data.data as NovaState).accounts) {
@@ -1363,8 +1363,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
         )
         .then(({ error }) => {
           if (error) {
-            console.error("[nova] save failed", error);
-            setSyncState("error");
+            if (import.meta.env.DEV) console.error("[nova] save failed", error.message);
+            setSyncState("save-error");
           } else {
             setSyncState("synced");
           }

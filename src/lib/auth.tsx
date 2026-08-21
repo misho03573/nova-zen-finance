@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearLocalNovaData } from "@/lib/nova-store";
 
 type AuthCtx = {
   user: User | null;
@@ -61,15 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async signOut() {
       // Never leave financial data cached on a shared device.
-      const uid = session?.user?.id;
-      try {
-        if (typeof window !== "undefined") {
-          if (uid) window.localStorage.removeItem(`nova.store.v3.${uid}`);
-          window.localStorage.removeItem("nova.store.v3");
-        }
-      } catch {
-        /* ignore */
-      }
+      clearLocalNovaData(session?.user?.id ?? null);
       await supabase.auth.signOut();
     },
   };
