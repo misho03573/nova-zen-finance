@@ -14,8 +14,8 @@ import {
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { EmptyState } from "@/components/nova/EmptyState";
-import { useDisplayState, useNova } from "@/lib/nova-store";
-import { useCurrency } from "@/lib/currency";
+import { accountCurrency, useDisplayState, useNova } from "@/lib/nova-store";
+import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, fmt, useDateLabels } from "@/lib/i18n";
 import {
