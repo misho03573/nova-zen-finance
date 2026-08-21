@@ -30,46 +30,26 @@ const ONBOARDED_KEY = "nova.onboarded.v1";
 
 type Slide = {
   icon: ReactNode;
-  eyebrow: string;
-  title: string;
-  body: string;
+  key: string;
   accent: string;
 };
 
 const slides: Slide[] = [
-  {
-    icon: <Wallet className="h-7 w-7" />,
-    eyebrow: "Welcome to NOVA",
-    title: "Every dollar,\nbeautifully clear.",
-    body: "Track spending across cash, banks, cards, and crypto — all in one calm view.",
-    accent: "var(--gradient-primary)",
-  },
-  {
-    icon: <Target className="h-7 w-7" />,
-    eyebrow: "Goals",
-    title: "Save with\nintention.",
-    body: "Set goals, automate contributions, and watch the ETA move closer every week.",
-    accent: "var(--gradient-accent)",
-  },
+  { icon: <Wallet className="h-7 w-7" />, key: "s1", accent: "var(--gradient-primary)" },
+  { icon: <Target className="h-7 w-7" />, key: "s2", accent: "var(--gradient-accent)" },
   {
     icon: <Sparkles className="h-7 w-7" />,
-    eyebrow: "NOVA AI",
-    title: "Insights that\nfeel personal.",
-    body: "Ask questions. Get forecasts, spending changes, and smart nudges in plain English.",
+    key: "s3",
     accent: "linear-gradient(135deg, oklch(0.7 0.19 300), oklch(0.62 0.18 200))",
   },
   {
     icon: <PieChart className="h-7 w-7" />,
-    eyebrow: "Budgets",
-    title: "Stay on track,\neffortlessly.",
-    body: "Category budgets with real-time progress and gentle warnings before you overspend.",
+    key: "s4",
     accent: "linear-gradient(135deg, oklch(0.78 0.17 80), oklch(0.68 0.19 30))",
   },
   {
     icon: <Bell className="h-7 w-7" />,
-    eyebrow: "Stay ahead",
-    title: "Never miss\na bill.",
-    body: "Get notified before subscriptions renew or a budget slips. Fully optional, always private.",
+    key: "s5",
     accent: "linear-gradient(135deg, oklch(0.7 0.18 155), oklch(0.6 0.16 200))",
   },
 ];
@@ -120,13 +100,13 @@ function Onboarding() {
 
         <div key={`copy-${i}`} className="mt-10 animate-fade-in">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
-            {s.eyebrow}
+            {t(`onb.${s.key}.eyebrow`)}
           </p>
           <h1 className="mt-3 whitespace-pre-line text-4xl font-semibold leading-[1.05] tracking-tight text-foreground">
-            {s.title}
+            {t(`onb.${s.key}.title`)}
           </h1>
           <p className="mt-4 max-w-[34ch] text-[15px] leading-relaxed text-muted-foreground">
-            {s.body}
+            {t(`onb.${s.key}.body`)}
           </p>
         </div>
 
@@ -147,7 +127,7 @@ function Onboarding() {
             className="group flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform active:scale-[0.98]"
             style={{ background: "var(--gradient-primary)" }}
           >
-            {last ? "Get started" : "Continue"}
+            {last ? t("onb.start") : t("onb.continue")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </button>
           {!last ? (
