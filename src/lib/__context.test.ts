@@ -2,6 +2,12 @@ import { describe, it, expect } from "vitest";
 import { buildFinancialContext } from "@/lib/financial-context";
 import { buildIntelligence } from "@/lib/intelligence";
 import { buildNotifications, unreadCount } from "@/lib/notifications";
+import {
+  buildAiSnapshot,
+  snapshotLines,
+  suggestActions,
+  FORBIDDEN_SNAPSHOT_KEYS,
+} from "@/lib/ai-context";
 import type { Account, Transaction, Budget, Goal, Liability, Subscription } from "@/lib/nova-store";
 
 const NOW = Date.parse("2026-08-15T12:00:00.000Z");
@@ -222,5 +228,55 @@ describe("notifications", () => {
       ],
     });
     expect(buildNotifications({ ctx: far }).some((n) => n.category === "bills")).toBe(false);
+  });
+});
+
+describe("ai context", () => {
+  it("never leaks names, ids or descriptions", () => {
+    const c = ctxOf({
+      accounts: [acc({ name: "Jane Doe Savings" })],
+      transactions: [tx({ amount: -40, title: "Dr. Smith Clinic", note: "private" })],
+      goals: [{ id: "g1", name: "Wedding", saved: 10, target: 100 } as Goal],
+    });
+    const json = JSON.stringify(buildAiSnapshot(c));
+    expect(json).not.toContain("Jane");
+    expect(json).not.toContain("Smith");
+    expect(json).not.toContain("private");
+    expect(json).not.toContain("Wedding");
+    for (const key of FORBIDDEN_SNAPSHOT_KEYS) {
+      expect(Object.keys(buildAiSnapshot(c))).not.toContain(key);
+    }
+  });
+
+  it("omits merchant labels unless explicitly requested", () => {
+    const c = ctxOf({ transactions: [tx({ amount: -20, title: "LIDL*0820" })] });
+    expect(buildAiSnapshot(c).merchants).toBeUndefined();
+    expect(buildAiSnapshot(c, { includeMerchants: true }).merchants?.[0].label).toBe("Lidl");
+  });
+
+  it("produces deterministic prompt lines", () => {
+    const c = ctxOf({ transactions: [tx({ amount: -40, category: "food" })] });
+    const lines = snapshotLines(buildAiSnapshot(c));
+    expect(lines).toEqual(snapshotLines(buildAiSnapshot(c)));
+    expect(lines[0]).toBe("month=2026-08");
+  });
+
+  it("suggests actions that match the situation", () => {
+    const broke = ctxOf({
+      accounts: [acc({ balance: 5 })],
+      recurring: [
+        {
+          id: "r1",
+          title: "Rent",
+          amount: -900,
+          category: "housing",
+          frequency: "monthly",
+          nextDate: iso(2026, 8, 20),
+          accountId: "a1",
+        } as never,
+      ],
+    });
+    expect(suggestActions(broke)[0].route).toBe("/forecast");
+    expect(suggestActions(ctxOf())[0].route).toBe("/add");
   });
 });
