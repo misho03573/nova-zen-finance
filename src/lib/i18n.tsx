@@ -1223,6 +1223,12 @@ const en: Dict = {
   "sync.saveError": "Last change didn't reach the cloud. It's saved on this device only.",
   "settings.err.reset": "Could not reset your data",
   "diag.storage.redacted": "User ids are redacted in copied reports.",
+  "home.noRecent": "No transactions yet",
+  "home.noRecentDesc": "Add your first income or expense and it will show up here.",
+  "home.noUpcomingDesc": "Add a subscription or recurring payment to see what's due next.",
+  "home.addSubscription": "Add a subscription",
+  "goals.editAria": "Edit goal",
+  "wallet.deleteTxAria": "Delete transaction",
 };
 
 const bg: Dict = {
@@ -2409,6 +2415,12 @@ const bg: Dict = {
   "sync.saveError": "Последната промяна не стигна до облака. Запазена е само на това устройство.",
   "settings.err.reset": "Данните не бяха нулирани",
   "diag.storage.redacted": "Потребителските идентификатори са скрити в копираните отчети.",
+  "home.noRecent": "Още няма транзакции",
+  "home.noRecentDesc": "Добави първия си приход или разход и той ще се появи тук.",
+  "home.noUpcomingDesc": "Добави абонамент или повтарящо се плащане, за да видиш какво предстои.",
+  "home.addSubscription": "Добави абонамент",
+  "goals.editAria": "Редактирай целта",
+  "wallet.deleteTxAria": "Изтрий транзакцията",
 };
 
 const de: Dict = {
@@ -3601,6 +3613,12 @@ const de: Dict = {
   "sync.saveError": "Letzte Änderung erreichte die Cloud nicht. Nur auf diesem Gerät gespeichert.",
   "settings.err.reset": "Daten konnten nicht zurückgesetzt werden",
   "diag.storage.redacted": "Benutzer-IDs werden in kopierten Berichten unkenntlich gemacht.",
+  "home.noRecent": "Noch keine Transaktionen",
+  "home.noRecentDesc": "Erfasse deine erste Einnahme oder Ausgabe – sie erscheint dann hier.",
+  "home.noUpcomingDesc": "Füge ein Abo oder eine wiederkehrende Zahlung hinzu, um Fälliges zu sehen.",
+  "home.addSubscription": "Abo hinzufügen",
+  "goals.editAria": "Ziel bearbeiten",
+  "wallet.deleteTxAria": "Transaktion löschen",
 };
 
 const fr: Dict = {
@@ -4793,6 +4811,12 @@ const fr: Dict = {
   "sync.saveError": "La dernière modification n'a pas atteint le cloud. Enregistrée localement.",
   "settings.err.reset": "Impossible de réinitialiser vos données",
   "diag.storage.redacted": "Les identifiants utilisateur sont masqués dans les rapports copiés.",
+  "home.noRecent": "Aucune transaction",
+  "home.noRecentDesc": "Ajoutez votre premier revenu ou dépense : il apparaîtra ici.",
+  "home.noUpcomingDesc": "Ajoutez un abonnement ou un paiement récurrent pour voir les échéances.",
+  "home.addSubscription": "Ajouter un abonnement",
+  "goals.editAria": "Modifier l'objectif",
+  "wallet.deleteTxAria": "Supprimer la transaction",
 };
 
 const es: Dict = {
@@ -5985,6 +6009,12 @@ const es: Dict = {
   "sync.saveError": "El último cambio no llegó a la nube. Guardado solo en este dispositivo.",
   "settings.err.reset": "No se pudieron restablecer tus datos",
   "diag.storage.redacted": "Los identificadores de usuario se ocultan en los informes copiados.",
+  "home.noRecent": "Aún no hay transacciones",
+  "home.noRecentDesc": "Añade tu primer ingreso o gasto y aparecerá aquí.",
+  "home.noUpcomingDesc": "Añade una suscripción o pago recurrente para ver los próximos cargos.",
+  "home.addSubscription": "Añadir suscripción",
+  "goals.editAria": "Editar objetivo",
+  "wallet.deleteTxAria": "Eliminar transacción",
 };
 
 const DICTS: Record<string, Dict> = { en, bg, de, fr, es };
