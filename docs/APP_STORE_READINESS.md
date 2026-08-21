@@ -38,10 +38,11 @@ These are **not** implemented and must not be advertised as working:
 
 ## 3. Capacitor wrapper checklist
 
-```
-bun add @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
-bunx cap init NOVA app.nova.finance --web-dir=dist
-```
+Capacitor is now configured — see [NATIVE_BUILD.md](./NATIVE_BUILD.md) for the
+full workflow. Dependencies are installed, `capacitor.config.ts` exists
+(`appId: app.nova.finance`, placeholder), and `bun run build:native` emits the
+static bundle at `dist/native` that `cap sync` copies into the native projects.
+`ios/` and `android/` are generated on demand with `bunx cap add <platform>`.
 
 - Build target must be the static client build; server functions stay on the web
   origin and are reached over HTTPS from the WebView.

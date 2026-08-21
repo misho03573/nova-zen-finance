@@ -12,7 +12,7 @@ Local-first. Offline capable. Beautifully dark.
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38BDF8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-8B5CF6?style=flat-square)](./CONTRIBUTING.md)
 
-[Features](#features) • [Screenshots](#screenshots) • [Installation](#installation) • [Architecture](./docs/ARCHITECTURE.md) • [Roadmap](./docs/ROADMAP.md) • [Changelog](./CHANGELOG.md)
+[Features](#features) • [Screenshots](#screenshots) • [Installation](#installation) • [Architecture](./docs/ARCHITECTURE.md) • [Native build](./docs/NATIVE_BUILD.md) • [Roadmap](./docs/ROADMAP.md) • [Changelog](./CHANGELOG.md)
 
 </div>
 
@@ -109,6 +109,8 @@ bun run dev          # Vite dev server (HMR)
 bun run build        # Production build
 bun run build:dev    # Dev-mode build (unminified)
 bun run preview      # Preview the production build
+bun run build:native # Static bundle for the Capacitor native shell
+bun run cap:sync     # build:native + cap sync
 bun run lint         # ESLint
 bun run format       # Prettier
 ```
