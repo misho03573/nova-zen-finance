@@ -12,11 +12,14 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 const native = process.env["NOVA_NATIVE"] === "1";
 
 export default defineConfig({
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
-    ...(native ? { spa: { enabled: true } } : {}),
-  },
+  tanstackStart: native
+    ? // SPA shell generation boots TanStack's own preview server, which expects
+      // the default server entry, so the SSR error wrapper is skipped here.
+      { spa: { enabled: true } }
+    : {
+        // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
+        // nitro/vite builds from this
+        server: { entry: "server" },
+      },
 });
 
