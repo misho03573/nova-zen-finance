@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
+import { NotificationBell } from "@/components/nova/NotificationBell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
 import { useCategoryLookup } from "@/lib/categories";
@@ -134,6 +135,7 @@ function Home() {
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker variant="chip" />
+            <NotificationBell />
             <Link
               to="/calendar"
               aria-label={tr("shell.calendar")}

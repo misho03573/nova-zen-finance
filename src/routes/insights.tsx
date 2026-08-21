@@ -12,6 +12,9 @@ import {
   LifeBuoy,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
+import { NotificationBell } from "@/components/nova/NotificationBell";
+import { SmartCard, SmartEmpty } from "@/components/nova/SmartCard";
+import { useIntelligence } from "@/lib/use-financial-context";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
 import {
@@ -56,6 +59,7 @@ function InsightsPage() {
   const tr = useT();
   const dateLabels = useDateLabels();
   const [query, setQuery] = useState("");
+  const smart = useIntelligence();
 
   const insights = useMemo(
     () => generateInsights(state.transactions, state.goals),
@@ -88,6 +92,7 @@ function InsightsPage() {
         right={
           <div className="flex items-center gap-2">
             <CurrencyPicker />
+            <NotificationBell />
             <Link
               to="/calendar"
               aria-label={tr("shell.calendar")}
