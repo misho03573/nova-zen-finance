@@ -1,3 +1,4 @@
+import { snapshotIn } from "@/lib/networth-history";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Landmark, Coins, TrendingUp, Bitcoin, Home, Car, CreditCard, Building2, Plus, Trash2, TrendingDown, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -59,14 +60,11 @@ function NetWorthPage() {
   const [range, setRange] = useState<NwRange>("3M");
   // History is stored in USD base; convert exactly once for display.
   const history = useMemo(() => {
+    // Snapshots are frozen in the USD base at capture time; this is a
+    // presentation-only conversion and never mutates stored history.
     const rows = filterByRange(state.netWorthHistory ?? [], range);
-    return rows.map((s) => ({
-      date: s.date,
-      assets: convert(s.assets, SNAPSHOT_BASE),
-      liabilities: convert(s.liabilities, SNAPSHOT_BASE),
-      net: convert(s.net, SNAPSHOT_BASE),
-    }));
-  }, [state.netWorthHistory, range, convert]);
+    return rows.map((s) => snapshotIn(s, currency.code));
+  }, [state.netWorthHistory, range, currency.code]);
 
   const change = useMemo(() => {
     const m = monthChange(state.netWorthHistory ?? []);
