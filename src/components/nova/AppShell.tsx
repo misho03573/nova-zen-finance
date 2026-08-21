@@ -1,5 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Wallet, Plus, Sparkles, Target, Settings as SettingsIcon } from "lucide-react";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { ArrowLeft, Home, Wallet, Plus, Sparkles, Target, Settings as SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -104,17 +104,43 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 
+export function BackButton() {
+  const router = useRouter();
+  const tr = useT();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (typeof window !== "undefined" && window.history.length > 1) router.history.back();
+        else router.navigate({ to: "/" });
+      }}
+      aria-label={tr("shell.back")}
+      className="tap grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
+    >
+      <ArrowLeft className="h-4 w-4" />
+    </button>
+  );
+}
+
 export function PageHeader({
   title,
   subtitle,
   right,
+  back,
 }: {
   title: string;
   subtitle?: string;
   right?: ReactNode;
+  back?: boolean;
 }) {
   return (
-    <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 pb-4 pt-8">
+    <header
+      className={cn(
+        "items-center gap-3 px-5 pb-4 pt-8",
+        back ? "grid grid-cols-[auto_minmax(0,1fr)_auto]" : "grid grid-cols-[minmax(0,1fr)_auto]",
+      )}
+    >
+      {back ? <BackButton /> : null}
       <div className="min-w-0">
         {subtitle ? (
           <p className="truncate text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
