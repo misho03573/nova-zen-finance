@@ -158,7 +158,7 @@ export function buildFinancialContext(args: {
     const v = -t.amount;
     expenses += v;
     byCat.set(t.category, (byCat.get(t.category) ?? 0) + v);
-    const m = resolveMerchant(t.merchant || t.title || "", args.merchants ?? []);
+    const m = resolveMerchant(t.title || "", args.merchants ?? []);
     if (!m.key) continue;
     const row = byMerchant.get(m.key) ?? { key: m.key, label: m.label, amount: 0, count: 0 };
     row.amount += v;
