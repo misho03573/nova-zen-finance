@@ -115,10 +115,18 @@ function isSoftNoise(token: string): boolean {
   );
 }
 
+function capitalize(w: string): string {
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+}
+
 function titleCase(s: string): string {
   return s
     .split(" ")
-    .map((w) => (w.length <= 3 && w === w.toUpperCase() ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+    .map((w) =>
+      w.length <= 3 && w === w.toUpperCase() && /[a-z]/i.test(w)
+        ? w
+        : w.split("-").map(capitalize).join("-"),
+    )
     .join(" ");
 }
 
@@ -173,7 +181,9 @@ export function cleanDescriptor(raw: string): string {
   while (tokens.length > 1 && isSoftNoise(tokens[0])) tokens.shift();
 
   const label = tokens.join(" ").trim();
-  if (!label) return original;
+  // A descriptor made purely of reference noise keeps its original text —
+  // better an ugly label than a lost merchant.
+  if (!label || !/[a-z]/.test(label)) return original;
   return titleCase(label);
 }
 
