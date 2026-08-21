@@ -14,12 +14,14 @@ import {
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { EmptyState } from "@/components/nova/EmptyState";
-import { useDisplayState, useNova } from "@/lib/nova-store";
-import { useCurrency } from "@/lib/currency";
+import { accountCurrency, useDisplayState, useNova } from "@/lib/nova-store";
+import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, fmt, useDateLabels } from "@/lib/i18n";
 import {
   computeMonthlyReview,
+  isCurrentMonth,
+  monthBasis,
   monthKey,
   parseMonthKey,
   recentMonthKeys,
@@ -86,6 +88,12 @@ function ReviewPage() {
   const tr = useT();
   const labels = useDateLabels();
 
+  const accCur = useMemo(() => {
+    const m = new Map<string, CurrencyCode>();
+    for (const a of state.accounts) m.set(a.id, accountCurrency(a));
+    return m;
+  }, [state.accounts]);
+
   const months = useMemo(() => recentMonthKeys(12), []);
   const [month, setMonth] = useState(() => monthKey(new Date()));
   const idx = months.indexOf(month);
@@ -94,14 +102,18 @@ function ReviewPage() {
     () =>
       computeMonthlyReview({
         month,
-        transactions: display.transactions,
+        // Raw (native) transactions: the month is valued once, with a frozen
+        // basis for closed months so past reviews never re-price.
+        transactions: state.transactions,
+        currencyOf: (t) => (t.currency ?? accCur.get(t.accountId) ?? "USD") as CurrencyCode,
+        basis: isCurrentMonth(month) ? null : monthBasis(month, state.netWorthHistory ?? []),
         budgets: display.budgets,
         goals: display.goals,
         subscriptions: display.subscriptions,
         history: state.netWorthHistory ?? [],
         to: currency.code,
       }),
-    [month, display, state.netWorthHistory, currency.code],
+    [month, display, state, accCur, state.netWorthHistory, currency.code],
   );
 
   const monthLabel = parseMonthKey(month).toLocaleDateString(labels.locale, {
@@ -135,7 +147,12 @@ function ReviewPage() {
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
+        {review.frozen ? (
+          <p className="px-1 pt-2 text-[11px] text-muted-foreground">{tr("hist.frozen")}</p>
+        ) : null}
       </section>
+
+
 
       {!hasData ? (
         <section className="px-5 pt-4">
