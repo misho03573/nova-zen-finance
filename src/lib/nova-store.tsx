@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { setSyncState } from "@/lib/sync-status";
 import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
 import { defaultCategories, type UserCategory } from "@/lib/categories";
@@ -1298,6 +1299,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
         // clobbering data written from another device.
         hydratedRef.current = true;
         remoteSyncRef.current = false;
+        setSyncState("error");
         return;
       }
       if (data?.data && typeof data.data === "object" && (data.data as NovaState).accounts) {
@@ -1312,6 +1314,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       }
       hydratedRef.current = true;
       remoteSyncRef.current = true;
+      setSyncState("synced");
     })();
 
     return () => {
@@ -1327,10 +1330,14 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     // Debounced remote persist for signed-in users.
-    if (!remoteSyncRef.current || !userId) return;
+    if (!remoteSyncRef.current || !userId) {
+      if (!userId) setSyncState("local");
+      return;
+    }
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     const snapshot = state;
     const uid = userId;
+    setSyncState("saving");
     saveTimerRef.current = setTimeout(() => {
       supabase
         .from("user_data")
@@ -1340,7 +1347,12 @@ export function NovaProvider({ children }: { children: ReactNode }) {
           { onConflict: "user_id" },
         )
         .then(({ error }) => {
-          if (error) console.error("[nova] save failed", error);
+          if (error) {
+            console.error("[nova] save failed", error);
+            setSyncState("error");
+          } else {
+            setSyncState("synced");
+          }
         });
     }, 600);
   }, [state, userId]);

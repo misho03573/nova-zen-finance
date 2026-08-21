@@ -21,6 +21,7 @@ import { useNova } from "@/lib/nova-store";
 import { ACCENTS } from "@/lib/i18n";
 import { ConfirmProvider } from "@/components/nova/ConfirmDialog";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { SyncIndicator } from "@/components/nova/SyncIndicator";
 
 function NotFoundComponent() {
   return (
@@ -163,6 +164,7 @@ function RootComponent() {
                     <RecurringAdvancer />
                     {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
                     <Outlet />
+                    <SyncIndicator />
                     <Toaster position="top-center" />
                   </>
                 ) : (
