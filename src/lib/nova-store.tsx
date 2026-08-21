@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { setSyncState } from "@/lib/sync-status";
+import { GUEST_STORE_KEY, storeKeyFor } from "@/lib/local-cache";
 import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
 import { defaultCategories, type UserCategory } from "@/lib/categories";
@@ -273,20 +274,9 @@ export type AutomationRule = {
   goalId?: string;
 };
 
-const GUEST_KEY = "nova.store.v3";
-/** Removes a signed-in user's cached financial data from this device. */
-export function clearLocalNovaData(userId?: string | null) {
-  if (typeof window === "undefined") return;
-  try {
-    if (userId) window.localStorage.removeItem(`nova.store.v3.${userId}`);
-    window.localStorage.removeItem(GUEST_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-function keyFor(userId: string | null) {
-  return userId ? `nova.store.v3.${userId}` : GUEST_KEY;
-}
+export { clearLocalNovaData } from "@/lib/local-cache";
+const GUEST_KEY = GUEST_STORE_KEY;
+const keyFor = storeKeyFor;
 
 function iso(daysAgo: number, hour = 9, minute = 0) {
   const d = new Date();
@@ -1293,13 +1283,13 @@ export function NovaProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (cancelled) return;
       if (error) {
-        console.error("[nova] load failed", error);
+        if (import.meta.env.DEV) console.error("[nova] load failed", error.message);
         // We never saw the server row, so the optimistic local cache may be
         // stale. Stay read-only for this session instead of uploading it and
         // clobbering data written from another device.
         hydratedRef.current = true;
         remoteSyncRef.current = false;
-        setSyncState("error");
+        setSyncState("load-error");
         return;
       }
       if (data?.data && typeof data.data === "object" && (data.data as NovaState).accounts) {
@@ -1348,8 +1338,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
         )
         .then(({ error }) => {
           if (error) {
-            console.error("[nova] save failed", error);
-            setSyncState("error");
+            if (import.meta.env.DEV) console.error("[nova] save failed", error.message);
+            setSyncState("save-error");
           } else {
             setSyncState("synced");
           }

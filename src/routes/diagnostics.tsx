@@ -7,6 +7,7 @@ import { runIntegrityChecks, repairState, integrityScore } from "@/lib/integrity
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useT, fmt } from "@/lib/i18n";
+import { redactStorageKey } from "@/lib/local-cache";
 import { CAPABILITIES, type CapabilityStatus } from "@/lib/native";
 
 export const APP_VERSION = "1.0.0-rc.1";
@@ -102,7 +103,7 @@ function Diagnostics() {
       setErrors((prev) => [{ msg: e.message, at: Date.now() }, ...prev].slice(0, 20));
     };
     const onRej = (e: PromiseRejectionEvent) => {
-      setErrors((prev) => [{ msg: String(e.reason?.message ?? e.reason), at: Date.now() }, ...prev].slice(0, 20));
+      setErrors((prev) => [{ msg: redactStorageKey(String(e.reason?.message ?? e.reason)), at: Date.now() }, ...prev].slice(0, 20));
     };
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onRej);
@@ -113,7 +114,9 @@ function Diagnostics() {
         const k = window.localStorage.key(i);
         if (!k) continue;
         const v = window.localStorage.getItem(k) ?? "";
-        rows.push({ key: k, bytes: new Blob([v]).size });
+        // Only the key name and byte size are recorded — never the value,
+        // which for `nova.store.*` is the user's entire financial state.
+        rows.push({ key: redactStorageKey(k), bytes: new Blob([v]).size });
       }
       rows.sort((a, b) => b.bytes - a.bytes);
       setStorage(rows);
@@ -210,7 +213,14 @@ function Diagnostics() {
     });
     if (!ok) return;
     try {
-      localStorage.clear();
+      // Scoped to NOVA keys so we never destroy unrelated origin state
+      // (including the Supabase auth session of the signed-in user).
+      const novaKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("nova.")) novaKeys.push(k);
+      }
+      novaKeys.forEach((k) => localStorage.removeItem(k));
       location.reload();
     } catch {
       toast.error(t("diag.wipeFail"));
