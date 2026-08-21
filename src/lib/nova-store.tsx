@@ -22,11 +22,13 @@ import {
 } from "@/lib/merchant";
 import {
   dayKey,
+  migrateSnapshots,
   sameSnapshot,
   upsertSnapshot,
   SNAPSHOT_BASE,
   type NetWorthSnapshot,
 } from "@/lib/networth-history";
+import { convertWith, currentFxMeta } from "@/lib/fx";
 
 export type { CategoryRule } from "@/lib/category-rules";
 
@@ -531,7 +533,9 @@ export function reducer(state: NovaState, action: Action): NovaState {
         categories: mergeCategories(action.state.categories),
         categoryRules: action.state.categoryRules ?? [],
         merchants: action.state.merchants ?? [],
-        netWorthHistory: action.state.netWorthHistory ?? [],
+        // Non-destructive: legacy snapshots keep their stored values and are
+        // only flagged, never re-priced with today's rates.
+        netWorthHistory: migrateSnapshots(action.state.netWorthHistory),
       };
     case "snapshotNetWorth":
       return {
@@ -1889,12 +1893,14 @@ export function totalLiabilities(ls: Liability[]) {
  * converted exactly once into the USD snapshot base.
  */
 export function computeSnapshot(state: NovaState): NetWorthSnapshot {
+  // The rate basis is captured once, here, and frozen into the snapshot.
+  const fx = currentFxMeta();
   const assets = state.accounts.reduce(
-    (s, a) => s + convertAmount(a.balance, accountCurrency(a), SNAPSHOT_BASE),
+    (s, a) => s + convertWith(a.balance, accountCurrency(a), SNAPSHOT_BASE, fx),
     0,
   );
   const liabilities = state.liabilities.reduce(
-    (s, l) => s + convertAmount(l.balance, liabilityCurrency(l), SNAPSHOT_BASE),
+    (s, l) => s + convertWith(l.balance, liabilityCurrency(l), SNAPSHOT_BASE, fx),
     0,
   );
   return {
@@ -1903,6 +1909,7 @@ export function computeSnapshot(state: NovaState): NetWorthSnapshot {
     liabilities,
     net: assets - liabilities,
     base: SNAPSHOT_BASE,
+    fx,
   };
 }
 
