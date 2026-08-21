@@ -260,7 +260,6 @@ export function mergeAliases(
     if (a.key === targetKey) target = { ...a, aliases: [...a.aliases] };
     else if (absorbed.has(a.key)) {
       // Folding a whole identity in: carry its own aliases across.
-      absorbed.add(...([] as string[]));
       for (const k of a.aliases) absorbed.add(k);
     } else rest.push(a);
   }
