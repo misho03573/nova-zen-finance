@@ -12,6 +12,8 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 const native = process.env["NOVA_NATIVE"] === "1";
 
 export default defineConfig({
+  // Native builds emit a plain static bundle (no Cloudflare/nitro server output).
+  ...(native ? { nitro: false as const } : {}),
   tanstackStart: native
     ? // SPA shell generation boots TanStack's own preview server, which expects
       // the default server entry, so the SSR error wrapper is skipped here.
