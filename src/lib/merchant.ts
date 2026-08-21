@@ -125,7 +125,7 @@ function titleCase(s: string): string {
     .map((w) =>
       w.length <= 3 && w === w.toUpperCase() && /[a-z]/i.test(w)
         ? w
-        : w.split("-").map(capitalize).join("-"),
+        : w.replace(/[a-z0-9]+/g, (part) => capitalize(part)),
     )
     .join(" ");
 }
