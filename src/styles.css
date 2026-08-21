@@ -224,11 +224,11 @@
 }
 
 @utility safe-top {
-  padding-top: calc(var(--safe-top) + var(--tw-safe-extra, 0px));
+  padding-top: var(--safe-top);
 }
 
 @utility safe-bottom {
-  padding-bottom: calc(var(--safe-bottom) + var(--tw-safe-extra, 0px));
+  padding-bottom: var(--safe-bottom);
 }
 
 @utility safe-x {
