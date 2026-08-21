@@ -164,6 +164,7 @@ function SettingsPage() {
   return (
     <AppShell>
       <PageHeader
+        back
         subtitle={t("settings.subtitle")}
         title={t("settings.title")}
         right={

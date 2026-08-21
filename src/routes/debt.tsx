@@ -107,7 +107,7 @@ function DebtPage() {
   if (state.liabilities.filter((l) => l.balance > 0).length === 0) {
     return (
       <AppShell>
-        <PageHeader subtitle={t("dp.subtitle")} title={t("dp.title")} right={<CurrencyPicker />} />
+        <PageHeader back subtitle={t("dp.subtitle")} title={t("dp.title")} right={<CurrencyPicker />} />
         <section className="px-5 pt-4">
           <EmptyState
             icon={<CreditCard className="h-6 w-6" />}
@@ -123,7 +123,7 @@ function DebtPage() {
 
   return (
     <AppShell>
-      <PageHeader subtitle={t("dp.subtitle")} title={t("dp.title")} right={<CurrencyPicker />} />
+      <PageHeader back subtitle={t("dp.subtitle")} title={t("dp.title")} right={<CurrencyPicker />} />
 
       <section className="px-5">
         <div className="flex gap-2">

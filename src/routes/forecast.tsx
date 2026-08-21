@@ -109,7 +109,7 @@ function ForecastPage() {
 
   return (
     <AppShell>
-      <PageHeader subtitle={tr("fc.subtitle")} title={tr("fc.title")} right={<CurrencyPicker />} />
+      <PageHeader back subtitle={tr("fc.subtitle")} title={tr("fc.title")} right={<CurrencyPicker />} />
 
       <section className="px-5">
         <div className="flex gap-2">

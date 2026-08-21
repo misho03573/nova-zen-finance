@@ -76,6 +76,7 @@ function NetWorthPage() {
   return (
     <AppShell>
       <PageHeader
+        back
         subtitle={t("nw.subtitle")}
         title={t("nw.title")}
         right={<CurrencyPicker variant="chip" />}
