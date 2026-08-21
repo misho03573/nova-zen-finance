@@ -121,6 +121,22 @@ function Diagnostics() {
 
   const totalBytes = storage.reduce((s, r) => s + r.bytes, 0);
 
+  const issues = useMemo(() => runIntegrityChecks(state), [state]);
+  const health = integrityScore(issues);
+
+  const repairAll = async () => {
+    const ok = await confirm({
+      title: t("integrity.confirmTitle"),
+      description: t("integrity.confirmDesc"),
+      confirmLabel: t("integrity.repairAll"),
+      destructive: true,
+    });
+    if (!ok) return;
+    const repaired = repairState(state, issues.map((i) => i.kind));
+    if (importData(JSON.stringify(repaired))) toast.success(t("integrity.repaired"));
+    else toast.error(t("integrity.repairFail"));
+  };
+
   const copyReport = async () => {
     const report = {
       version: APP_VERSION,
