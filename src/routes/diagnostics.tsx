@@ -7,6 +7,7 @@ import { runIntegrityChecks, repairState, integrityScore } from "@/lib/integrity
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useT, fmt } from "@/lib/i18n";
+import { redactStorageKey } from "@/lib/local-cache";
 import { CAPABILITIES, type CapabilityStatus } from "@/lib/native";
 
 export const APP_VERSION = "1.0.0-rc.1";
