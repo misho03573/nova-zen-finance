@@ -1127,6 +1127,15 @@ const en: Dict = {
   "fi.goalNear.body": "{pct}% complete — {amount} to go.",
   "settings.notifications.link": "Notifications center",
   "settings.notifications.linkDesc": "Bills, budgets, goals and cash-flow alerts",
+  "ai.act.add": "Add transaction",
+  "ai.act.forecast": "See forecast",
+  "ai.act.budgets": "Check budgets",
+  "ai.act.subs": "Review subscriptions",
+  "ai.act.goals": "Open goals",
+  "ai.act.debt": "Plan debt payoff",
+  "ai.act.runway": "Emergency fund",
+  "ai.act.review": "Monthly review",
+  "ai.act.alerts": "See alerts",
 };
 
 const bg: Dict = {
@@ -2217,6 +2226,15 @@ const bg: Dict = {
   "fi.goalNear.body": "{pct}% завършено — остават {amount}.",
   "settings.notifications.link": "Център за известия",
   "settings.notifications.linkDesc": "Сметки, бюджети, цели и сигнали за паричен поток",
+  "ai.act.add": "Добави транзакция",
+  "ai.act.forecast": "Виж прогнозата",
+  "ai.act.budgets": "Провери бюджетите",
+  "ai.act.subs": "Прегледай абонаментите",
+  "ai.act.goals": "Отвори целите",
+  "ai.act.debt": "Планирай изплащане",
+  "ai.act.runway": "Спешен фонд",
+  "ai.act.review": "Месечен преглед",
+  "ai.act.alerts": "Виж известията",
 };
 
 const de: Dict = {
@@ -3313,6 +3331,15 @@ const de: Dict = {
   "fi.goalNear.body": "{pct}% erreicht — noch {amount}.",
   "settings.notifications.link": "Mitteilungszentrale",
   "settings.notifications.linkDesc": "Rechnungen, Budgets, Ziele und Cashflow-Warnungen",
+  "ai.act.add": "Transaktion hinzufügen",
+  "ai.act.forecast": "Prognose ansehen",
+  "ai.act.budgets": "Budgets prüfen",
+  "ai.act.subs": "Abos prüfen",
+  "ai.act.goals": "Ziele öffnen",
+  "ai.act.debt": "Schulden planen",
+  "ai.act.runway": "Notgroschen",
+  "ai.act.review": "Monatsrückblick",
+  "ai.act.alerts": "Warnungen ansehen",
 };
 
 const fr: Dict = {
@@ -4409,6 +4436,15 @@ const fr: Dict = {
   "fi.goalNear.body": "{pct}% atteint — encore {amount}.",
   "settings.notifications.link": "Centre de notifications",
   "settings.notifications.linkDesc": "Factures, budgets, objectifs et alertes de trésorerie",
+  "ai.act.add": "Ajouter une transaction",
+  "ai.act.forecast": "Voir la prévision",
+  "ai.act.budgets": "Vérifier les budgets",
+  "ai.act.subs": "Revoir les abonnements",
+  "ai.act.goals": "Ouvrir les objectifs",
+  "ai.act.debt": "Planifier le remboursement",
+  "ai.act.runway": "Fonds d'urgence",
+  "ai.act.review": "Bilan mensuel",
+  "ai.act.alerts": "Voir les alertes",
 };
 
 const es: Dict = {
@@ -5505,6 +5541,15 @@ const es: Dict = {
   "fi.goalNear.body": "{pct}% completado — faltan {amount}.",
   "settings.notifications.link": "Centro de notificaciones",
   "settings.notifications.linkDesc": "Facturas, presupuestos, objetivos y alertas de flujo",
+  "ai.act.add": "Añadir transacción",
+  "ai.act.forecast": "Ver previsión",
+  "ai.act.budgets": "Revisar presupuestos",
+  "ai.act.subs": "Revisar suscripciones",
+  "ai.act.goals": "Abrir objetivos",
+  "ai.act.debt": "Planificar la deuda",
+  "ai.act.runway": "Fondo de emergencia",
+  "ai.act.review": "Resumen mensual",
+  "ai.act.alerts": "Ver alertas",
 };
 
 const DICTS: Record<string, Dict> = { en, bg, de, fr, es };
