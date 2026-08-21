@@ -1,109 +1,130 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Upload, FileText, Check, AlertTriangle, FileWarning } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  FileText,
+  Check,
+  AlertTriangle,
+  FileWarning,
+  ShieldCheck,
+  Repeat,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import { useNova, type Transaction } from "@/lib/nova-store";
+import { useNova } from "@/lib/nova-store";
 import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { toast } from "sonner";
-import { useCategoryLookup } from "@/lib/categories";
+import { useCategories, useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, fmt } from "@/lib/i18n";
-import { parseBankCsv, buildExistingIndex, isDuplicate, dupeKey } from "@/lib/csv-import";
+import { parseBankCsvRaw } from "@/lib/csv-import";
+import {
+  buildPreview,
+  summarize,
+  toTransactions,
+  outcomeOf,
+  isSelected,
+  type CrossCurrencyMode,
+  type ImportOutcome,
+  type PreviewRow,
+  type RowIssue,
+} from "@/lib/import-preview";
+import { runIntegrityChecks } from "@/lib/integrity";
 import { EmptyState } from "@/components/nova/EmptyState";
 
 export const Route = createFileRoute("/import")({
   head: () => ({
     meta: [
       { title: "Bank Import · NOVA" },
-      { name: "description", content: "Import transactions from your bank CSV." },
+      { name: "description", content: "Preview, verify and import bank CSV transactions." },
+      { property: "og:title", content: "Bank Import · NOVA" },
+      {
+        property: "og:description",
+        content: "Preview, verify and import bank CSV transactions.",
+      },
     ],
   }),
   component: ImportPage,
 });
 
-type DupeKind = "none" | "existing" | "file";
-type Draft = Omit<Transaction, "id"> & { dupe: DupeKind };
+const SAMPLE = `date,description,amount,currency
+2026-07-18,BLUE BOTTLE COFFEE #221,-6.50,USD
+2026-07-18,WHOLE FOODS MKT 1029,-84.32,USD
+2026-07-17,UBER *TRIP,-18.90,USD
+2026-07-15,SALARY ACME INC,6200.00,USD
+2026-07-14,AESOP LONDON,-142.00,GBP
+2026-07-12,CON EDISON,-96.14,USD
+2026-07-10,TRADER JOES #481,-52.11,USD
+2026-07-10,TRADER JOES #481,-52.11,USD
+2026-07-08,SHELL GAS,-0,USD`;
 
-const SAMPLE = `date,description,amount
-2026-07-18,Blue Bottle Coffee,-6.50
-2026-07-18,Whole Foods Market,-84.32
-2026-07-17,Uber,-18.90
-2026-07-15,Salary Acme Inc,6200.00
-2026-07-14,Aesop,-142.00
-2026-07-12,Con Edison,-96.14
-2026-07-10,Trader Joe's,-52.11
-2026-07-08,Shell Gas,-54.90`;
-
-function guessCategory(desc: string): string {
-  const d = desc.toLowerCase();
-  if (/coffee|starbucks|blue bottle/.test(d)) return "coffee";
-  if (/uber|lyft|gas|shell|fuel|transit|metro/.test(d)) return "transport";
-  if (/salary|payroll|inc\.?$|payment received/.test(d)) return "salary";
-  if (/whole foods|trader|grocery|market/.test(d)) return "food";
-  if (/aesop|zara|amazon|shop/.test(d)) return "shopping";
-  if (/electric|water|internet|utility|edison|verizon|phone/.test(d)) return "utilities";
-  if (/netflix|spotify|hulu|chatgpt|icloud/.test(d)) return "subscription";
-  if (/rent|landlord/.test(d)) return "rent";
-  if (/travel|hotel|airbnb|delta|united|airline/.test(d)) return "travel";
-  return "bills";
-}
+const MAX_ROWS = 60;
 
 function ImportPage() {
   const { state, importTransactions } = useNova();
   const { formatIn } = useCurrency();
   const tr = useT();
-  const [csv, setCsv] = useState<string>("");
-  const [account, setAccount] = useState<string>(state.accounts[0]?.id ?? "");
   const navigate = useNavigate();
   const categoryOf = useCategoryLookup();
   const catName = useCategoryName();
+  const allCategories = useCategories();
 
-  const accountCur: CurrencyCode =
-    (state.accounts.find((a) => a.id === account)?.currency ?? "USD") as CurrencyCode;
+  const [csv, setCsv] = useState("");
+  const [account, setAccount] = useState(state.accounts[0]?.id ?? "");
+  const [crossCurrency, setCrossCurrency] = useState<CrossCurrencyMode>("block");
+  const [selection, setSelection] = useState<Record<number, boolean>>({});
+  const [catOverrides, setCatOverrides] = useState<Record<number, string>>({});
+  const [result, setResult] = useState<ImportOutcome | null>(null);
 
-  const parsed = useMemo(() => parseBankCsv(csv), [csv]);
+  const accountCur = (state.accounts.find((a) => a.id === account)?.currency ??
+    "USD") as CurrencyCode;
 
-  const drafts: Draft[] = useMemo(() => {
-    if (!csv.trim()) return [];
-    const existing = buildExistingIndex(state.transactions);
-    const seen = new Map<string, number[]>();
-    return parsed.rows.map((r): Draft => {
-      let dupe: DupeKind = "none";
-      if (isDuplicate(r, existing)) dupe = "existing";
-      else if (isDuplicate(r, seen)) dupe = "file";
-      const k = dupeKey(r.title, r.amount);
-      seen.set(k, [...(seen.get(k) ?? []), +new Date(r.date)]);
-      return {
-        title: r.title,
-        category: guessCategory(r.title),
-        amount: r.amount,
-        date: r.date,
-        accountId: account,
-        currency: accountCur,
-        dupe,
-      };
-    });
-  }, [csv, parsed, account, accountCur, state.transactions]);
+  const parsed = useMemo(() => parseBankCsvRaw(csv), [csv]);
 
-  // Rows the user explicitly re-enabled (duplicates) or disabled (clean rows).
-  const [overrides, setOverrides] = useState<Record<number, boolean>>({});
-  useEffect(() => setOverrides({}), [csv, account]);
+  const rows = useMemo(
+    () =>
+      csv.trim()
+        ? buildPreview(parsed.rows, {
+            accountId: account,
+            accountCurrency: accountCur,
+            existing: state.transactions,
+            rules: state.categoryRules,
+            merchants: state.merchants,
+            crossCurrency,
+            categoryOverrides: catOverrides,
+          })
+        : [],
+    [csv, parsed, account, accountCur, state.transactions, state.categoryRules, state.merchants, crossCurrency, catOverrides],
+  );
 
-  const included = (i: number, d: Draft) => overrides[i] ?? d.dupe === "none";
-  const toImport = drafts.filter((d, i) => included(i, d));
-  const dupCount = drafts.filter((d) => d.dupe !== "none").length;
+  const totals = useMemo(() => summarize(rows, selection), [rows, selection]);
+  const hasMismatch = rows.some((r) => r.issues.includes("currencyMismatch"));
+
+  useEffect(() => {
+    setSelection({});
+    setCatOverrides({});
+    setResult(null);
+  }, [csv, account]);
+
+  const postIssues = useMemo(
+    () => (result ? runIntegrityChecks(state).filter((i) => i.severity === "critical") : []),
+    [result, state],
+  );
 
   const onFile = async (f: File | null) => {
     if (!f) return;
-    const text = await f.text();
-    setCsv(text);
+    setCsv(await f.text());
   };
 
   const doImport = () => {
-    if (toImport.length === 0) return;
-    importTransactions(toImport.map(({ dupe: _d, ...rest }) => rest));
-    toast.success(fmt(tr("imp.imported"), { n: toImport.length }));
-    navigate({ to: "/wallet" });
+    const txs = toTransactions(rows, selection);
+    if (!txs.length) return;
+    const outcome = outcomeOf(rows, selection);
+    importTransactions(txs);
+    setResult(outcome);
+    toast.success(fmt(tr("imp.imported"), { n: txs.length }));
   };
+
+  const issueLabel = (i: RowIssue) => tr(`imp.issue.${i}`);
 
   return (
     <AppShell>
@@ -111,7 +132,10 @@ function ImportPage() {
         subtitle={tr("imp.subtitle")}
         title={tr("imp.title")}
         right={
-          <Link to="/" className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur">
+          <Link
+            to="/"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Link>
         }
@@ -154,13 +178,46 @@ function ImportPage() {
                 account === a.id ? "border-primary bg-primary/10 text-primary" : "border-border"
               }`}
             >
-              {a.name}
+              {a.name} · {a.currency}
             </button>
           ))}
         </div>
       </section>
 
-      {csv.trim() && drafts.length === 0 ? (
+      {result ? (
+        <section className="mt-4 px-5">
+          <div className="rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]">
+            <p className="text-sm font-semibold">{tr("imp.resultTitle")}</p>
+            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+              <li>{fmt(tr("imp.resImported"), { n: result.imported })}</li>
+              <li>{fmt(tr("imp.resDupes"), { n: result.skippedDuplicates })}</li>
+              <li>{fmt(tr("imp.resInvalid"), { n: result.skippedInvalid })}</li>
+              <li>{fmt(tr("imp.resExcluded"), { n: result.excluded })}</li>
+            </ul>
+            <div className="mt-3 flex items-center gap-2 text-xs">
+              {postIssues.length === 0 ? (
+                <span className="flex items-center gap-1.5 text-primary">
+                  <ShieldCheck className="h-4 w-4" /> {tr("imp.integrityOk")}
+                </span>
+              ) : (
+                <Link to="/diagnostics" className="flex items-center gap-1.5 text-amber-500">
+                  <AlertTriangle className="h-4 w-4" />
+                  {fmt(tr("imp.integrityIssues"), { n: postIssues.length })}
+                </Link>
+              )}
+            </div>
+            <button
+              onClick={() => navigate({ to: "/wallet" })}
+              className="mt-4 w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
+              style={{ background: "var(--gradient-primary)" }}
+            >
+              {tr("imp.done")}
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {!result && csv.trim() && rows.length === 0 ? (
         <section className="mt-4 px-5">
           <EmptyState
             icon={<FileWarning className="h-6 w-6" />}
@@ -170,83 +227,176 @@ function ImportPage() {
         </section>
       ) : null}
 
-      {drafts.length > 0 && (
+      {!result && rows.length > 0 ? (
         <section className="mt-4 px-5">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-semibold">{fmt(tr("imp.preview"), { n: drafts.length })}</p>
-            <p className="text-xs text-muted-foreground">
-              {fmt(tr("imp.counts"), { newCount: toImport.length, dupCount })}
+          <div className="rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]">
+            <p className="text-sm font-semibold">
+              {fmt(tr("imp.rowsDetected"), { n: totals.total })}
             </p>
+            <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <li>{fmt(tr("imp.validN"), { n: totals.valid })}</li>
+              <li>{fmt(tr("imp.dupN"), { n: totals.duplicates })}</li>
+              <li>{fmt(tr("imp.autoCatN"), { n: totals.autoCategorized })}</li>
+              <li>{fmt(tr("imp.reviewN"), { n: totals.needsReview })}</li>
+              <li>{fmt(tr("imp.invalidN"), { n: totals.invalid })}</li>
+              <li>{fmt(tr("imp.selectedN"), { n: totals.selected })}</li>
+            </ul>
+            {parsed.columns ? (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {fmt(tr("imp.detected"), {
+                  date: parsed.columns.date,
+                  description: parsed.columns.description,
+                  amount: parsed.columns.amount,
+                })}
+              </p>
+            ) : null}
+            {hasMismatch ? (
+              <label className="mt-3 flex items-center gap-2 rounded-2xl border border-border bg-background/40 p-3 text-xs">
+                <input
+                  type="checkbox"
+                  checked={crossCurrency === "convert"}
+                  onChange={(e) => setCrossCurrency(e.target.checked ? "convert" : "block")}
+                  className="h-4 w-4 accent-[var(--primary)]"
+                />
+                <span className="flex items-center gap-1.5">
+                  <Repeat className="h-3.5 w-3.5" />
+                  {fmt(tr("imp.convertToggle"), { cur: accountCur })}
+                </span>
+              </label>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() =>
+                  setSelection(Object.fromEntries(rows.filter((r) => r.valid).map((r) => [r.index, true])))
+                }
+                className="rounded-full border border-border px-3 py-1.5 text-[11px] font-medium"
+              >
+                {tr("imp.selectAllValid")}
+              </button>
+              <button
+                onClick={() => setSelection(Object.fromEntries(rows.map((r) => [r.index, false])))}
+                className="rounded-full border border-border px-3 py-1.5 text-[11px] font-medium"
+              >
+                {tr("imp.deselectAll")}
+              </button>
+              <button
+                onClick={() =>
+                  setSelection(
+                    Object.fromEntries(rows.map((r) => [r.index, r.valid && r.dupe === "none"])),
+                  )
+                }
+                className="rounded-full border border-border px-3 py-1.5 text-[11px] font-medium"
+              >
+                {tr("imp.skipDuplicates")}
+              </button>
+            </div>
           </div>
-          {parsed.columns ? (
-            <p className="mb-2 text-[11px] text-muted-foreground">
-              {fmt(tr("imp.detected"), {
-                date: parsed.columns.date,
-                description: parsed.columns.description,
-                amount: parsed.columns.amount,
-              })}
-            </p>
-          ) : null}
-          {parsed.skipped > 0 ? (
-            <p className="mb-2 text-[11px] text-amber-500">
-              {fmt(tr("imp.skippedRows"), { n: parsed.skipped })}
-            </p>
-          ) : null}
-          <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
-            {drafts.slice(0, 30).map((d, i) => {
-              const cat = categoryOf(d.category);
+
+          <ul className="mt-3 divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
+            {rows.slice(0, MAX_ROWS).map((r: PreviewRow) => {
+              const cat = categoryOf(r.category);
               const Icon = cat.icon;
-              const on = included(i, d);
+              const on = isSelected(r, selection);
               return (
-                <li key={i} className={`flex items-center gap-3 px-4 py-2.5 ${on ? "" : "opacity-50"}`}>
-                  <input
-                    type="checkbox"
-                    checked={on}
-                    onChange={() => setOverrides((p) => ({ ...p, [i]: !on }))}
-                    aria-label={tr("imp.include")}
-                    className="h-4 w-4 shrink-0 accent-[var(--primary)]"
-                  />
-                  <div
-                    className="grid h-8 w-8 place-items-center rounded-xl"
-                    style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
-                  >
-                    <Icon className="h-3.5 w-3.5" style={{ color: cat.color }} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{d.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {new Date(d.date).toLocaleDateString()} · {catName(cat.id, cat.name, cat.builtin)}
-                    </p>
-                  </div>
-                  {d.dupe !== "none" ? (
-                    <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-amber-500">
-                      <AlertTriangle className="h-3 w-3" />
-                      {d.dupe === "file" ? tr("imp.dupeInFile") : tr("imp.dupe")}
+                <li key={r.index} className={`px-4 py-3 ${on ? "" : "opacity-60"}`}>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      disabled={!r.valid}
+                      checked={on}
+                      onChange={() => setSelection((p) => ({ ...p, [r.index]: !on }))}
+                      aria-label={tr("imp.include")}
+                      className="h-4 w-4 shrink-0 accent-[var(--primary)]"
+                    />
+                    <div
+                      className="grid h-8 w-8 place-items-center rounded-xl"
+                      style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
+                    >
+                      <Icon className="h-3.5 w-3.5" style={{ color: cat.color }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{r.merchantLabel}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {fmt(tr("imp.raw"), { raw: r.raw.title || "—" })}
+                      </p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {r.date ? new Date(r.date).toLocaleDateString() : r.raw.date || "—"}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 text-sm font-semibold ${(r.amount ?? 0) > 0 ? "text-primary" : ""}`}>
+                      {r.amount !== null
+                        ? formatIn(r.amount, r.currency)
+                        : r.raw.amount || "—"}
                     </span>
-                  ) : null}
-                  <span className={`shrink-0 text-sm font-semibold ${d.amount > 0 ? "text-primary" : ""}`}>
-                    {formatIn(d.amount, d.currency ?? accountCur)}
-                  </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-11">
+                    <select
+                      value={r.category}
+                      onChange={(e) =>
+                        setCatOverrides((p) => ({ ...p, [r.index]: e.target.value }))
+                      }
+                      aria-label={tr("imp.category")}
+                      className="rounded-full border border-border bg-background/60 px-2 py-1 text-[11px]"
+                    >
+                      {allCategories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {catName(c.id, c.name, c.builtin)}
+                        </option>
+                      ))}
+                    </select>
+                    {r.categorySource === "rule" ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+                        {tr("imp.byRule")}
+                      </span>
+                    ) : null}
+                    {r.categorySource === "manual" ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+                        {tr("imp.locked")}
+                      </span>
+                    ) : null}
+                    {r.dupe !== "none" ? (
+                      <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-500">
+                        <AlertTriangle className="h-3 w-3" />
+                        {r.dupe === "exact" ? tr("imp.dupeExact") : tr("imp.dupeLikely")}
+                      </span>
+                    ) : null}
+                    {r.converted ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+                        {fmt(tr("imp.convertedFrom"), {
+                          amount: formatIn(r.sourceAmount ?? 0, r.sourceCurrency),
+                        })}
+                      </span>
+                    ) : null}
+                    {r.issues.map((i) => (
+                      <span
+                        key={i}
+                        className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] text-destructive"
+                      >
+                        {issueLabel(i)}
+                      </span>
+                    ))}
+                  </div>
                 </li>
               );
             })}
           </ul>
-          {drafts.length > 30 ? (
+          {rows.length > MAX_ROWS ? (
             <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              {fmt(tr("imp.showingFirst"), { n: 30, total: drafts.length })}
+              {fmt(tr("imp.showingFirst"), { n: MAX_ROWS, total: rows.length })}
             </p>
           ) : null}
 
           <button
-            disabled={toImport.length === 0}
+            disabled={totals.selected === 0}
             onClick={doImport}
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] disabled:opacity-60"
             style={{ background: "var(--gradient-primary)" }}
           >
-            <Check className="h-4 w-4" /> {fmt(tr("imp.importBtn"), { n: toImport.length })}
+            <Check className="h-4 w-4" /> {fmt(tr("imp.importBtn"), { n: totals.selected })}
           </button>
         </section>
-      )}
+      ) : null}
     </AppShell>
   );
 }
