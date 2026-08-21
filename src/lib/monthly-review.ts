@@ -1,6 +1,7 @@
 import type { Transaction, Budget, Goal, Subscription } from "@/lib/nova-store";
 import { subscriptionMonthlyAmount } from "@/lib/nova-store";
 import { convertAmount, type CurrencyCode } from "@/lib/currency";
+import { convertWith, type FxMeta } from "@/lib/fx";
 import type { NetWorthSnapshot } from "@/lib/networth-history";
 import { SNAPSHOT_BASE } from "@/lib/networth-history";
 
@@ -61,14 +62,45 @@ export type MonthlyReview = {
   subscriptionTotal: number;
   subscriptionsCounted: number;
   subscriptionsMatched: number;
+  /** True when the month is closed and was valued with a frozen rate basis. */
+  frozen: boolean;
+  /** When the frozen basis was captured (absent for live months). */
+  basisCapturedAt?: string;
 };
+
+/**
+ * Rate basis for a finished month: the FX metadata frozen into the last Net
+ * Worth snapshot of that month. Returns null when no basis exists (current
+ * month, or legacy history) — callers then value the month live. NOVA never
+ * invents past rates.
+ */
+export function monthBasis(
+  month: string,
+  history: NetWorthSnapshot[],
+): FxMeta | null {
+  const inside = history
+    .filter((s) => s.date.slice(0, 7) === month && s.fx)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  return inside.length > 0 ? (inside[inside.length - 1].fx as FxMeta) : null;
+}
+
+/** True when `month` is the month currently in progress. */
+export function isCurrentMonth(month: string, now: Date = new Date()): boolean {
+  return month === monthKey(now);
+}
 
 function norm(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 /**
- * All inputs must already be converted into the active display currency
+ * Amount policy:
+ * - When `currencyOf` is supplied the transactions are RAW (native currency)
+ *   and are converted here exactly once, using `basis` when the month is
+ *   closed (frozen rates) or today's rates when it is live.
+ * - Without `currencyOf` the caller must pass already-converted amounts.
+ *
+ * All other inputs must already be converted into the active display currency
  * exactly once (via `useDisplayState`), except `history`, which is stored in
  * the neutral USD base and converted here.
  */
@@ -80,9 +112,17 @@ export function computeMonthlyReview(args: {
   subscriptions: Subscription[];
   history: NetWorthSnapshot[];
   to: CurrencyCode;
+  /** Native currency resolver — presence means `transactions` are unconverted. */
+  currencyOf?: (t: Transaction) => CurrencyCode;
+  /** Frozen rate basis for a closed month; null/undefined = live rates. */
+  basis?: FxMeta | null;
 }): MonthlyReview {
   const { month, to } = args;
-  const monthTx = args.transactions.filter((t) => inMonth(t.date, month));
+  const cur = args.currencyOf;
+  const raw = args.transactions.filter((t) => inMonth(t.date, month));
+  const monthTx = cur
+    ? raw.map((t) => ({ ...t, amount: convertWith(t.amount, cur(t), to, args.basis) }))
+    : raw;
   const flows = monthTx.filter((t) => !isTransfer(t));
 
   let income = 0;
@@ -169,5 +209,7 @@ export function computeMonthlyReview(args: {
     subscriptionTotal,
     subscriptionsCounted,
     subscriptionsMatched,
+    frozen: Boolean(args.basis),
+    basisCapturedAt: args.basis?.capturedAt,
   };
 }
