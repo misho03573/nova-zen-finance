@@ -124,7 +124,18 @@ function ImportPage() {
     toast.success(fmt(tr("imp.imported"), { n: txs.length }));
   };
 
-  const issueLabel = (i: RowIssue) => tr(`imp.issue.${i}`);
+  const issueLabel = (i: RowIssue) => {
+    switch (i) {
+      case "dateMissing": return tr("imp.issue.dateMissing");
+      case "dateInvalid": return tr("imp.issue.dateInvalid");
+      case "dateFuture": return tr("imp.issue.dateFuture");
+      case "amountMissing": return tr("imp.issue.amountMissing");
+      case "amountInvalid": return tr("imp.issue.amountInvalid");
+      case "amountZero": return tr("imp.issue.amountZero");
+      case "titleMissing": return tr("imp.issue.titleMissing");
+      default: return fmt(tr("imp.issue.currencyMismatch"), { cur: "" });
+    }
+  };
 
   return (
     <AppShell>
