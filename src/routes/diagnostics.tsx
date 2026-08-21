@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Database, Package, Activity, HardDrive, AlertTriangle, CheckCircle2, Circle, Copy, Trash2 } from "lucide-react";
+import { ArrowLeft, Database, Package, Activity, HardDrive, AlertTriangle, CheckCircle2, Circle, Copy, Trash2, ShieldCheck, Wrench } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova } from "@/lib/nova-store";
+import { runIntegrityChecks, repairState, integrityScore } from "@/lib/integrity";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useT, fmt } from "@/lib/i18n";
@@ -60,7 +61,7 @@ function statusIcon(s: ModuleStatus) {
 }
 
 function Diagnostics() {
-  const { state } = useNova();
+  const { state, importData } = useNova();
   const confirm = useConfirm();
   const t = useT();
   const statusLabel = (s: ModuleStatus) =>
@@ -119,6 +120,22 @@ function Diagnostics() {
   }, []);
 
   const totalBytes = storage.reduce((s, r) => s + r.bytes, 0);
+
+  const issues = useMemo(() => runIntegrityChecks(state), [state]);
+  const health = integrityScore(issues);
+
+  const repairAll = async () => {
+    const ok = await confirm({
+      title: t("integrity.confirmTitle"),
+      description: t("integrity.confirmDesc"),
+      confirmLabel: t("integrity.repairAll"),
+      destructive: true,
+    });
+    if (!ok) return;
+    const repaired = repairState(state, issues.map((i) => i.kind));
+    if (importData(JSON.stringify(repaired))) toast.success(t("integrity.repaired"));
+    else toast.error(t("integrity.repairFail"));
+  };
 
   const copyReport = async () => {
     const report = {
@@ -309,6 +326,48 @@ function Diagnostics() {
             ))
           )}
         </ul>
+      </section>
+
+      <section className="mt-6 px-5">
+        <SectionHeader>{t("diag.section.integrity")}</SectionHeader>
+        <div className="mt-2 rounded-3xl border border-border bg-card/70 p-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className={health === 100 ? "h-4 w-4 text-primary" : "h-4 w-4 text-muted-foreground"} />
+            <span className="text-[11px] uppercase tracking-widest text-muted-foreground">
+              {t("integrity.score")}
+            </span>
+            <span className="ml-auto text-sm font-semibold tabular-nums">{health}/100</span>
+          </div>
+          {issues.length === 0 ? (
+            <p className="mt-2 text-xs text-muted-foreground">{t("integrity.clean")}</p>
+          ) : (
+            <>
+              <ul className="mt-3 space-y-2">
+                {issues.map((i) => (
+                  <li key={i.kind} className="rounded-2xl border border-border bg-background/40 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{t(i.titleKey)}</span>
+                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{i.count}</span>
+                      <span
+                        className="shrink-0 text-[10px] font-semibold uppercase tracking-widest"
+                        style={{ color: i.severity === "critical" ? "var(--destructive)" : "oklch(0.82 0.17 80)" }}
+                      >
+                        {t(`integrity.severity.${i.severity}`)}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{t(i.fixKey)}</p>
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={repairAll}
+                className="press mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold"
+              >
+                <Wrench className="h-4 w-4" /> {t("integrity.repairAll")}
+              </button>
+            </>
+          )}
+        </div>
       </section>
 
       <section className="mt-6 px-5">
