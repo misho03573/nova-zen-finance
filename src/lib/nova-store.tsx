@@ -274,19 +274,34 @@ export type AutomationRule = {
 };
 
 const GUEST_KEY = "nova.store.v3";
-/** Removes a signed-in user's cached financial data from this device. */
+/**
+ * Removes cached financial data for a user (and the shared guest slot) from
+ * this device. Called on sign-out and on "reset all data" so the next person
+ * using the browser can never read the previous session's finances.
+ * Preferences (theme, language, currency) and onboarding flags are deliberately
+ * kept: they contain no financial or identifying information.
+ */
 export function clearLocalNovaData(userId?: string | null) {
   if (typeof window === "undefined") return;
-  try {
-    if (userId) window.localStorage.removeItem(`nova.store.v3.${userId}`);
-    window.localStorage.removeItem(GUEST_KEY);
-  } catch {
-    /* ignore */
+  const keys = [
+    GUEST_KEY,
+    "nova.store.v2",
+    "nova.store.v1",
+    "nova.txfilters.v1.guest",
+    ...(userId ? [`nova.store.v3.${userId}`, `nova.txfilters.v1.${userId}`] : []),
+  ];
+  for (const k of keys) {
+    try {
+      window.localStorage.removeItem(k);
+    } catch {
+      /* ignore */
+    }
   }
 }
 function keyFor(userId: string | null) {
   return userId ? `nova.store.v3.${userId}` : GUEST_KEY;
 }
+
 
 function iso(daysAgo: number, hour = 9, minute = 0) {
   const d = new Date();
