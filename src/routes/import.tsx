@@ -133,7 +133,7 @@ function ImportPage() {
       case "amountInvalid": return tr("imp.issue.amountInvalid");
       case "amountZero": return tr("imp.issue.amountZero");
       case "titleMissing": return tr("imp.issue.titleMissing");
-      default: return fmt(tr("imp.issue.currencyMismatch"), { cur: "" });
+      default: return tr("imp.issue.currencyMismatch");
     }
   };
 
