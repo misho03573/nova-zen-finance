@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { setSyncState } from "@/lib/sync-status";
+import { GUEST_STORE_KEY, storeKeyFor } from "@/lib/local-cache";
 import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
 import { defaultCategories, type UserCategory } from "@/lib/categories";
@@ -273,35 +274,9 @@ export type AutomationRule = {
   goalId?: string;
 };
 
-const GUEST_KEY = "nova.store.v3";
-/**
- * Removes cached financial data for a user (and the shared guest slot) from
- * this device. Called on sign-out and on "reset all data" so the next person
- * using the browser can never read the previous session's finances.
- * Preferences (theme, language, currency) and onboarding flags are deliberately
- * kept: they contain no financial or identifying information.
- */
-export function clearLocalNovaData(userId?: string | null) {
-  if (typeof window === "undefined") return;
-  const keys = [
-    GUEST_KEY,
-    "nova.store.v2",
-    "nova.store.v1",
-    "nova.txfilters.v1.guest",
-    ...(userId ? [`nova.store.v3.${userId}`, `nova.txfilters.v1.${userId}`] : []),
-  ];
-  for (const k of keys) {
-    try {
-      window.localStorage.removeItem(k);
-    } catch {
-      /* ignore */
-    }
-  }
-}
-function keyFor(userId: string | null) {
-  return userId ? `nova.store.v3.${userId}` : GUEST_KEY;
-}
-
+export { clearLocalNovaData } from "@/lib/local-cache";
+const GUEST_KEY = GUEST_STORE_KEY;
+const keyFor = storeKeyFor;
 
 function iso(daysAgo: number, hour = 9, minute = 0) {
   const d = new Date();
