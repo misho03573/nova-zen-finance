@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Database, Package, Activity, HardDrive, AlertTriangle, CheckCircle2, Circle, Copy, Trash2 } from "lucide-react";
+import { ArrowLeft, Database, Package, Activity, HardDrive, AlertTriangle, CheckCircle2, Circle, Copy, Trash2, ShieldCheck, Wrench } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova } from "@/lib/nova-store";
+import { runIntegrityChecks, repairState, integrityScore } from "@/lib/integrity";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useT, fmt } from "@/lib/i18n";
