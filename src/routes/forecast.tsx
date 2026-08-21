@@ -276,7 +276,7 @@ function ForecastPage() {
               <ul className="mt-3 space-y-2">
                 {forecast.events.slice(0, 40).map((e, i) => (
                   <li key={e.id} className="flex items-center gap-3">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-secondary">
+                    <span className="tap grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-secondary">
                       {e.amount >= 0 ? (
                         <ArrowUpRight className="h-4 w-4 text-emerald-400" />
                       ) : (

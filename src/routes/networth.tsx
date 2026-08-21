@@ -160,7 +160,7 @@ function NetWorthPage() {
             to="/debt"
             className="mb-3 flex items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 transition-colors hover:bg-card"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="tap grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
               <TrendingDown className="h-4 w-4" />
             </span>
             <span className="min-w-0 flex-1">
@@ -184,7 +184,7 @@ function NetWorthPage() {
                   aria-label={t("nw.edit")}
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-destructive/15 text-destructive">
+                  <div className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-destructive/15 text-destructive">
                     {l.type === "credit_card" ? <CreditCard className="h-4 w-4" /> : l.type === "mortgage" ? <Building2 className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -352,7 +352,7 @@ function AssetTile({
   return (
     <div className="rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]">
       <div
-        className="grid h-8 w-8 place-items-center rounded-xl"
+        className="tap grid h-8 w-8 place-items-center rounded-xl"
         style={{ background: `color-mix(in oklab, ${tint} 22%, transparent)`, color: tint }}
       >
         {icon}

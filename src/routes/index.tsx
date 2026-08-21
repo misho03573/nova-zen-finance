@@ -185,7 +185,7 @@ function Home() {
           className="press mb-3 flex items-center gap-3 rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]"
         >
           <span
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-primary"
+            className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-primary"
             style={{ background: "var(--gradient-card)" }}
           >
             <CalendarRange className="h-4 w-4" />
@@ -283,7 +283,7 @@ function Home() {
                   style={{ animationDelay: `${480 + i * 60}ms` }}
                 >
                   <div
-                    className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                    className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                     style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
                   >
                     <Icon className="h-4 w-4" style={{ color: cat.color }} />
@@ -324,7 +324,7 @@ function Home() {
                 style={{ animationDelay: `${580 + i * 60}ms` }}
               >
                 <div
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                  className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                   style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
                 >
                   <Icon className="h-4 w-4" style={{ color: cat.color }} />

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Camera, Sparkles, Check, RefreshCw } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
+import { PreviewBadge } from "@/components/nova/PreviewBadge";
 import { useNova } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
@@ -78,7 +79,8 @@ function ScanPage() {
         right={
           <Link
             to="/"
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+            aria-label={tr("shell.back")}
+            className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -86,6 +88,14 @@ function ScanPage() {
       />
 
       <section className="px-5">
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-primary/25 bg-primary/5 p-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              {tr("scan.simulated")} <PreviewBadge />
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{tr("scan.simulatedDesc")}</p>
+          </div>
+        </div>
         <div className="relative overflow-hidden rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]">
           <div
             className="relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border"
@@ -137,7 +147,7 @@ function ScanPage() {
               <button
                 key={c.id}
                 onClick={() => setReceipt({ ...receipt, category: c.id })}
-                className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 ${
+                className={`flex min-h-11 items-center gap-1.5 rounded-full border px-2.5 py-1.5 ${
                   receipt.category === c.id ? "border-primary bg-primary/10 text-primary" : "border-border"
                 }`}
               >

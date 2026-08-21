@@ -221,7 +221,7 @@ function SubscriptionsPage() {
                   toast.message(status === "active" ? t("subs.paused") : t("subs.resumed"));
                 }}
                 aria-label={status === "active" ? t("subs.pause") : t("subs.resume")}
-                className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+                className="tap grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
               >
                 {status === "active" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
               </button>
@@ -232,14 +232,14 @@ function SubscriptionsPage() {
                 setOpen(true);
               }}
               aria-label={t("action.edit")}
-              className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+              className="tap grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onDelete(s)}
               aria-label={t("action.delete")}
-              className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-destructive"
+              className="tap grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>

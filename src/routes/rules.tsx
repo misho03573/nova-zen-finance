@@ -154,7 +154,7 @@ function RulesPage() {
                 className="animate-rise-in flex items-center gap-3 rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]"
               >
                 <span
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                  className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                   style={{ backgroundColor: `color-mix(in oklab, ${color} 22%, transparent)` }}
                 >
                   <Icon className="h-4 w-4" style={{ color }} />
@@ -174,14 +174,14 @@ function RulesPage() {
                 <button
                   onClick={() => { setPrefill(null); setEditing(r); setOpen(true); }}
                   aria-label={t("action.edit")}
-                  className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+                  className="tap grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-foreground"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={() => onDelete(r)}
                   aria-label={t("action.delete")}
-                  className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-destructive"
+                  className="tap grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

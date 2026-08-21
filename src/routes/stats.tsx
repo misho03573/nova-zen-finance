@@ -255,7 +255,7 @@ function StatsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl"
+                      className="tap grid h-9 w-9 shrink-0 place-items-center rounded-xl"
                       style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
                     >
                       <cat.icon className="h-4 w-4" style={{ color: cat.color }} />
@@ -288,7 +288,7 @@ function StatsPage() {
                     <button
                       onClick={() => removeBudget(b.id)}
                       aria-label={tr("stats.budget.delete")}
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-foreground"
+                      className="tap grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-foreground"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

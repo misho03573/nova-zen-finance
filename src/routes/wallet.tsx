@@ -128,7 +128,7 @@ function WalletPage() {
             <TransferDialog />
             <button
               onClick={() => setShowSearch((v) => !v)}
-              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+              className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
               aria-label={tr("wallet.search")}
             >
               {showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
@@ -149,7 +149,7 @@ function WalletPage() {
                 aria-label={tr("wallet.addAccount")}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <span className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card">
+                  <span className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card">
                     <Plus className="h-4 w-4" />
                   </span>
                   <span className="text-xs">{tr("wallet.addAccount")}</span>
@@ -221,7 +221,7 @@ function WalletPage() {
                       className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-card"
                     >
                       <div
-                        className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                        className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                         style={{
                           backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)`,
                         }}
@@ -556,7 +556,7 @@ function AccountCardInner({ account }: { account: Account }) {
             trigger={
               <button
                 aria-label={tr("wallet.editAccount")}
-                className="grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+                className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -585,7 +585,7 @@ function AccountCardInner({ account }: { account: Account }) {
                 toast.message(tr("wallet.deleted"));
               }
             }}
-            className="grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+            className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -719,7 +719,7 @@ function AdjustBalanceDialog({ account }: { account: Account }) {
         <button
           aria-label={tr("adjust.cta")}
           title={tr("adjust.cta")}
-          className="grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+          className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
         >
           <Scale className="h-3.5 w-3.5" />
         </button>
@@ -961,7 +961,7 @@ function TransferDialog() {
       <DialogTrigger asChild>
         <button
           aria-label={tr("wallet.transfer")}
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+          className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
         >
           <ArrowLeftRight className="h-4 w-4" />
         </button>

@@ -62,7 +62,7 @@ function GoalsPage() {
             <GoalDialog
               trigger={
                 <button
-                  className="grid h-10 w-10 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
+                  className="tap grid h-10 w-10 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
                   style={{ background: "var(--gradient-primary)" }}
                   aria-label={tr("goals.add")}
                 >
@@ -147,7 +147,7 @@ function GoalsPage() {
                 <GoalDialog
                   goal={g}
                   trigger={
-                    <button className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-foreground">
+                    <button className="tap grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-foreground">
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                   }
@@ -172,7 +172,7 @@ function GoalsPage() {
                       );
                     }
                   }}
-                  className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-destructive"
+                  className="tap grid h-8 w-8 place-items-center rounded-full border border-border bg-card/60 text-muted-foreground hover:text-destructive"
                   aria-label={tr("goals.deleteAria")}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -338,7 +338,7 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
                 <button
                   key={e}
                   onClick={() => setEmoji(e)}
-                  className={`grid h-9 w-9 place-items-center rounded-xl border text-lg ${
+                  className={`tap grid h-9 w-9 place-items-center rounded-xl border text-lg ${
                     emoji === e ? "border-primary/60 bg-primary/15" : "border-border bg-card/60"
                   }`}
                 >

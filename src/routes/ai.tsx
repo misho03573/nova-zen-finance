@@ -79,7 +79,7 @@ function AIChat() {
         right={
           <Link
             to="/"
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+            className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -92,7 +92,7 @@ function AIChat() {
         ))}
         {typing && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-primary">
+            <span className="tap grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-primary">
               <Bot className="h-4 w-4" />
             </span>
             <span className="flex gap-1">
@@ -149,7 +149,7 @@ function AIChat() {
           />
           <button
             type="submit"
-            className="grid h-9 w-9 place-items-center rounded-full text-primary-foreground"
+            className="tap grid h-9 w-9 place-items-center rounded-full text-primary-foreground"
             style={{ background: "var(--gradient-primary)" }}
             aria-label={tr("ai.send")}
           >

@@ -145,7 +145,7 @@ function ImportPage() {
         right={
           <Link
             to="/"
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+            className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -320,7 +320,7 @@ function ImportPage() {
                       className="h-4 w-4 shrink-0 accent-[var(--primary)]"
                     />
                     <div
-                      className="grid h-8 w-8 place-items-center rounded-xl"
+                      className="tap grid h-8 w-8 place-items-center rounded-xl"
                       style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
                     >
                       <Icon className="h-3.5 w-3.5" style={{ color: cat.color }} />
