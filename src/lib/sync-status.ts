@@ -11,7 +11,9 @@ export type SyncState =
   | "synced" // last cloud write succeeded
   | "saving" // a cloud write is in flight
   | "offline" // browser reports no network
-  | "error"; // cloud read or write failed — local edits are NOT in the cloud
+  | "load-error" // cloud read failed — the app stays read-only for the cloud
+  | "save-error"; // cloud write failed — local edits are NOT in the cloud
+
 
 let current: SyncState = "local";
 const listeners = new Set<() => void>();
