@@ -88,7 +88,7 @@ function RunwayPage() {
   if (display.accounts.length === 0) {
     return (
       <AppShell>
-        <PageHeader subtitle={tr("ef.subtitle")} title={tr("ef.title")} right={<CurrencyPicker />} />
+        <PageHeader back subtitle={tr("ef.subtitle")} title={tr("ef.title")} right={<CurrencyPicker />} />
         <section className="px-5">
           <EmptyState
             icon={<WalletIcon className="h-6 w-6" />}
@@ -104,7 +104,7 @@ function RunwayPage() {
 
   return (
     <AppShell>
-      <PageHeader subtitle={tr("ef.subtitle")} title={tr("ef.title")} right={<CurrencyPicker />} />
+      <PageHeader back subtitle={tr("ef.subtitle")} title={tr("ef.title")} right={<CurrencyPicker />} />
 
       <section className="px-5">
         <div

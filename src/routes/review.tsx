@@ -125,7 +125,7 @@ function ReviewPage() {
 
   return (
     <AppShell>
-      <PageHeader subtitle={tr("rev.subtitle")} title={tr("rev.title")} right={<CurrencyPicker />} />
+      <PageHeader back subtitle={tr("rev.subtitle")} title={tr("rev.title")} right={<CurrencyPicker />} />
 
       <section className="px-5">
         <div className="flex items-center justify-between rounded-2xl border border-border bg-card/70 px-2 py-2 backdrop-blur">

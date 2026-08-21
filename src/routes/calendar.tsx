@@ -7,7 +7,7 @@ import { useNova, type Transaction, type Recurring } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useT, useLocale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/calendar")({
   head: () => ({
@@ -37,6 +37,7 @@ function CalendarPage() {
   const { format } = useCurrency();
   const categoryOf = useCategoryLookup();
   const tr = useT();
+  const locale = useLocale();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     d.setDate(1);
@@ -101,7 +102,7 @@ function CalendarPage() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <p className="text-sm font-semibold">
-            {cursor.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+            {cursor.toLocaleDateString(locale, { month: "long", year: "numeric" })}
           </p>
           <button
             onClick={() =>
@@ -194,12 +195,12 @@ function CalendarPage() {
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  {selectedInfo.date.toLocaleDateString("en-US", {
+                  {selectedInfo.date.toLocaleDateString(locale, {
                     weekday: "long",
                   })}
                 </p>
                 <p className="text-lg font-semibold">
-                  {selectedInfo.date.toLocaleDateString("en-US", {
+                  {selectedInfo.date.toLocaleDateString(locale, {
                     month: "long",
                     day: "numeric",
                   })}

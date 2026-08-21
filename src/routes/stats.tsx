@@ -118,7 +118,7 @@ function StatsPage() {
 
   return (
     <AppShell>
-      <PageHeader subtitle={tr("stats.subtitle")} title={tr("stats.title")} right={<CurrencyPicker />} />
+      <PageHeader back subtitle={tr("stats.subtitle")} title={tr("stats.title")} right={<CurrencyPicker />} />
 
       <section className="px-5">
         <div className="inline-flex w-full rounded-full border border-border bg-card/60 p-1 text-xs">

@@ -16,6 +16,7 @@ import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { NotificationBell } from "@/components/nova/NotificationBell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
+import { EmptyState } from "@/components/nova/EmptyState";
 import { useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, useDateLabels, useLocale, fmt } from "@/lib/i18n";
 import {
@@ -264,9 +265,14 @@ function Home() {
           <span className="text-xs text-muted-foreground">{upcoming.length}</span>
         </div>
         {upcoming.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-            {tr("home.noUpcoming")}
-          </div>
+          <EmptyState
+            icon={<CalendarClock className="h-6 w-6" />}
+            title={tr("home.noUpcoming")}
+            description={tr("home.noUpcomingDesc")}
+            ctaLabel={tr("home.addSubscription")}
+            ctaTo="/subscriptions"
+            className="py-8"
+          />
         ) : (
           <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
             {upcoming.map((r, i) => {
@@ -312,6 +318,16 @@ function Home() {
             {tr("home.viewAll")}
           </Link>
         </div>
+        {recent.length === 0 ? (
+          <EmptyState
+            icon={<Plus className="h-6 w-6" />}
+            title={tr("home.noRecent")}
+            description={tr("home.noRecentDesc")}
+            ctaLabel={tr("home.add")}
+            ctaTo="/add"
+            className="py-8"
+          />
+        ) : (
         <ul className="divide-y divide-border rounded-3xl border border-border bg-card/70 shadow-[var(--shadow-card)]">
           {recent.map((t, i) => {
             const cat = categoryOf(t.category);
@@ -346,6 +362,7 @@ function Home() {
             );
           })}
         </ul>
+        )}
       </section>
     </AppShell>
   );
