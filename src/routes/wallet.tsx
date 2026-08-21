@@ -297,7 +297,7 @@ function WalletPage() {
                             toast.message(tr("wallet.txDeleted"));
                           }
                         }}
-                        aria-label={tr("wallet.txDeleted")}
+                        aria-label={tr("wallet.deleteTxAria")}
                         className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

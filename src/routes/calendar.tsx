@@ -7,7 +7,7 @@ import { useNova, type Transaction, type Recurring } from "@/lib/nova-store";
 import { useCurrency } from "@/lib/currency";
 import { useCategoryLookup } from "@/lib/categories";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useT, useLocale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/calendar")({
   head: () => ({
@@ -37,6 +37,7 @@ function CalendarPage() {
   const { format } = useCurrency();
   const categoryOf = useCategoryLookup();
   const tr = useT();
+  const locale = useLocale();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     d.setDate(1);
