@@ -61,7 +61,7 @@ function statusIcon(s: ModuleStatus) {
 }
 
 function Diagnostics() {
-  const { state } = useNova();
+  const { state, importData } = useNova();
   const confirm = useConfirm();
   const t = useT();
   const statusLabel = (s: ModuleStatus) =>
