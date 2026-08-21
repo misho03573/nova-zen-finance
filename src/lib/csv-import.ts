@@ -234,3 +234,82 @@ export function isDuplicate(
   const t = +new Date(row.date);
   return times.some((x) => Math.abs(x - t) <= DAY);
 }
+const CURRENCY_HEADERS = /^(currency|ccy|curr|währung|devise|moneda|валута)/i;
+
+export type RawCsvRow = {
+  line: number;
+  date: string;
+  title: string;
+  amount: string;
+  currency?: string;
+};
+
+export type RawParseResult = {
+  rows: RawCsvRow[];
+  delimiter: string;
+  columns: { date: string; description: string; amount: string; currency?: string } | null;
+};
+
+/**
+ * Like `parseBankCsv`, but keeps every body row verbatim (including rows with
+ * missing / malformed cells) so the import preview can validate and report
+ * them instead of silently dropping data.
+ */
+export function parseBankCsvRaw(text: string): RawParseResult {
+  const delimiter = detectDelimiter(text);
+  const records = splitRecords(text, delimiter);
+  if (!records.length) return { rows: [], delimiter, columns: null };
+
+  const head = records[0];
+  const lower = head.map((h) => h.toLowerCase().trim());
+  let dateIdx = lower.findIndex((h) => DATE_HEADERS.test(h));
+  let descIdx = lower.findIndex((h) => DESC_HEADERS.test(h));
+  const amountIdx = lower.findIndex((h) => AMOUNT_HEADERS.test(h));
+  const debitIdx = lower.findIndex((h) => DEBIT_HEADERS.test(h));
+  const creditIdx = lower.findIndex((h) => CREDIT_HEADERS.test(h));
+  const curIdx = lower.findIndex((h) => CURRENCY_HEADERS.test(h));
+  const hasHeader = dateIdx > -1 || descIdx > -1 || amountIdx > -1 || debitIdx > -1;
+
+  if (!hasHeader) {
+    dateIdx = 0;
+    descIdx = 1;
+  } else {
+    if (dateIdx < 0) dateIdx = 0;
+    if (descIdx < 0) descIdx = head.length > 1 ? 1 : 0;
+  }
+  const amtIdx = hasHeader ? amountIdx : 2;
+  const body = hasHeader ? records.slice(1) : records;
+
+  const rows: RawCsvRow[] = body.map((r, i) => {
+    let amount = amtIdx > -1 ? (r[amtIdx] ?? "") : "";
+    if (!amount.trim() && (debitIdx > -1 || creditIdx > -1)) {
+      const debit = debitIdx > -1 ? parseAmount(r[debitIdx] ?? "") : null;
+      const credit = creditIdx > -1 ? parseAmount(r[creditIdx] ?? "") : null;
+      if (debit) amount = String(-Math.abs(debit));
+      else if (credit) amount = String(Math.abs(credit));
+    }
+    return {
+      line: i + (hasHeader ? 2 : 1),
+      date: r[dateIdx] ?? "",
+      title: (r[descIdx] ?? "").replace(/\s+/g, " ").trim(),
+      amount,
+      currency: curIdx > -1 ? r[curIdx] : undefined,
+    };
+  });
+
+  return {
+    rows,
+    delimiter,
+    columns: hasHeader
+      ? {
+          date: head[dateIdx] ?? "",
+          description: head[descIdx] ?? "",
+          amount:
+            amountIdx > -1
+              ? head[amountIdx] ?? ""
+              : [debitIdx, creditIdx].filter((i) => i > -1).map((i) => head[i]).join(" / "),
+          currency: curIdx > -1 ? head[curIdx] : undefined,
+        }
+      : null,
+  };
+}
