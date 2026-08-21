@@ -18,6 +18,7 @@ import { Route as RunwayRouteImport } from './routes/runway'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NetworthRouteImport } from './routes/networth'
 import { Route as MerchantsRouteImport } from './routes/merchants'
 import { Route as InsightsRouteImport } from './routes/insights'
@@ -77,6 +78,11 @@ const ReviewRoute = ReviewRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NetworthRoute = NetworthRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/insights': typeof InsightsRoute
   '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/insights': typeof InsightsRoute
   '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/insights': typeof InsightsRoute
   '/merchants': typeof MerchantsRoute
   '/networth': typeof NetworthRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/review': typeof ReviewRoute
   '/rules': typeof RulesRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/merchants'
     | '/networth'
+    | '/notifications'
     | '/onboarding'
     | '/review'
     | '/rules'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/merchants'
     | '/networth'
+    | '/notifications'
     | '/onboarding'
     | '/review'
     | '/rules'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/merchants'
     | '/networth'
+    | '/notifications'
     | '/onboarding'
     | '/review'
     | '/rules'
@@ -331,6 +343,7 @@ export interface RootRouteChildren {
   InsightsRoute: typeof InsightsRoute
   MerchantsRoute: typeof MerchantsRoute
   NetworthRoute: typeof NetworthRoute
+  NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
   ReviewRoute: typeof ReviewRoute
   RulesRoute: typeof RulesRoute
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/networth': {
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   InsightsRoute: InsightsRoute,
   MerchantsRoute: MerchantsRoute,
   NetworthRoute: NetworthRoute,
+  NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
   ReviewRoute: ReviewRoute,
   RulesRoute: RulesRoute,
