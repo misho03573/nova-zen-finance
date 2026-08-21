@@ -1219,6 +1219,10 @@ const en: Dict = {
   "set.cloudSyncOn": "Cloud sync preference on",
   "set.cloudSyncOff": "Cloud sync preference off",
   "shell.back": "Back",
+  "sync.loadError": "Couldn't load your cloud data. Editing is local-only until you reconnect.",
+  "sync.saveError": "Last change didn't reach the cloud. It's saved on this device only.",
+  "settings.err.reset": "Could not reset your data",
+  "diag.storage.redacted": "User ids are redacted in copied reports.",
 };
 
 const bg: Dict = {
@@ -2401,6 +2405,10 @@ const bg: Dict = {
   "set.cloudSyncOn": "Облачна синхронизация включена",
   "set.cloudSyncOff": "Облачна синхронизация изключена",
   "shell.back": "Назад",
+  "sync.loadError": "Данните от облака не се заредиха. Промените остават само на това устройство.",
+  "sync.saveError": "Последната промяна не стигна до облака. Запазена е само на това устройство.",
+  "settings.err.reset": "Данните не бяха нулирани",
+  "diag.storage.redacted": "Потребителските идентификатори са скрити в копираните отчети.",
 };
 
 const de: Dict = {
@@ -3589,6 +3597,10 @@ const de: Dict = {
   "set.cloudSyncOn": "Cloud-Synchronisierung aktiviert",
   "set.cloudSyncOff": "Cloud-Synchronisierung deaktiviert",
   "shell.back": "Zurück",
+  "sync.loadError": "Cloud-Daten konnten nicht geladen werden. Änderungen bleiben nur auf diesem Gerät.",
+  "sync.saveError": "Letzte Änderung erreichte die Cloud nicht. Nur auf diesem Gerät gespeichert.",
+  "settings.err.reset": "Daten konnten nicht zurückgesetzt werden",
+  "diag.storage.redacted": "Benutzer-IDs werden in kopierten Berichten unkenntlich gemacht.",
 };
 
 const fr: Dict = {
@@ -4777,6 +4789,10 @@ const fr: Dict = {
   "set.cloudSyncOn": "Synchronisation cloud activée",
   "set.cloudSyncOff": "Synchronisation cloud désactivée",
   "shell.back": "Retour",
+  "sync.loadError": "Impossible de charger vos données cloud. Les modifications restent locales.",
+  "sync.saveError": "La dernière modification n'a pas atteint le cloud. Enregistrée localement.",
+  "settings.err.reset": "Impossible de réinitialiser vos données",
+  "diag.storage.redacted": "Les identifiants utilisateur sont masqués dans les rapports copiés.",
 };
 
 const es: Dict = {
@@ -5965,6 +5981,10 @@ const es: Dict = {
   "set.cloudSyncOn": "Sincronización en la nube activada",
   "set.cloudSyncOff": "Sincronización en la nube desactivada",
   "shell.back": "Atrás",
+  "sync.loadError": "No se pudieron cargar tus datos en la nube. Los cambios quedan solo en este dispositivo.",
+  "sync.saveError": "El último cambio no llegó a la nube. Guardado solo en este dispositivo.",
+  "settings.err.reset": "No se pudieron restablecer tus datos",
+  "diag.storage.redacted": "Los identificadores de usuario se ocultan en los informes copiados.",
 };
 
 const DICTS: Record<string, Dict> = { en, bg, de, fr, es };
