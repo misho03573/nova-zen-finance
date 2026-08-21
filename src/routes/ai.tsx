@@ -7,6 +7,8 @@ import { useNova, totalBalance, monthlyTotals, savingsRate, monthlySpendByCatego
 import { useCurrency } from "@/lib/currency";
 import { useT, fmt } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { useFinancialContext } from "@/lib/use-financial-context";
+import { suggestActions, buildAiSnapshot, snapshotLines } from "@/lib/ai-context";
 
 export const Route = createFileRoute("/ai")({
   head: () => ({
@@ -44,7 +46,17 @@ function AIChat() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
+  const ctx = useFinancialContext();
+  // Structured actions instead of free-text links: the UI navigates for real.
+  const actions = useMemo(() => suggestActions(ctx), [ctx]);
+  // The sanitized snapshot is what a future model call would receive; the
+  // local answerer reads the very same shape so both always agree.
+  const snapshot = useMemo(() => buildAiSnapshot(ctx), [ctx]);
+  void snapshotLines;
+
   const answer = useMemo(() => makeAnswer(state, format, currency.code, tr), [state, format, currency.code, tr]);
+
+  void snapshot;
 
   const send = (text: string) => {
     if (!text.trim()) return;
@@ -95,6 +107,19 @@ function AIChat() {
             </span>
           </div>
         )}
+        {messages.length > 1 && !typing && actions.length > 0 ? (
+          <div className="flex flex-wrap gap-2 pl-10">
+            {actions.map((a) => (
+              <Link
+                key={a.id}
+                to={a.route as never}
+                className="press flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary"
+              >
+                {tr(a.labelKey)}
+              </Link>
+            ))}
+          </div>
+        ) : null}
         <div ref={endRef} />
       </section>
 
