@@ -35,6 +35,12 @@ export type RuleInput = {
   title?: string;
   note?: string;
   amount: number;
+  /**
+   * Normalized merchant label (see `@/lib/merchant`). When present, a
+   * `merchant` rule matches either the raw descriptor or the clean identity,
+   * so one rule covers `LIDL 1248 SOFIA` and `LIDL*0820` alike.
+   */
+  merchantLabel?: string;
 };
 
 function norm(s: string): string {
@@ -57,7 +63,10 @@ export function ruleMatches(rule: CategoryRule, tx: RuleInput): boolean {
   if (!rule.enabled) return false;
   switch (rule.field) {
     case "merchant":
-      return matchText(tx.title ?? "", rule.operator, rule.value);
+      return (
+        matchText(tx.title ?? "", rule.operator, rule.value) ||
+        (!!tx.merchantLabel && matchText(tx.merchantLabel, rule.operator, rule.value))
+      );
     case "description":
       return matchText(`${tx.note ?? ""} ${tx.title ?? ""}`, rule.operator, rule.value);
     case "amount": {
