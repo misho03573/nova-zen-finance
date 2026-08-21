@@ -105,13 +105,8 @@ function MerchantsPage() {
       <PageHeader
         title={t("mrc.title")}
         subtitle={t("mrc.subtitle")}
-        left={
-          <Link to="/settings" aria-label={t("common.back")}>
-            <ChevronLeft className="h-5 w-5" />
-          </Link>
-        }
         right={
-          merchants.length > 0 ? (
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 setMergeMode((v) => !v);
@@ -124,9 +119,16 @@ function MerchantsPage() {
                   : "border-border bg-card/60 text-muted-foreground",
               )}
             >
-              {mergeMode ? t("common.cancel") : t("mrc.merge")}
+              {mergeMode ? t("action.cancel") : t("mrc.merge")}
             </button>
-          ) : null
+            <Link
+              to="/settings"
+              aria-label={t("action.back")}
+              className="press grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 backdrop-blur"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+          </div>
         }
       />
 
@@ -236,9 +238,9 @@ function MerchantsPage() {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditing(null)}>
-              {t("common.cancel")}
+              {t("action.cancel")}
             </Button>
-            <Button onClick={saveRename}>{t("common.save")}</Button>
+            <Button onClick={saveRename}>{t("action.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
