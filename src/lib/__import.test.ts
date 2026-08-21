@@ -9,7 +9,8 @@ import {
   type ExistingTx,
 } from "./import-preview";
 import { parseBankCsvRaw } from "./csv-import";
-import { runIntegrityChecks, type NovaState } from "./integrity";
+import { runIntegrityChecks } from "./integrity";
+import type { NovaState } from "./nova-store";
 import type { CategoryRule } from "./category-rules";
 
 const NOW = Date.UTC(2026, 6, 20, 12);
