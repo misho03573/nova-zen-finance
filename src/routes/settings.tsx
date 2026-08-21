@@ -19,7 +19,7 @@ import {
   LogOut,
   UserCircle, Wand2, Repeat, TrendingUp, Zap, Camera } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import { Tag } from "lucide-react";
+import { Tag, Store } from "lucide-react";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/lib/theme";
