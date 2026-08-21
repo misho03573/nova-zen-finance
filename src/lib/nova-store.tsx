@@ -168,6 +168,10 @@ export type Settings = {
   /** Pattern keys of recurring-payment suggestions the user dismissed. */
   ignoredRecurring?: string[];
   language?: string; // "en" | "bg" | "de" | "fr" | "es"
+  /** Per-category switches for the Smart Notifications Center. */
+  notificationPrefs?: Partial<Record<"bills" | "budgets" | "goals" | "forecast" | "insights", boolean>>;
+  /** Deterministic ids of notifications the user has already seen. */
+  notificationsRead?: string[];
 };
 
 export type NovaState = {
