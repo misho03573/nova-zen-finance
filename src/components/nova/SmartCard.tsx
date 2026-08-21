@@ -19,7 +19,7 @@ export type SmartCardItem = {
 };
 
 const TONE: Record<SmartSeverity, string> = {
-  critical: "border-danger/40 bg-danger/10 text-danger",
+  critical: "border-destructive/40 bg-destructive/10 text-destructive",
   warn: "border-warning/40 bg-warning/10 text-warning",
   good: "border-success/40 bg-success/10 text-success",
   info: "border-border bg-card/70 text-primary",
@@ -84,7 +84,7 @@ export function SmartCard({
 
   if (item.route) {
     return (
-      <Link to={item.route} className={cn(base, "press")} onClick={onClick}>
+      <Link to={item.route as never} className={cn(base, "press")} onClick={onClick}>
         {body}
       </Link>
     );
