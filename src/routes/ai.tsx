@@ -92,7 +92,7 @@ function AIChat() {
         ))}
         {typing && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="tap grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-primary">
               <Bot className="h-4 w-4" />
             </span>
             <span className="flex gap-1">

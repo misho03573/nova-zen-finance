@@ -123,7 +123,7 @@ function InsightsPage() {
           to="/review"
           className="press flex items-center gap-3 rounded-2xl border border-border bg-card/70 p-4 backdrop-blur"
         >
-          <span className="tap grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
             <CalendarDays className="h-4 w-4" />
           </span>
           <span className="min-w-0 flex-1">
@@ -139,7 +139,7 @@ function InsightsPage() {
           to="/forecast"
           className="press flex items-center gap-3 rounded-2xl border border-border bg-card/70 p-4 backdrop-blur"
         >
-          <span className="tap grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
             <TrendingUp className="h-4 w-4" />
           </span>
           <span className="min-w-0 flex-1">
@@ -155,7 +155,7 @@ function InsightsPage() {
           to="/runway"
           className="press flex items-center gap-3 rounded-2xl border border-border bg-card/70 p-4 backdrop-blur"
         >
-          <span className="tap grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
             <LifeBuoy className="h-4 w-4" />
           </span>
           <span className="min-w-0 flex-1">
@@ -196,7 +196,7 @@ function InsightsPage() {
                   return (
                     <li key={t.id} className="flex items-center gap-3 px-4 py-2.5">
                       <div
-                        className="tap grid h-8 w-8 place-items-center rounded-xl"
+                        className="grid h-8 w-8 place-items-center rounded-xl"
                         style={{
                           backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)`,
                         }}
@@ -309,7 +309,7 @@ function InsightsPage() {
                 className="flex items-center gap-3 rounded-2xl border border-border bg-card/70 px-3 py-2.5"
               >
                 <div
-                  className="tap grid h-9 w-9 place-items-center rounded-xl"
+                  className="grid h-9 w-9 place-items-center rounded-xl"
                   style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
                 >
                   <Icon className="h-4 w-4" style={{ color: cat.color }} />

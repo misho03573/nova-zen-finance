@@ -142,7 +142,7 @@ function ReviewPage() {
             aria-label={tr("rev.nextMonth")}
             disabled={idx <= 0}
             onClick={() => setMonth(months[Math.max(0, idx - 1)])}
-            className="tap grid h-9 w-9 place-items-center rounded-full disabled:opacity-30"
+            className="grid h-9 w-9 place-items-center rounded-full disabled:opacity-30"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -207,7 +207,7 @@ function ReviewPage() {
               <h2 className="text-sm font-semibold">{tr("rev.highlights")}</h2>
               <ul className="mt-3 space-y-3">
                 <li className="flex items-center gap-3">
-                  <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-secondary">
+                  <span className="grid h-8 w-8 place-items-center rounded-xl bg-secondary">
                     <ArrowDownRight className="h-4 w-4 text-muted-foreground" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -220,7 +220,7 @@ function ReviewPage() {
                   </div>
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-secondary">
+                  <span className="grid h-8 w-8 place-items-center rounded-xl bg-secondary">
                     <WalletIcon className="h-4 w-4 text-muted-foreground" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -234,7 +234,7 @@ function ReviewPage() {
                 </li>
                 {review.transferCount > 0 ? (
                   <li className="flex items-center gap-3">
-                    <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-secondary">
+                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-secondary">
                       <Repeat className="h-4 w-4 text-muted-foreground" />
                     </span>
                     <div className="min-w-0 flex-1">

@@ -80,7 +80,7 @@ function AuthPage() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-10 pt-16">
         <div className="mb-8 flex items-center gap-2">
           <div
-            className="tap grid h-10 w-10 place-items-center rounded-2xl text-primary-foreground shadow-[var(--shadow-glow)]"
+            className="grid h-10 w-10 place-items-center rounded-2xl text-primary-foreground shadow-[var(--shadow-glow)]"
             style={{ background: "var(--gradient-primary)" }}
           >
             <Sparkles className="h-5 w-5" />

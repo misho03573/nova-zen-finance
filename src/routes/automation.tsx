@@ -83,7 +83,7 @@ function AutomationPage() {
               key={r.id}
               className="animate-rise-in flex items-center gap-3 rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]"
             >
-              <span className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary">
                 <Wand2 className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">

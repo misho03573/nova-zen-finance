@@ -120,7 +120,7 @@ function CategoriesPage() {
                       className="flex items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 shadow-[var(--shadow-card)]"
                     >
                       <span
-                        className="tap grid h-10 w-10 place-items-center rounded-xl"
+                        className="grid h-10 w-10 place-items-center rounded-xl"
                         style={{ backgroundColor: `color-mix(in oklab, ${c.color} 22%, transparent)` }}
                       >
                         <Icon className="h-4 w-4" style={{ color: c.color }} />

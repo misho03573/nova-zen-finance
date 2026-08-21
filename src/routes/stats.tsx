@@ -255,7 +255,7 @@ function StatsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className="tap grid h-9 w-9 shrink-0 place-items-center rounded-xl"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl"
                       style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
                     >
                       <cat.icon className="h-4 w-4" style={{ color: cat.color }} />

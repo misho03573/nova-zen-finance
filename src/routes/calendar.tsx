@@ -255,7 +255,7 @@ function CalendarPage() {
                     return (
                       <li key={t.id} className="flex items-center gap-3">
                         <div
-                          className="tap grid h-8 w-8 place-items-center rounded-xl"
+                          className="grid h-8 w-8 place-items-center rounded-xl"
                           style={{
                             backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)`,
                           }}

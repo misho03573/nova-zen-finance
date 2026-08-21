@@ -175,7 +175,7 @@ function AddPage() {
                 )}
               >
                 <span
-                  className="tap grid h-8 w-8 place-items-center rounded-xl border border-white/10 text-white"
+                  className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 text-white"
                   style={{ background: a.gradient }}
                 >
                   <CreditCard className="h-3.5 w-3.5" />
@@ -211,7 +211,7 @@ function AddPage() {
                 )}
               >
                 <span
-                  className="tap grid h-9 w-9 place-items-center rounded-xl"
+                  className="grid h-9 w-9 place-items-center rounded-xl"
                   style={{ backgroundColor: `color-mix(in oklab, ${c.color} 22%, transparent)` }}
                 >
                   <Icon className="h-4 w-4" style={{ color: c.color }} />
@@ -224,7 +224,7 @@ function AddPage() {
             to="/categories"
             className="flex shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border bg-card/40 px-3 py-2.5 text-muted-foreground hover:text-foreground"
           >
-            <span className="tap grid h-9 w-9 place-items-center rounded-xl border border-border">
+            <span className="grid h-9 w-9 place-items-center rounded-xl border border-border">
               <Plus className="h-4 w-4" />
             </span>
             <span className="text-[11px] font-medium">{t("cat.new")}</span>

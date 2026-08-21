@@ -336,7 +336,7 @@ function SettingsPage() {
             to="/subscriptions"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Repeat className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -349,7 +349,7 @@ function SettingsPage() {
             to="/networth"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <TrendingUp className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -362,7 +362,7 @@ function SettingsPage() {
             to="/automation"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Zap className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -375,7 +375,7 @@ function SettingsPage() {
             to="/categories"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Tag className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -388,7 +388,7 @@ function SettingsPage() {
             to="/notifications"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Bell className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -401,7 +401,7 @@ function SettingsPage() {
             to="/merchants"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Store className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -414,7 +414,7 @@ function SettingsPage() {
             to="/rules"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Wand2 className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -427,7 +427,7 @@ function SettingsPage() {
             to="/import"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Upload className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -440,7 +440,7 @@ function SettingsPage() {
             to="/scan"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Camera className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -453,7 +453,7 @@ function SettingsPage() {
             to="/ai"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Sparkles className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -466,7 +466,7 @@ function SettingsPage() {
             onClick={handleExport}
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Download className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -479,7 +479,7 @@ function SettingsPage() {
             onClick={() => fileRef.current?.click()}
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Upload className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -499,7 +499,7 @@ function SettingsPage() {
             onClick={handleReset}
             className="flex w-full items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-left text-sm text-destructive"
           >
-            <span className="tap grid h-8 w-8 place-items-center rounded-xl bg-destructive/20">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-destructive/20">
               <Trash2 className="h-4 w-4" />
             </span>
             <span className="flex-1">
@@ -607,7 +607,7 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 shadow-[var(--shadow-card)]">
-      <span className="tap grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
         {icon}
       </span>
       <div className="min-w-0 flex-1">

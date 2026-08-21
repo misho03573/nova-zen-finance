@@ -149,7 +149,7 @@ function WalletPage() {
                 aria-label={tr("wallet.addAccount")}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <span className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card">
+                  <span className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card">
                     <Plus className="h-4 w-4" />
                   </span>
                   <span className="text-xs">{tr("wallet.addAccount")}</span>
@@ -221,7 +221,7 @@ function WalletPage() {
                       className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-card"
                     >
                       <div
-                        className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                         style={{
                           backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)`,
                         }}

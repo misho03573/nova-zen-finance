@@ -154,7 +154,7 @@ function RulesPage() {
                 className="animate-rise-in flex items-center gap-3 rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]"
               >
                 <span
-                  className="tap grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                   style={{ backgroundColor: `color-mix(in oklab, ${color} 22%, transparent)` }}
                 >
                   <Icon className="h-4 w-4" style={{ color }} />

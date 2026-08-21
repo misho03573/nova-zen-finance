@@ -242,7 +242,7 @@ function RunwayPage() {
                 )}
               >
                 <span
-                  className="tap grid h-8 w-8 shrink-0 place-items-center rounded-xl"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-xl"
                   style={{ background: `color-mix(in oklch, ${c.color} 22%, transparent)` }}
                 >
                   <IconFor name={c.icon} className="h-4 w-4" style={{ color: c.color }} />

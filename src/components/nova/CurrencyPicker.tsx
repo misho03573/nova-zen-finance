@@ -55,7 +55,7 @@ export function CurrencyPicker({ variant = "icon" }: { variant?: "icon" | "chip"
                       : "border-border bg-card/60 hover:bg-card",
                   )}
                 >
-                  <span className="tap grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-background text-lg">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-background text-lg">
                     {c.flag}
                   </span>
                   <span className="min-w-0 flex-1">
