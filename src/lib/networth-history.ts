@@ -1,4 +1,5 @@
 import type { CurrencyCode } from "@/lib/currency";
+import { convertWith, isLegacyFx, type FxMeta } from "@/lib/fx";
 
 /**
  * A daily Net Worth snapshot.
@@ -22,6 +23,14 @@ export type NetWorthSnapshot = {
   net: number;
   /** Currency the three amounts above are denominated in. Always "USD". */
   base: CurrencyCode;
+  /**
+   * Rate basis used to convert the native account/liability balances into
+   * `base` on the capture day. Frozen forever: past snapshots therefore never
+   * re-price when today's rate table changes.
+   */
+  fx?: FxMeta;
+  /** Captured before FX metadata existed. Value preserved, basis unknown. */
+  legacy?: boolean;
 };
 
 export const SNAPSHOT_BASE: CurrencyCode = "USD";
@@ -51,6 +60,37 @@ export function sameSnapshot(a: NetWorthSnapshot | undefined, b: NetWorthSnapsho
   return (
     a.date === b.date && a.base === b.base && eq(a.assets, b.assets) && eq(a.liabilities, b.liabilities)
   );
+}
+
+/**
+ * Non-destructive migration for history stored before FX metadata existed.
+ * Values are never recomputed or rewritten — the snapshot is only flagged so
+ * the UI can explain that its rate basis is unknown.
+ */
+export function migrateSnapshots(list: NetWorthSnapshot[] | undefined): NetWorthSnapshot[] {
+  if (!list || list.length === 0) return list ?? [];
+  let changed = false;
+  const out = list.map((s) => {
+    if (!isLegacyFx(s.fx) || s.legacy) return s;
+    changed = true;
+    return { ...s, legacy: true };
+  });
+  return changed ? out : list;
+}
+
+/**
+ * Presentation-only conversion of a frozen snapshot into the display currency.
+ * The stored value is never mutated and never recomputed from today's balances.
+ */
+export function snapshotIn(snap: NetWorthSnapshot, to: CurrencyCode) {
+  const from = (snap.base ?? SNAPSHOT_BASE) as CurrencyCode;
+  return {
+    date: snap.date,
+    assets: convertWith(snap.assets, from, to),
+    liabilities: convertWith(snap.liabilities, from, to),
+    net: convertWith(snap.net, from, to),
+    legacy: Boolean(snap.legacy),
+  };
 }
 
 export const NW_RANGES = ["1M", "3M", "6M", "1Y", "ALL"] as const;
