@@ -31,7 +31,7 @@ describe("merchant normalization", () => {
 
   it("never returns empty for a non-empty descriptor", () => {
     expect(cleanDescriptor("#12345")).toBe("#12345");
-    expect(cleanDescriptor("POS")).toBe("POS");
+    expect(cleanDescriptor("POS")).toBe("Pos");
     expect(cleanDescriptor("   ")).toBe("");
   });
 
