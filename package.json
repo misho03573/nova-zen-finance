@@ -12,7 +12,11 @@
     "format": "prettier --write .",
     "i18n:check": "node scripts/i18n-check.mjs",
     "i18n:locales": "node scripts/i18n-locale-check.mjs",
-    "test:ci": "npm run i18n:check && npm run i18n:locales"
+    "test:ci": "npm run i18n:check && npm run i18n:locales",
+    "build:native": "node scripts/build-native.mjs",
+    "cap:sync": "npm run build:native && cap sync",
+    "cap:ios": "cap open ios",
+    "cap:android": "cap open android"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
