@@ -6,10 +6,17 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// Native (Capacitor) builds set NOVA_NATIVE=1. That build additionally emits a
+// static SPA shell so the app can be packaged into an iOS/Android WebView.
+// The normal web/SSR build is untouched when the flag is absent.
+const native = process.env["NOVA_NATIVE"] === "1";
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    ...(native ? { spa: { enabled: true } } : {}),
   },
 });
+
