@@ -38,7 +38,7 @@ export function SettingsButton() {
   return (
     <Link
       to="/settings"
-      className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
+      className="tap grid h-10 w-10 place-items-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur transition-colors hover:bg-card"
       aria-label={tr("shell.settings")}
     >
       <SettingsIcon className="h-4 w-4" />
