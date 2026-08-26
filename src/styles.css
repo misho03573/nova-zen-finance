@@ -168,8 +168,35 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
   }
 }
+
+/* Squircle icon container — the NOVA feature-icon system. */
+@utility icon-tile {
+  display: grid;
+  place-items: center;
+  border-radius: 1.25rem;
+  border: 1px solid var(--color-border);
+  background: var(--gradient-tile);
+  color: var(--color-primary);
+}
+
+/* Tabular figures for money so columns never jitter. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
 
 @keyframes shimmer {
   100% {
