@@ -41,6 +41,9 @@ import { Button } from "@/components/ui/button";
 import { PreviewBadge } from "@/components/nova/PreviewBadge";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useAuth } from "@/lib/auth";
+import { useLock } from "@/lib/lock";
+import type { AutoLockDelay } from "@/lib/lock-policy";
+import { ScanFace } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings")({
@@ -60,13 +63,50 @@ function SettingsPage() {
   const s = state.settings;
   const fileRef = useRef<HTMLInputElement>(null);
   const [pinOpen, setPinOpen] = useState(false);
-  const [pin, setPin] = useState("");
   const confirm = useConfirm();
   const { user, fullName, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [nameOpen, setNameOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const lock = useLock();
+
+  const biometricLabel =
+    lock.biometricStatus.kind === "touchId"
+      ? t("sec.touchIdName")
+      : lock.biometricStatus.kind === "fingerprint"
+        ? t("sec.fingerprintName")
+        : t("sec.faceIdName");
+
+  const biometricDescription = !lock.biometricStatus.available
+    ? lock.biometricStatus.reason === "web"
+      ? t("sec.bioNativeOnly")
+      : lock.biometricStatus.reason === "not-enrolled"
+        ? t("sec.bioNotEnrolled")
+        : t("sec.bioUnsupported")
+    : !lock.hasPin
+      ? t("sec.bioNeedsPin")
+      : lock.biometricEnabled
+        ? t("sec.bioEnabled")
+        : t("sec.bioAvailable");
+
+  const storageLabel = lock.backend === "keychain" ? t("sec.storageKeychain") : t("sec.storageLocal");
+
+  const toggleBiometric = async (on: boolean) => {
+    const res = await lock.setBiometricEnabled(on);
+    if (res.error === "no-pin") toast.error(t("sec.bioNeedsPin"));
+    else if (res.error === "unavailable") toast.error(t("sec.bioUnsupported"));
+    else if (res.error === "cancelled") toast.message(t("lock.bioCancelled"));
+    else if (res.error) toast.error(t("lock.bioFailed"));
+    else toast.success(on ? t("sec.bioOn") : t("sec.bioOff"));
+  };
+
+  const removePin = async () => {
+    const ok = await confirm({ title: t("sec.clearPin"), description: t("sec.clearPinConfirm") });
+    if (!ok) return;
+    await lock.clearPin();
+    toast.success(t("sec.pinRemoved"));
+  };
 
   const openNameEditor = () => {
     setNameDraft(fullName);
@@ -274,39 +314,55 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.security")}>
-          <Row icon={<Fingerprint className="h-4 w-4" />} label={t("set.faceId")} description={t("set.faceIdDesc")} preview>
+          <Row
+            icon={lock.biometricStatus.kind === "faceId" ? <ScanFace className="h-4 w-4" /> : <Fingerprint className="h-4 w-4" />}
+            label={biometricLabel}
+            description={biometricDescription}
+            preview={!lock.biometricStatus.available}
+          >
             <Switch
-              checked={!!s.faceId}
-              onCheckedChange={(v) => { setSettings({ faceId: v }); toast.message(v ? t("set.faceIdOn") : t("set.faceIdOff")); }}
+              checked={lock.biometricEnabled}
+              disabled={!lock.biometricStatus.available || !lock.hasPin}
+              onCheckedChange={(v) => void toggleBiometric(v)}
             />
           </Row>
-          <Row icon={<Fingerprint className="h-4 w-4" />} label={t("set.touchId")} description={t("set.touchIdDesc")} preview>
-            <Switch
-              checked={!!s.touchId}
-              onCheckedChange={(v) => setSettings({ touchId: v })}
-            />
+          <Row
+            icon={<Lock className="h-4 w-4" />}
+            label={t("sec.pin")}
+            description={lock.hasPin ? `${t("sec.pinActive")} · ${storageLabel}` : t("sec.pinNone")}
+          >
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPinOpen(true)}
+                className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
+              >
+                {lock.hasPin ? t("sec.changePin") : t("sec.setPin")}
+              </button>
+              {lock.hasPin ? (
+                <button
+                  onClick={() => void removePin()}
+                  className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs text-destructive"
+                >
+                  {t("sec.clearPin")}
+                </button>
+              ) : null}
+            </div>
           </Row>
-          <Row icon={<Lock className="h-4 w-4" />} label={t("set.pin")} description={s.pinEnabled ? t("set.pinActive") : t("set.pinSet")} preview>
-            <button
-              onClick={() => setPinOpen(true)}
-              className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
-            >
-              {s.pinEnabled ? t("set.change") : t("set.setBtn")}
-            </button>
-          </Row>
-          <Row icon={<Lock className="h-4 w-4" />} label={t("set.autoLock")} description={t("set.autoLockDesc")} preview>
+          <Row icon={<Lock className="h-4 w-4" />} label={t("sec.autoLock")} description={t("sec.autoLockDesc")}>
             <select
-              value={s.autoLockMinutes ?? 5}
-              onChange={(e) => setSettings({ autoLockMinutes: parseInt(e.target.value, 10) })}
-              className="rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs"
+              value={lock.delay}
+              disabled={!lock.hasPin}
+              onChange={(e) => void lock.setDelay(e.target.value as AutoLockDelay)}
+              className="rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs disabled:opacity-50"
             >
-              <option value={1}>{t("set.autolock.min1")}</option>
-              <option value={5}>{t("set.autolock.min5")}</option>
-              <option value={15}>{t("set.autolock.min15")}</option>
-              <option value={60}>{t("set.autolock.hr1")}</option>
-              <option value={0}>{t("set.autolock.never")}</option>
+              <option value="immediate">{t("sec.al.immediate")}</option>
+              <option value="m1">{t("sec.al.m1")}</option>
+              <option value="m5">{t("sec.al.m5")}</option>
+              <option value="m15">{t("sec.al.m15")}</option>
+              <option value="never">{t("sec.al.never")}</option>
             </select>
           </Row>
+
           <Row icon={<ShieldCheck className="h-4 w-4" />} label={t("set.hideBalances")} description={t("set.hideBalancesDesc")}>
             <Switch
               checked={!!s.hideBalances}
@@ -525,45 +581,8 @@ function SettingsPage() {
         </p>
       </section>
 
-      <Dialog open={pinOpen} onOpenChange={setPinOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{s.pinEnabled ? t("set.pinChangeTitle") : t("set.pinSetTitle")}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Label>{t("set.pinLabel")}</Label>
-            <Input
-              type="password"
-              inputMode="numeric"
-              maxLength={6}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="••••••"
-              className="text-center text-2xl tracking-[0.6em]"
-            />
-            <Button
-              onClick={() => {
-                if (pin.length !== 6) { toast.error(t("settings.err.pin")); return; }
-                setSettings({ pin, pinEnabled: true });
-                setPin("");
-                setPinOpen(false);
-                toast.success(t("settings.ok.pin"));
-              }}
-              className="w-full"
-            >
-              {t("set.pinSave")}
-            </Button>
-            {s.pinEnabled && (
-              <button
-                onClick={() => { setSettings({ pinEnabled: false, pin: undefined }); setPinOpen(false); toast.message(t("settings.ok.pinOff")); }}
-                className="w-full text-xs text-muted-foreground"
-              >
-                {t("set.pinDisable")}
-              </button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PinDialog open={pinOpen} onOpenChange={setPinOpen} />
+
 
       <Dialog open={nameOpen} onOpenChange={setNameOpen}>
         <DialogContent className="sm:max-w-sm">
@@ -629,5 +648,102 @@ function Row({
       </div>
       <div className="shrink-0">{children}</div>
     </div>
+  );
+}
+/** Real PIN creation / change flow. Requires confirmation, and the current PIN when one exists. */
+function PinDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const t = useT();
+  const lock = useLock();
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const reset = () => {
+    setCurrent("");
+    setNext("");
+    setConfirmPin("");
+  };
+
+  const digits = (v: string) => v.replace(/\D/g, "").slice(0, 6);
+
+  const save = async () => {
+    if (next.length !== 6) {
+      toast.error(t("sec.pinInvalid"));
+      return;
+    }
+    if (next !== confirmPin) {
+      toast.error(t("sec.pinMismatch"));
+      return;
+    }
+    setBusy(true);
+    const res = await lock.setPin(next, current);
+    setBusy(false);
+    if (res.error === "wrong-current") {
+      toast.error(t("sec.pinWrongCurrent"));
+      return;
+    }
+    if (res.error) {
+      toast.error(t("sec.pinInvalid"));
+      return;
+    }
+    reset();
+    onOpenChange(false);
+    toast.success(t("sec.pinSaved"));
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) reset();
+        onOpenChange(v);
+      }}
+    >
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{lock.hasPin ? t("sec.changePinTitle") : t("sec.setPinTitle")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          {lock.hasPin ? (
+            <>
+              <Label htmlFor="pinCurrent">{t("sec.pinCurrent")}</Label>
+              <Input
+                id="pinCurrent"
+                type="password"
+                inputMode="numeric"
+                value={current}
+                onChange={(e) => setCurrent(digits(e.target.value))}
+                className="text-center text-xl tracking-[0.5em]"
+              />
+            </>
+          ) : null}
+          <Label htmlFor="pinNew">{t("sec.pinNew")}</Label>
+          <Input
+            id="pinNew"
+            type="password"
+            inputMode="numeric"
+            value={next}
+            onChange={(e) => setNext(digits(e.target.value))}
+            className="text-center text-xl tracking-[0.5em]"
+          />
+          <Label htmlFor="pinConfirm">{t("sec.pinConfirm")}</Label>
+          <Input
+            id="pinConfirm"
+            type="password"
+            inputMode="numeric"
+            value={confirmPin}
+            onChange={(e) => setConfirmPin(digits(e.target.value))}
+            className="text-center text-xl tracking-[0.5em]"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            {lock.backend === "keychain" ? t("sec.storageKeychain") : t("sec.storageLocal")}
+          </p>
+          <Button className="w-full" disabled={busy} onClick={() => void save()}>
+            {t("sec.pinSave")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

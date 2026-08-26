@@ -21,6 +21,8 @@ import { useNova } from "@/lib/nova-store";
 import { ACCENTS } from "@/lib/i18n";
 import { ConfirmProvider } from "@/components/nova/ConfirmDialog";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { LockProvider, useLock } from "@/lib/lock";
+import { LockScreen } from "@/components/nova/LockScreen";
 import { SyncIndicator } from "@/components/nova/SyncIndicator";
 
 function NotFoundComponent() {
@@ -154,29 +156,38 @@ function RootComponent() {
       <ThemeProvider>
         <CurrencyProvider>
           <AuthProvider>
-            <NovaProvider>
-              <ConfirmProvider>
-                {hydrated ? (
-                  <>
-                    <OnboardingGate />
-                    <AuthGate />
-                    <PreferencesApplier />
-                    <RecurringAdvancer />
-                    {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-                    <Outlet />
-                    <SyncIndicator />
-                    <Toaster position="top-center" />
-                  </>
-                ) : (
-                  <div className="min-h-screen bg-background" aria-hidden />
-                )}
-              </ConfirmProvider>
-            </NovaProvider>
+            <LockProvider>
+              <NovaProvider>
+                <ConfirmProvider>
+                  {hydrated ? (
+                    <LockGate>
+                      <OnboardingGate />
+                      <AuthGate />
+                      <PreferencesApplier />
+                      <RecurringAdvancer />
+                      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                      <Outlet />
+                      <SyncIndicator />
+                      <Toaster position="top-center" />
+                    </LockGate>
+                  ) : (
+                    <div className="min-h-screen bg-background" aria-hidden />
+                  )}
+                </ConfirmProvider>
+              </NovaProvider>
+            </LockProvider>
           </AuthProvider>
         </CurrencyProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
+}
+
+/** Blocks every financial screen behind the lock screen while locked. */
+function LockGate({ children }: { children: ReactNode }) {
+  const { locked } = useLock();
+  if (locked) return <LockScreen />;
+  return <>{children}</>;
 }
 
 function OnboardingGate() {
