@@ -17,6 +17,7 @@ import { NotificationBell } from "@/components/nova/NotificationBell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
 import { EmptyState } from "@/components/nova/EmptyState";
+import { FeatureIcon } from "@/components/nova/FeatureIcon";
 import { useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, useDateLabels, useLocale, fmt } from "@/lib/i18n";
 import {
@@ -185,12 +186,9 @@ function Home() {
           to="/review"
           className="press mb-3 flex items-center gap-3 rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]"
         >
-          <span
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-primary"
-            style={{ background: "var(--gradient-card)" }}
-          >
-            <CalendarRange className="h-4 w-4" />
-          </span>
+          <FeatureIcon>
+            <CalendarRange />
+          </FeatureIcon>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold">{tr("rev.open")}</span>
             <span className="block truncate text-xs text-muted-foreground">
