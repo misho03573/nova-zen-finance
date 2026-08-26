@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { FeatureIcon } from "@/components/nova/FeatureIcon";
 import { cn } from "@/lib/utils";
 
 type CtaTo =
