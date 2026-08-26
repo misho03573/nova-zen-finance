@@ -513,7 +513,14 @@ export function reducer(state: NovaState, action: Action): NovaState {
       return {
         ...emptyState,
         ...action.state,
-        settings: { ...emptyState.settings, ...action.state.settings },
+        settings: {
+          ...emptyState.settings,
+          ...action.state.settings,
+          // Security credentials moved to secure storage (see lib/lock.tsx).
+          // Any legacy plaintext PIN is dropped on load, never re-persisted.
+          pin: undefined,
+          pinEnabled: false,
+        },
         // Migrate legacy liabilities that predate per-row currency.
         liabilities: (action.state.liabilities ?? []).map((l) => ({
           ...l,
