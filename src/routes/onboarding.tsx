@@ -70,8 +70,11 @@ function Onboarding() {
       />
       <div className="safe-top relative mx-auto flex min-h-dvh-screen w-full max-w-[430px] flex-col px-6 pb-[calc(2rem+var(--safe-bottom))] pt-6">
         <header className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-            NOVA
+          <span className="flex items-center gap-2 text-primary">
+            <NovaMark className="h-5 w-5" />
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+              NOVA
+            </span>
           </span>
           <button
             onClick={finish}
@@ -81,14 +84,12 @@ function Onboarding() {
           </button>
         </header>
 
-        <div className="mt-10 grid place-items-center">
-          <div
-            key={i}
-            className="grid h-24 w-24 place-items-center rounded-3xl border border-border bg-card text-primary shadow-[var(--shadow-card)]"
-          >
-            <div className="animate-scale-in">{s.icon}</div>
-          </div>
+        <div className="mt-12 grid place-items-center">
+          <FeatureIcon key={i} size="xl" className="animate-scale-in shadow-[var(--shadow-card)]">
+            {s.icon}
+          </FeatureIcon>
         </div>
+
 
 
         <div key={`copy-${i}`} className="mt-10 animate-fade-in">
