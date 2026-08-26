@@ -650,3 +650,100 @@ function Row({
     </div>
   );
 }
+/** Real PIN creation / change flow. Requires confirmation, and the current PIN when one exists. */
+function PinDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const t = useT();
+  const lock = useLock();
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const reset = () => {
+    setCurrent("");
+    setNext("");
+    setConfirmPin("");
+  };
+
+  const digits = (v: string) => v.replace(/\D/g, "").slice(0, 6);
+
+  const save = async () => {
+    if (next.length !== 6) {
+      toast.error(t("sec.pinInvalid"));
+      return;
+    }
+    if (next !== confirmPin) {
+      toast.error(t("sec.pinMismatch"));
+      return;
+    }
+    setBusy(true);
+    const res = await lock.setPin(next, current);
+    setBusy(false);
+    if (res.error === "wrong-current") {
+      toast.error(t("sec.pinWrongCurrent"));
+      return;
+    }
+    if (res.error) {
+      toast.error(t("sec.pinInvalid"));
+      return;
+    }
+    reset();
+    onOpenChange(false);
+    toast.success(t("sec.pinSaved"));
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) reset();
+        onOpenChange(v);
+      }}
+    >
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{lock.hasPin ? t("sec.changePinTitle") : t("sec.setPinTitle")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          {lock.hasPin ? (
+            <>
+              <Label htmlFor="pinCurrent">{t("sec.pinCurrent")}</Label>
+              <Input
+                id="pinCurrent"
+                type="password"
+                inputMode="numeric"
+                value={current}
+                onChange={(e) => setCurrent(digits(e.target.value))}
+                className="text-center text-xl tracking-[0.5em]"
+              />
+            </>
+          ) : null}
+          <Label htmlFor="pinNew">{t("sec.pinNew")}</Label>
+          <Input
+            id="pinNew"
+            type="password"
+            inputMode="numeric"
+            value={next}
+            onChange={(e) => setNext(digits(e.target.value))}
+            className="text-center text-xl tracking-[0.5em]"
+          />
+          <Label htmlFor="pinConfirm">{t("sec.pinConfirm")}</Label>
+          <Input
+            id="pinConfirm"
+            type="password"
+            inputMode="numeric"
+            value={confirmPin}
+            onChange={(e) => setConfirmPin(digits(e.target.value))}
+            className="text-center text-xl tracking-[0.5em]"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            {lock.backend === "keychain" ? t("sec.storageKeychain") : t("sec.storageLocal")}
+          </p>
+          <Button className="w-full" disabled={busy} onClick={() => void save()}>
+            {t("sec.pinSave")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
