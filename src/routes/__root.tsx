@@ -21,6 +21,8 @@ import { useNova } from "@/lib/nova-store";
 import { ACCENTS } from "@/lib/i18n";
 import { ConfirmProvider } from "@/components/nova/ConfirmDialog";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { LockProvider, useLock } from "@/lib/lock";
+import { LockScreen } from "@/components/nova/LockScreen";
 import { SyncIndicator } from "@/components/nova/SyncIndicator";
 
 function NotFoundComponent() {
