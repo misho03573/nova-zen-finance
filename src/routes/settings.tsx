@@ -41,6 +41,9 @@ import { Button } from "@/components/ui/button";
 import { PreviewBadge } from "@/components/nova/PreviewBadge";
 import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useAuth } from "@/lib/auth";
+import { useLock } from "@/lib/lock";
+import type { AutoLockDelay } from "@/lib/lock-policy";
+import { ScanFace } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings")({
