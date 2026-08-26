@@ -125,5 +125,6 @@ Nothing cascades into unrelated financial records.
 3. Last-writer-wins across devices for the single `user_data` row; there is no
    merge or per-record versioning.
 4. Export files are unencrypted by design once downloaded.
-5. Preview-only PIN/biometrics must not be presented to users as equivalent to
-   native authentication.
+5. On the web the PIN hash lives in localStorage rather than a Keychain, so
+   web app-lock is a deterrent, not device-bound security. Only the native
+   shell gives Keychain/Keystore-backed storage and biometrics.
