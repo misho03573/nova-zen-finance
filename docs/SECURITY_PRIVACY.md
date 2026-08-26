@@ -98,14 +98,24 @@ transfers deleted together, intentionally), delete goal, budget, subscription
 and automation rule, integrity repair-all, and diagnostics storage wipe.
 Nothing cascades into unrelated financial records.
 
-## Native security limitations (current)
+## App lock (PIN, biometrics, auto-lock)
 
-- PIN, Face ID / Touch ID and auto-lock are **Preview** and are labelled as
-  such in Settings. They are UI-level only and provide no cryptographic
-  protection; the local cache is not encrypted at rest by the app.
-- Receipt scanning is simulated; no camera or OCR runs today.
-- Real device-bound security requires the native wrapper (see
-  `docs/APP_STORE_READINESS.md`).
+- The 6-digit PIN is never stored. `src/lib/pin.ts` derives a PBKDF2-SHA256
+  hash (120k iterations, random per-credential salt); only the hash is kept.
+- Lock config lives in secure storage (`src/lib/secure-store.ts`): iOS
+  Keychain / Android Keystore in the native shell, namespaced localStorage on
+  the web. It never enters the NOVA store, so it is never synced to the cloud.
+- Biometrics (Face ID / Touch ID) run through the native plugin and can only
+  be enabled once a PIN exists — biometrics are never the only way in. On the
+  web the row is labelled "Requires native app" and is disabled.
+- Auto-lock (`src/lib/lock-policy.ts`) locks on cold launch, on resume after
+  the chosen delay, and on foreground inactivity. "Immediately" applies to
+  backgrounding only, so an app in active use is never locked mid-typing.
+- `LockGate` in `src/routes/__root.tsx` renders the lock screen instead of the
+  app, so no financial data is painted while locked.
+- Any legacy plaintext PIN from earlier builds is dropped on store hydrate and
+  never re-persisted.
+- Receipt scanning is still simulated; no camera or OCR runs today.
 
 ## Known remaining risks
 
