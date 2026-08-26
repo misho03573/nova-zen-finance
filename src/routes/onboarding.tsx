@@ -5,13 +5,15 @@ import { useT } from "@/lib/i18n";
 import {
   Wallet,
   Target,
+  BarChart3,
   LineChart,
-  PieChart,
-  Receipt,
+  Bell,
   ShieldCheck,
   ArrowRight,
 } from "lucide-react";
 
+import { FeatureIcon } from "@/components/nova/FeatureIcon";
+import { NovaMark } from "@/components/nova/NovaMark";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding")({
@@ -35,17 +37,15 @@ type Slide = {
   key: string;
 };
 
-const ICON = "h-8 w-8";
-const STROKE = 1.5;
-
 const slides: Slide[] = [
-  { icon: <Wallet className={ICON} strokeWidth={STROKE} />, key: "s1" },
-  { icon: <Target className={ICON} strokeWidth={STROKE} />, key: "s2" },
-  { icon: <LineChart className={ICON} strokeWidth={STROKE} />, key: "s3" },
-  { icon: <PieChart className={ICON} strokeWidth={STROKE} />, key: "s4" },
-  { icon: <Receipt className={ICON} strokeWidth={STROKE} />, key: "s5" },
-  { icon: <ShieldCheck className={ICON} strokeWidth={STROKE} />, key: "s6" },
+  { icon: <Wallet />, key: "s1" },
+  { icon: <Target />, key: "s2" },
+  { icon: <BarChart3 />, key: "s3" },
+  { icon: <LineChart />, key: "s4" },
+  { icon: <Bell />, key: "s5" },
+  { icon: <ShieldCheck />, key: "s6" },
 ];
+
 
 function Onboarding() {
   const navigate = useNavigate();
