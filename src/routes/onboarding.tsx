@@ -5,11 +5,13 @@ import { useT } from "@/lib/i18n";
 import {
   Wallet,
   Target,
-  Sparkles,
+  LineChart,
   PieChart,
-  Bell,
+  Receipt,
+  ShieldCheck,
   ArrowRight,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding")({
@@ -31,27 +33,18 @@ const ONBOARDED_KEY = "nova.onboarded.v1";
 type Slide = {
   icon: ReactNode;
   key: string;
-  accent: string;
 };
 
+const ICON = "h-8 w-8";
+const STROKE = 1.5;
+
 const slides: Slide[] = [
-  { icon: <Wallet className="h-7 w-7" />, key: "s1", accent: "var(--gradient-primary)" },
-  { icon: <Target className="h-7 w-7" />, key: "s2", accent: "var(--gradient-accent)" },
-  {
-    icon: <Sparkles className="h-7 w-7" />,
-    key: "s3",
-    accent: "linear-gradient(135deg, oklch(0.7 0.19 300), oklch(0.62 0.18 200))",
-  },
-  {
-    icon: <PieChart className="h-7 w-7" />,
-    key: "s4",
-    accent: "linear-gradient(135deg, oklch(0.78 0.17 80), oklch(0.68 0.19 30))",
-  },
-  {
-    icon: <Bell className="h-7 w-7" />,
-    key: "s5",
-    accent: "linear-gradient(135deg, oklch(0.7 0.18 155), oklch(0.6 0.16 200))",
-  },
+  { icon: <Wallet className={ICON} strokeWidth={STROKE} />, key: "s1" },
+  { icon: <Target className={ICON} strokeWidth={STROKE} />, key: "s2" },
+  { icon: <LineChart className={ICON} strokeWidth={STROKE} />, key: "s3" },
+  { icon: <PieChart className={ICON} strokeWidth={STROKE} />, key: "s4" },
+  { icon: <Receipt className={ICON} strokeWidth={STROKE} />, key: "s5" },
+  { icon: <ShieldCheck className={ICON} strokeWidth={STROKE} />, key: "s6" },
 ];
 
 function Onboarding() {
@@ -91,12 +84,12 @@ function Onboarding() {
         <div className="mt-10 grid place-items-center">
           <div
             key={i}
-            className="animate-float-slow grid h-32 w-32 place-items-center rounded-4xl border border-white/10 text-white shadow-[var(--shadow-elevated)]"
-            style={{ background: s.accent }}
+            className="grid h-24 w-24 place-items-center rounded-3xl border border-border bg-card text-primary shadow-[var(--shadow-card)]"
           >
             <div className="animate-scale-in">{s.icon}</div>
           </div>
         </div>
+
 
         <div key={`copy-${i}`} className="mt-10 animate-fade-in">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
