@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Sparkles, ArrowLeft, Bot } from "lucide-react";
+import { Send, LineChart, ArrowLeft, Bot } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova, totalBalance, monthlyTotals, savingsRate, monthlySpendByCategory, netWorthBreakdown, useDisplayState } from "@/lib/nova-store";
@@ -125,7 +125,7 @@ function AIChat() {
                 onClick={() => send(s)}
                 className="flex items-center gap-1.5 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs backdrop-blur transition-colors hover:bg-card"
               >
-                <Sparkles className="h-3 w-3 text-primary" />
+                <LineChart className="h-3 w-3 text-primary" />
                 {s}
               </button>
             ))}

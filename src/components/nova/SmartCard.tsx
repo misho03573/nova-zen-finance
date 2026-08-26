@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { AlertTriangle, Info, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, Info, LineChart, TrendingUp } from "lucide-react";
 import { useCurrency } from "@/lib/currency";
 import { useT, fmt } from "@/lib/i18n";
 import { useCategoryName } from "@/lib/i18n";
@@ -99,7 +99,7 @@ export function SmartCard({
 export function SmartEmpty({ title, desc }: { title: string; desc: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center">
-      <Sparkles className="mx-auto h-6 w-6 text-muted-foreground" />
+      <LineChart className="mx-auto h-6 w-6 text-muted-foreground" />
       <p className="mt-2 text-sm font-semibold text-foreground">{title}</p>
       <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
     </div>

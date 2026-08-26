@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Camera, Sparkles, Check, RefreshCw } from "lucide-react";
+import { ArrowLeft, Camera, Receipt, Check, RefreshCw } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { PreviewBadge } from "@/components/nova/PreviewBadge";
 import { useNova } from "@/lib/nova-store";
@@ -117,7 +117,7 @@ function ScanPage() {
                 <div className="relative h-24 w-24">
                   <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
                   <div className="relative grid h-24 w-24 place-items-center rounded-full border border-primary/40 bg-primary/10">
-                    <Sparkles className="h-8 w-8 text-primary" />
+                    <Receipt className="h-8 w-8 text-primary" />
                   </div>
                 </div>
                 <p className="text-sm font-medium">{tr("scan.analyzing")}</p>

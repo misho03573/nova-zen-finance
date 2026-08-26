@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CreditCard, TrendingDown, AlertTriangle, Sparkles } from "lucide-react";
+import { CreditCard, TrendingDown, AlertTriangle, Lightbulb } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { EmptyState } from "@/components/nova/EmptyState";
@@ -230,7 +230,7 @@ function DebtPage() {
             ))}
           </div>
           <div className="mt-3 flex gap-2 rounded-2xl border border-primary/40 bg-primary/10 p-3">
-            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <p className="text-xs text-foreground">
               {saving > 0.5
                 ? fmt(t("dp.saving"), { amount: format(saving) })

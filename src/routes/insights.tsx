@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Sparkles,
+  LineChart,
   TrendingUp,
   Search,
   Trophy,
@@ -255,7 +255,7 @@ function InsightsPage() {
       ) : null}
 
       <section className="mt-6 px-5">
-        <SectionTitle icon={<Sparkles className="h-3.5 w-3.5" />}>{tr("ins.aiInsights")}</SectionTitle>
+        <SectionTitle icon={<LineChart className="h-3.5 w-3.5" />}>{tr("ins.aiInsights")}</SectionTitle>
         {insights.length === 0 ? (
           <div className="mt-2 rounded-3xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
             {tr("ins.aiEmpty")}

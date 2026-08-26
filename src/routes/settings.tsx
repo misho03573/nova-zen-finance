@@ -4,6 +4,7 @@ import {
   Fingerprint,
   Bell,
   Palette,
+  LineChart,
   Coins,
   Download,
   ShieldCheck,
@@ -15,7 +16,6 @@ import {
   Cloud,
   Upload,
   Languages,
-  Sparkles,
   LogOut,
   UserCircle, Wand2, Repeat, TrendingUp, Zap, Camera } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
@@ -284,7 +284,7 @@ function SettingsPage() {
           <Row icon={<Coins className="h-4 w-4" />} label={t("settings.currency")}>
             <CurrencyPicker variant="chip" />
           </Row>
-          <Row icon={<Sparkles className="h-4 w-4" />} label={t("settings.accent")}>
+          <Row icon={<Palette className="h-4 w-4" />} label={t("settings.accent")}>
             <div className="flex gap-1.5">
               {ACCENTS.map((a) => (
                 <button
@@ -518,7 +518,7 @@ function SettingsPage() {
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
             <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
-              <Sparkles className="h-4 w-4" />
+              <LineChart className="h-4 w-4" />
             </span>
             <span className="flex-1">
               <span className="block text-sm font-semibold">{t("ai.title")}</span>

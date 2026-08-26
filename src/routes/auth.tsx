@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles } from "lucide-react";
+import { NovaMark } from "@/components/nova/NovaMark";
 import { useAuth } from "@/lib/auth";
 import { lovable } from "@/integrations/lovable/index";
 import { useT } from "@/lib/i18n";
@@ -83,7 +83,7 @@ function AuthPage() {
             className="grid h-10 w-10 place-items-center rounded-2xl text-primary-foreground shadow-[var(--shadow-glow)]"
             style={{ background: "var(--gradient-primary)" }}
           >
-            <Sparkles className="h-5 w-5" />
+            <NovaMark className="h-5 w-5" />
           </div>
           <span className="text-lg font-semibold tracking-tight">NOVA</span>
         </div>
