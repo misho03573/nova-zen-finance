@@ -525,45 +525,8 @@ function SettingsPage() {
         </p>
       </section>
 
-      <Dialog open={pinOpen} onOpenChange={setPinOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{s.pinEnabled ? t("set.pinChangeTitle") : t("set.pinSetTitle")}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Label>{t("set.pinLabel")}</Label>
-            <Input
-              type="password"
-              inputMode="numeric"
-              maxLength={6}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="••••••"
-              className="text-center text-2xl tracking-[0.6em]"
-            />
-            <Button
-              onClick={() => {
-                if (pin.length !== 6) { toast.error(t("settings.err.pin")); return; }
-                setSettings({ pin, pinEnabled: true });
-                setPin("");
-                setPinOpen(false);
-                toast.success(t("settings.ok.pin"));
-              }}
-              className="w-full"
-            >
-              {t("set.pinSave")}
-            </Button>
-            {s.pinEnabled && (
-              <button
-                onClick={() => { setSettings({ pinEnabled: false, pin: undefined }); setPinOpen(false); toast.message(t("settings.ok.pinOff")); }}
-                className="w-full text-xs text-muted-foreground"
-              >
-                {t("set.pinDisable")}
-              </button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PinDialog open={pinOpen} onOpenChange={setPinOpen} />
+
 
       <Dialog open={nameOpen} onOpenChange={setNameOpen}>
         <DialogContent className="sm:max-w-sm">
