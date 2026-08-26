@@ -274,39 +274,55 @@ function SettingsPage() {
         </Group>
 
         <Group title={t("settings.group.security")}>
-          <Row icon={<Fingerprint className="h-4 w-4" />} label={t("set.faceId")} description={t("set.faceIdDesc")} preview>
+          <Row
+            icon={lock.biometricStatus.kind === "faceId" ? <ScanFace className="h-4 w-4" /> : <Fingerprint className="h-4 w-4" />}
+            label={biometricLabel}
+            description={biometricDescription}
+            preview={!lock.biometricStatus.available}
+          >
             <Switch
-              checked={!!s.faceId}
-              onCheckedChange={(v) => { setSettings({ faceId: v }); toast.message(v ? t("set.faceIdOn") : t("set.faceIdOff")); }}
+              checked={lock.biometricEnabled}
+              disabled={!lock.biometricStatus.available || !lock.hasPin}
+              onCheckedChange={(v) => void toggleBiometric(v)}
             />
           </Row>
-          <Row icon={<Fingerprint className="h-4 w-4" />} label={t("set.touchId")} description={t("set.touchIdDesc")} preview>
-            <Switch
-              checked={!!s.touchId}
-              onCheckedChange={(v) => setSettings({ touchId: v })}
-            />
+          <Row
+            icon={<Lock className="h-4 w-4" />}
+            label={t("sec.pin")}
+            description={lock.hasPin ? `${t("sec.pinActive")} · ${storageLabel}` : t("sec.pinNone")}
+          >
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPinOpen(true)}
+                className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
+              >
+                {lock.hasPin ? t("sec.changePin") : t("sec.setPin")}
+              </button>
+              {lock.hasPin ? (
+                <button
+                  onClick={() => void removePin()}
+                  className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs text-destructive"
+                >
+                  {t("sec.clearPin")}
+                </button>
+              ) : null}
+            </div>
           </Row>
-          <Row icon={<Lock className="h-4 w-4" />} label={t("set.pin")} description={s.pinEnabled ? t("set.pinActive") : t("set.pinSet")} preview>
-            <button
-              onClick={() => setPinOpen(true)}
-              className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
-            >
-              {s.pinEnabled ? t("set.change") : t("set.setBtn")}
-            </button>
-          </Row>
-          <Row icon={<Lock className="h-4 w-4" />} label={t("set.autoLock")} description={t("set.autoLockDesc")} preview>
+          <Row icon={<Lock className="h-4 w-4" />} label={t("sec.autoLock")} description={t("sec.autoLockDesc")}>
             <select
-              value={s.autoLockMinutes ?? 5}
-              onChange={(e) => setSettings({ autoLockMinutes: parseInt(e.target.value, 10) })}
-              className="rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs"
+              value={lock.delay}
+              disabled={!lock.hasPin}
+              onChange={(e) => void lock.setDelay(e.target.value as AutoLockDelay)}
+              className="rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs disabled:opacity-50"
             >
-              <option value={1}>{t("set.autolock.min1")}</option>
-              <option value={5}>{t("set.autolock.min5")}</option>
-              <option value={15}>{t("set.autolock.min15")}</option>
-              <option value={60}>{t("set.autolock.hr1")}</option>
-              <option value={0}>{t("set.autolock.never")}</option>
+              <option value="immediate">{t("sec.al.immediate")}</option>
+              <option value="m1">{t("sec.al.m1")}</option>
+              <option value="m5">{t("sec.al.m5")}</option>
+              <option value="m15">{t("sec.al.m15")}</option>
+              <option value="never">{t("sec.al.never")}</option>
             </select>
           </Row>
+
           <Row icon={<ShieldCheck className="h-4 w-4" />} label={t("set.hideBalances")} description={t("set.hideBalancesDesc")}>
             <Switch
               checked={!!s.hideBalances}
