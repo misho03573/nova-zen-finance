@@ -1,5 +1,5 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, Home, Wallet, Plus, Sparkles, Target, Settings as SettingsIcon } from "lucide-react";
+import { ArrowLeft, Home, Wallet, Plus, LineChart, Target, Settings as SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -29,7 +29,7 @@ const tabs: Tab[] = [
   { to: "/", labelKey: "nav.home", icon: Home },
   { to: "/wallet", labelKey: "nav.wallet", icon: Wallet },
   { to: "/add", labelKey: "nav.add", icon: Plus, primary: true },
-  { to: "/insights", labelKey: "nav.insights", icon: Sparkles },
+  { to: "/insights", labelKey: "nav.insights", icon: LineChart },
   { to: "/goals", labelKey: "nav.goals", icon: Target },
 ];
 

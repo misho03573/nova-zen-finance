@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Sparkles, Trash2, Pencil, PiggyBank } from "lucide-react";
+import { Plus, TrendingUp, Trash2, Pencil, PiggyBank } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { useCurrency } from "@/lib/currency";
@@ -88,7 +88,7 @@ function GoalsPage() {
               <p className="text-xs text-muted-foreground">{tr("goals.of")} {maskAmount(hide, format(totalTarget), "md")} {tr("goals.goalWord")}</p>
             </div>
             <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
-              <Sparkles className="h-3 w-3" /> {tr("goals.onTrack")}
+              <TrendingUp className="h-3 w-3" /> {tr("goals.onTrack")}
             </span>
           </div>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">

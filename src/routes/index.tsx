@@ -3,7 +3,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Plus,
-  Sparkles,
+  LineChart,
   Settings as SettingsIcon,
   CalendarClock,
   CalendarDays,
@@ -176,7 +176,7 @@ function Home() {
           <QuickAction icon={<Plus className="h-4 w-4" />} label={tr("home.add")} to="/add" primary />
           <QuickAction icon={<ArrowUpRight className="h-4 w-4" />} label={tr("home.send")} to="/wallet" />
           <QuickAction icon={<ArrowDownRight className="h-4 w-4" />} label={tr("home.request")} to="/wallet" />
-          <QuickAction icon={<Sparkles className="h-4 w-4" />} label={tr("home.insights")} to="/insights" />
+          <QuickAction icon={<LineChart className="h-4 w-4" />} label={tr("home.insights")} to="/insights" />
         </div>
       </section>
 

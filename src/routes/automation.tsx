@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { ArrowLeft, PiggyBank, Trash2, Wand2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { EmptyState } from "@/components/nova/EmptyState";
 import { PreviewBadge } from "@/components/nova/PreviewBadge";
@@ -64,7 +64,7 @@ function AutomationPage() {
               className="grid h-12 w-12 place-items-center rounded-2xl text-primary-foreground shadow-[var(--shadow-glow)]"
               style={{ background: "var(--gradient-primary)" }}
             >
-              <Sparkles className="h-5 w-5" />
+              <PiggyBank className="h-5 w-5" />
             </span>
           </div>
         </div>
