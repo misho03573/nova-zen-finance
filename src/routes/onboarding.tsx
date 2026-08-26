@@ -5,11 +5,13 @@ import { useT } from "@/lib/i18n";
 import {
   Wallet,
   Target,
-  Sparkles,
+  LineChart,
   PieChart,
-  Bell,
+  Receipt,
+  ShieldCheck,
   ArrowRight,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding")({
