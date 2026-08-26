@@ -16,8 +16,6 @@ import {
   Cloud,
   Upload,
   Languages,
-  Palette,
-  LineChart,
   LogOut,
   UserCircle, Wand2, Repeat, TrendingUp, Zap, Camera } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
