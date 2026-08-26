@@ -612,17 +612,15 @@ function QuickAction({
 }) {
   return (
     <Link to={to} className="press flex flex-col items-center gap-1.5">
-      <span
-        className="grid h-12 w-12 place-items-center rounded-2xl border border-border shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5"
-        style={
-          primary
-            ? { background: "var(--gradient-primary)", color: "var(--primary-foreground)" }
-            : { background: "var(--gradient-card)" }
-        }
+      <FeatureIcon
+        size="lg"
+        tone={primary ? "solid" : "brand"}
+        className="transition-transform hover:-translate-y-0.5"
       >
         {icon}
-      </span>
+      </FeatureIcon>
       <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
     </Link>
   );
 }
+
