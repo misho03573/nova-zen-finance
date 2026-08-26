@@ -78,19 +78,25 @@ function AuthPage() {
         style={{ background: "var(--gradient-hero)" }}
       />
       <div className="safe-top relative mx-auto flex min-h-dvh-screen w-full max-w-[430px] flex-col px-5 pb-[calc(2.5rem+var(--safe-bottom))] pt-16">
-        <div className="mb-8 flex items-center gap-2">
+        <div className="mb-10 flex flex-col items-start gap-3">
           <div
-            className="grid h-10 w-10 place-items-center rounded-2xl text-primary-foreground shadow-[var(--shadow-glow)]"
+            className="grid h-14 w-14 place-items-center rounded-[1.35rem] text-primary-foreground shadow-[var(--shadow-glow)]"
             style={{ background: "var(--gradient-primary)" }}
           >
-            <NovaMark className="h-5 w-5" />
+            <NovaMark className="h-7 w-7" />
           </div>
-          <span className="text-lg font-semibold tracking-tight">NOVA</span>
+          <div>
+            <span className="font-display text-xl font-semibold tracking-[0.32em]">NOVA</span>
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+              Plan · Track · Grow
+            </p>
+          </div>
         </div>
 
-        <h1 className="text-3xl font-semibold tracking-tight">
+        <h1 className="font-display text-3xl font-semibold tracking-[-0.02em]">
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </h1>
+
         <p className="mt-1 text-sm text-muted-foreground">
           {mode === "signin"
             ? "Sign in to sync your accounts across devices."
