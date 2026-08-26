@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { FeatureIcon } from "@/components/nova/FeatureIcon";
 import { cn } from "@/lib/utils";
 
 type CtaTo =
@@ -41,12 +42,10 @@ export function EmptyState({
         className,
       )}
     >
-      <div
-        className="mb-4 grid h-16 w-16 place-items-center rounded-3xl border border-border shadow-[var(--shadow-card)]"
-        style={{ background: "var(--gradient-card)" }}
-      >
-        <span className="text-primary">{icon}</span>
-      </div>
+      <FeatureIcon size="lg" className="mb-4">
+        {icon}
+      </FeatureIcon>
+
       <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
       <p className="mt-1 max-w-[26ch] text-sm text-muted-foreground">{description}</p>
       {ctaLabel && ctaTo ? (

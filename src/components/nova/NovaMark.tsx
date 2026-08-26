@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 
 /**
- * NOVA brand mark — a ribbon "N" drawn as a single continuous stroke.
- * Purely presentational; inherits `currentColor`.
+ * NOVA brand mark — a ribbon "N": two uprights joined by a single folded
+ * diagonal. Purely presentational; inherits `currentColor`.
  */
 export function NovaMark({ className }: { className?: string }) {
   return (
@@ -12,18 +12,28 @@ export function NovaMark({ className }: { className?: string }) {
       aria-hidden="true"
       className={cn("h-5 w-5", className)}
     >
+      {/* left upright */}
       <path
-        d="M7 25V9.5c0-1.3 1.6-1.9 2.5-1L23 22"
+        d="M8 25.5V10.2c0-2 2.4-3 3.8-1.6"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="3.4"
         strokeLinecap="round"
       />
+      {/* folded diagonal ribbon */}
       <path
-        d="M25 7v15.5c0 1.3-1.6 1.9-2.5 1L9 10"
+        d="M9.4 8.6 22.6 23.4"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="3.4"
         strokeLinecap="round"
-        opacity="0.55"
+        opacity="0.9"
+      />
+      {/* right upright */}
+      <path
+        d="M24 6.5v15.3c0 2-2.4 3-3.8 1.6"
+        stroke="currentColor"
+        strokeWidth="3.4"
+        strokeLinecap="round"
+        opacity="0.6"
       />
     </svg>
   );

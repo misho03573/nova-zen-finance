@@ -17,6 +17,7 @@ import { NotificationBell } from "@/components/nova/NotificationBell";
 import { CurrencyPicker } from "@/components/nova/CurrencyPicker";
 import { AnimatedNumber } from "@/components/nova/AnimatedNumber";
 import { EmptyState } from "@/components/nova/EmptyState";
+import { FeatureIcon } from "@/components/nova/FeatureIcon";
 import { useCategoryLookup } from "@/lib/categories";
 import { useCategoryName, useT, useDateLabels, useLocale, fmt } from "@/lib/i18n";
 import {
@@ -185,12 +186,9 @@ function Home() {
           to="/review"
           className="press mb-3 flex items-center gap-3 rounded-3xl border border-border bg-card/70 p-4 shadow-[var(--shadow-card)]"
         >
-          <span
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-primary"
-            style={{ background: "var(--gradient-card)" }}
-          >
-            <CalendarRange className="h-4 w-4" />
-          </span>
+          <FeatureIcon>
+            <CalendarRange />
+          </FeatureIcon>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold">{tr("rev.open")}</span>
             <span className="block truncate text-xs text-muted-foreground">
@@ -612,17 +610,15 @@ function QuickAction({
 }) {
   return (
     <Link to={to} className="press flex flex-col items-center gap-1.5">
-      <span
-        className="grid h-12 w-12 place-items-center rounded-2xl border border-border shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5"
-        style={
-          primary
-            ? { background: "var(--gradient-primary)", color: "var(--primary-foreground)" }
-            : { background: "var(--gradient-card)" }
-        }
+      <FeatureIcon
+        size="lg"
+        tone={primary ? "solid" : "brand"}
+        className="transition-transform hover:-translate-y-0.5"
       >
         {icon}
-      </span>
+      </FeatureIcon>
       <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
     </Link>
   );
 }
+
