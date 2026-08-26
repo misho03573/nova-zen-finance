@@ -61,7 +61,7 @@ export function SmartCard({
     <div className="flex items-start gap-3">
       <span
         className={cn(
-          "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl border",
+          "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-[0.9rem] border [&_svg]:stroke-[1.6]",
           TONE[item.severity],
         )}
       >

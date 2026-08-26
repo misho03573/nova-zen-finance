@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="safe-bottom fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-around px-4 pt-3"
         aria-label="Primary"
       >
-        <div className="mb-3 flex w-full items-center justify-around rounded-full border border-border bg-card/80 px-2 py-2 shadow-[var(--shadow-elevated)] backdrop-blur-xl">
+        <div className="mb-3 flex w-full items-center justify-around rounded-[1.75rem] border border-border bg-card/85 px-2 py-2 shadow-[var(--shadow-elevated)] backdrop-blur-xl">
           {tabs.map((tab) => {
             const active = pathname === tab.to;
             const Icon = tab.icon;
@@ -75,7 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={tab.to}
                   to={tab.to}
                   aria-label={label}
-                  className="tap grid h-12 w-12 shrink-0 place-items-center rounded-full text-primary-foreground shadow-[var(--shadow-glow)]"
+                  className="tap grid h-12 w-12 shrink-0 place-items-center rounded-[1.15rem] text-primary-foreground shadow-[var(--shadow-glow)]"
                   style={{ background: "var(--gradient-primary)" }}
                 >
                   <Icon className="h-5 w-5" strokeWidth={2.5} />
@@ -92,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Icon className={cn("h-5 w-5", active && "text-primary")} />
+                <Icon className={cn("h-5 w-5", active && "text-primary")} strokeWidth={active ? 2.1 : 1.7} />
                 <span>{label}</span>
               </Link>
             );
@@ -136,18 +136,20 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "items-center gap-3 px-5 pb-4 pt-8",
+        "items-center gap-3 px-5 pb-5 pt-8",
         back ? "grid grid-cols-[auto_minmax(0,1fr)_auto]" : "grid grid-cols-[minmax(0,1fr)_auto]",
       )}
     >
       {back ? <BackButton /> : null}
       <div className="min-w-0">
         {subtitle ? (
-          <p className="truncate text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          <p className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             {subtitle}
           </p>
         ) : null}
-        <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+        <h1 className="truncate font-display text-[1.6rem] font-semibold leading-tight tracking-[-0.02em] text-foreground">
+          {title}
+        </h1>
       </div>
       {right ? <div className="shrink-0">{right}</div> : null}
     </header>
