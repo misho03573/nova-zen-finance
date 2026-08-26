@@ -60,13 +60,50 @@ function SettingsPage() {
   const s = state.settings;
   const fileRef = useRef<HTMLInputElement>(null);
   const [pinOpen, setPinOpen] = useState(false);
-  const [pin, setPin] = useState("");
   const confirm = useConfirm();
   const { user, fullName, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [nameOpen, setNameOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const lock = useLock();
+
+  const biometricLabel =
+    lock.biometricStatus.kind === "touchId"
+      ? t("sec.touchIdName")
+      : lock.biometricStatus.kind === "fingerprint"
+        ? t("sec.fingerprintName")
+        : t("sec.faceIdName");
+
+  const biometricDescription = !lock.biometricStatus.available
+    ? lock.biometricStatus.reason === "web"
+      ? t("sec.bioNativeOnly")
+      : lock.biometricStatus.reason === "not-enrolled"
+        ? t("sec.bioNotEnrolled")
+        : t("sec.bioUnsupported")
+    : !lock.hasPin
+      ? t("sec.bioNeedsPin")
+      : lock.biometricEnabled
+        ? t("sec.bioEnabled")
+        : t("sec.bioAvailable");
+
+  const storageLabel = lock.backend === "keychain" ? t("sec.storageKeychain") : t("sec.storageLocal");
+
+  const toggleBiometric = async (on: boolean) => {
+    const res = await lock.setBiometricEnabled(on);
+    if (res.error === "no-pin") toast.error(t("sec.bioNeedsPin"));
+    else if (res.error === "unavailable") toast.error(t("sec.bioUnsupported"));
+    else if (res.error === "cancelled") toast.message(t("lock.bioCancelled"));
+    else if (res.error) toast.error(t("lock.bioFailed"));
+    else toast.success(on ? t("sec.bioOn") : t("sec.bioOff"));
+  };
+
+  const removePin = async () => {
+    const ok = await confirm({ title: t("sec.clearPin"), description: t("sec.clearPinConfirm") });
+    if (!ok) return;
+    await lock.clearPin();
+    toast.success(t("sec.pinRemoved"));
+  };
 
   const openNameEditor = () => {
     setNameDraft(fullName);
