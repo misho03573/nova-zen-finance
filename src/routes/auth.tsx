@@ -88,6 +88,7 @@ function AuthPage() {
           <div>
             <span className="font-display text-xl font-semibold tracking-[0.32em]">NOVA</span>
             <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+              {/* i18n-ignore — brand tagline */}
               Plan · Track · Grow
             </p>
           </div>
