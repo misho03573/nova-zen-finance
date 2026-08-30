@@ -102,9 +102,15 @@ Nothing cascades into unrelated financial records.
 
 - The 6-digit PIN is never stored. `src/lib/pin.ts` derives a PBKDF2-SHA256
   hash (120k iterations, random per-credential salt); only the hash is kept.
+- All lock state transitions live in `src/lib/lock-core.ts` (headless, tested);
+  `src/lib/lock.tsx` only owns React/UI state and lifecycle wiring.
+- Disabling the lock requires the current PIN, or a successful biometric
+  authentication when biometrics are enabled. "Lock now" is available in
+  Settings whenever a PIN exists.
 - Lock config lives in secure storage (`src/lib/secure-store.ts`): iOS
   Keychain / Android Keystore in the native shell, namespaced localStorage on
   the web. It never enters the NOVA store, so it is never synced to the cloud.
+
 - Biometrics (Face ID / Touch ID) run through the native plugin and can only
   be enabled once a PIN exists — biometrics are never the only way in. On the
   web the row is labelled "Requires native app" and is disabled.
