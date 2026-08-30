@@ -63,6 +63,7 @@ function SettingsPage() {
   const s = state.settings;
   const fileRef = useRef<HTMLInputElement>(null);
   const [pinOpen, setPinOpen] = useState(false);
+  const [removeOpen, setRemoveOpen] = useState(false);
   const confirm = useConfirm();
   const { user, fullName, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -101,12 +102,6 @@ function SettingsPage() {
     else toast.success(on ? t("sec.bioOn") : t("sec.bioOff"));
   };
 
-  const removePin = async () => {
-    const ok = await confirm({ title: t("sec.clearPin"), description: t("sec.clearPinConfirm") });
-    if (!ok) return;
-    await lock.clearPin();
-    toast.success(t("sec.pinRemoved"));
-  };
 
   const openNameEditor = () => {
     setNameDraft(fullName);
@@ -340,7 +335,7 @@ function SettingsPage() {
               </button>
               {lock.hasPin ? (
                 <button
-                  onClick={() => void removePin()}
+                  onClick={() => setRemoveOpen(true)}
                   className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs text-destructive"
                 >
                   {t("sec.clearPin")}
@@ -362,6 +357,17 @@ function SettingsPage() {
               <option value="never">{t("sec.al.never")}</option>
             </select>
           </Row>
+
+          {lock.hasPin ? (
+            <Row icon={<Lock className="h-4 w-4" />} label={t("sec.lockNow")} description={t("sec.lockNowDesc")}>
+              <button
+                onClick={() => lock.lockNow()}
+                className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs"
+              >
+                {t("sec.lockNow")}
+              </button>
+            </Row>
+          ) : null}
 
           <Row icon={<ShieldCheck className="h-4 w-4" />} label={t("set.hideBalances")} description={t("set.hideBalancesDesc")}>
             <Switch
@@ -582,6 +588,7 @@ function SettingsPage() {
       </section>
 
       <PinDialog open={pinOpen} onOpenChange={setPinOpen} />
+      <RemovePinDialog open={removeOpen} onOpenChange={setRemoveOpen} />
 
 
       <Dialog open={nameOpen} onOpenChange={setNameOpen}>
@@ -742,6 +749,73 @@ function PinDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
           <Button className="w-full" disabled={busy} onClick={() => void save()}>
             {t("sec.pinSave")}
           </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Disabling the lock requires proof of ownership: current PIN, or biometrics. */
+function RemovePinDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const t = useT();
+  const lock = useLock();
+  const [pin, setPin] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const run = async (proof: { pin?: string; biometric?: boolean }) => {
+    setBusy(true);
+    const res = await lock.clearPin(proof);
+    setBusy(false);
+    if (res.error) {
+      toast.error(t("sec.pinWrongCurrent"));
+      return;
+    }
+    setPin("");
+    onOpenChange(false);
+    toast.success(t("sec.pinRemoved"));
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) setPin("");
+        onOpenChange(v);
+      }}
+    >
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("sec.clearPin")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">{t("sec.clearPinConfirm")}</p>
+          <Label htmlFor="pinRemove">{t("sec.pinCurrent")}</Label>
+          <Input
+            id="pinRemove"
+            type="password"
+            inputMode="numeric"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="text-center text-xl tracking-[0.5em]"
+          />
+          <Button
+            className="w-full"
+            variant="destructive"
+            disabled={busy || pin.length !== 6}
+            onClick={() => void run({ pin })}
+          >
+            {t("sec.clearPin")}
+          </Button>
+          {lock.biometricEnabled && lock.biometricStatus.available ? (
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={busy}
+              onClick={() => void run({ biometric: true })}
+            >
+              {t("lock.useBiometrics")}
+            </Button>
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>
