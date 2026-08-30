@@ -17,17 +17,12 @@ import {
 } from "react";
 import { getSecureStore } from "@/lib/secure-store";
 import {
-  createPinCredential,
-  verifyPin,
-  isValidPin,
-  type PinCredential,
-} from "@/lib/pin";
-import {
-  authenticateBiometric,
   getBiometricStatus,
   type BiometricResult,
   type BiometricStatus,
 } from "@/lib/biometrics";
+import * as core from "@/lib/lock-core";
+import type { LockConfig } from "@/lib/lock-core";
 import {
   normalizeDelay,
   shouldLockOnInactivity,
@@ -36,17 +31,9 @@ import {
 } from "@/lib/lock-policy";
 import { isNativeShell } from "@/lib/native";
 
-const CONFIG_KEY = "nova.lock.v1";
-/** Non-sensitive hint so the very first paint can lock without a flash. */
-const HINT_KEY = "nova.lock.enabled";
+export type { LockConfig } from "@/lib/lock-core";
 
-export type LockConfig = {
-  pin: PinCredential | null;
-  biometric: boolean;
-  delay: AutoLockDelay;
-};
-
-const DEFAULT_CONFIG: LockConfig = { pin: null, biometric: false, delay: "m5" };
+const DEFAULT_CONFIG = core.DEFAULT_CONFIG;
 
 type LockCtx = {
   ready: boolean;
@@ -56,8 +43,8 @@ type LockCtx = {
   biometricStatus: BiometricStatus;
   delay: AutoLockDelay;
   backend: string;
-  setPin(next: string, current?: string): Promise<{ error?: "invalid" | "wrong-current" }>;
-  clearPin(): Promise<void>;
+  setPin(next: string, current?: string): Promise<{ error?: core.SetPinError }>;
+  clearPin(proof: { pin?: string; biometric?: boolean }): Promise<{ error?: "wrong-current" }>;
   setBiometricEnabled(on: boolean): Promise<{ error?: "no-pin" | "unavailable" | BiometricResult }>;
   setDelay(d: AutoLockDelay): Promise<void>;
   unlockWithPin(pin: string): Promise<boolean>;
@@ -77,14 +64,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
     reason: isNativeShell() ? "unsupported" : "web",
   });
   // Cold launch: lock immediately if the hint says a PIN exists.
-  const [locked, setLocked] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem(HINT_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [locked, setLocked] = useState(() => core.readHint());
 
   const configRef = useRef(config);
   configRef.current = config;
@@ -93,44 +73,20 @@ export function LockProvider({ children }: { children: ReactNode }) {
   const backgroundedAt = useRef<number | null>(null);
   const lastActivity = useRef(Date.now());
 
-  const persist = useCallback(async (next: LockConfig) => {
+  const persist = useCallback((next: LockConfig) => {
     setConfig(next);
-    const store = await getSecureStore();
-    await store.set(CONFIG_KEY, JSON.stringify(next));
-    try {
-      window.localStorage.setItem(HINT_KEY, next.pin ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
   }, []);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       const store = await getSecureStore();
-      let loaded = DEFAULT_CONFIG;
-      try {
-        const raw = await store.get(CONFIG_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw) as Partial<LockConfig>;
-          loaded = {
-            pin: parsed.pin ?? null,
-            biometric: Boolean(parsed.biometric),
-            delay: normalizeDelay(parsed.delay),
-          };
-        }
-      } catch {
-        /* corrupted config → treat as no lock */
-      }
+      const loaded = await core.loadConfig(store);
       if (!alive) return;
       setBackend(store.backend);
       setConfig(loaded);
       setLocked(Boolean(loaded.pin));
-      try {
-        window.localStorage.setItem(HINT_KEY, loaded.pin ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
+      await core.saveConfig(loaded, store);
       setReady(true);
       const st = await getBiometricStatus();
       if (alive) setBiometricStatus(st);
@@ -231,39 +187,32 @@ export function LockProvider({ children }: { children: ReactNode }) {
       delay: config.delay,
       backend,
       async setPin(next, current) {
-        if (!isValidPin(next)) return { error: "invalid" as const };
-        if (config.pin && !(await verifyPin(current ?? "", config.pin))) {
-          return { error: "wrong-current" as const };
-        }
-        const cred = await createPinCredential(next);
-        await persist({ ...config, pin: cred });
+        const res = await core.setPin(config, next, current);
+        if (res.error) return { error: res.error };
+        persist(res.config);
         setLocked(false);
         return {};
       },
-      async clearPin() {
-        await persist({ ...config, pin: null, biometric: false });
+      async clearPin(proof) {
+        const res = await core.clearPin(config, proof);
+        if (res.error) return { error: res.error };
+        persist(res.config);
         setLocked(false);
+        return {};
       },
       async setBiometricEnabled(on) {
-        if (!on) {
-          await persist({ ...config, biometric: false });
-          return {};
-        }
-        // Safety: biometrics may never be the only way in.
-        if (!config.pin) return { error: "no-pin" as const };
         const st = await getBiometricStatus();
         setBiometricStatus(st);
-        if (!st.available) return { error: "unavailable" as const };
-        const res = await authenticateBiometric("Enable biometric unlock for NOVA");
-        if (res !== "success") return { error: res };
-        await persist({ ...config, biometric: true });
+        const res = await core.setBiometricEnabled(config, on);
+        if (res.error) return { error: res.error };
+        persist(res.config);
         return {};
       },
       async setDelay(d) {
-        await persist({ ...config, delay: d });
+        persist(await core.setDelay(config, d));
       },
       async unlockWithPin(pin) {
-        const ok = await verifyPin(pin, config.pin);
+        const ok = await core.unlockWithPin(config, pin);
         if (ok) {
           lastActivity.current = Date.now();
           setLocked(false);
@@ -271,8 +220,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
         return ok;
       },
       async unlockWithBiometric(reason) {
-        if (!config.biometric || !config.pin) return "unavailable";
-        const res = await authenticateBiometric(reason);
+        const res = await core.unlockWithBiometric(config, reason);
         if (res === "success") {
           lastActivity.current = Date.now();
           setLocked(false);
