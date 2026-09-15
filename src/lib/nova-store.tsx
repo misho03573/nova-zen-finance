@@ -40,6 +40,15 @@ function round(n: number, cur?: CurrencyCode): number {
   return Math.round((n + Number.EPSILON) * d) / d;
 }
 
+/**
+ * Money guard. A single NaN/Infinity entering the state poisons the account
+ * balance, Net Worth, every snapshot and every aggregate forever, with no way
+ * back for the user. Actions carrying a non-finite amount are rejected.
+ */
+function finite(n: unknown): n is number {
+  return typeof n === "number" && Number.isFinite(n);
+}
+
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
 export type Account = {
@@ -542,6 +551,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
       };
     case "addTransaction": {
       // (see adjustBalance below for reconciliation records)
+      if (!finite(action.tx.amount)) return state;
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
       const ruled = action.tx.categoryLocked
         ? null
@@ -565,7 +575,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
     }
     case "adjustBalance": {
       const acc = state.accounts.find((a) => a.id === action.accountId);
-      if (!acc) return state;
+      if (!acc || !finite(action.actual) || !finite(acc.balance)) return state;
       const cur = accountCurrency(acc);
       const actual = round(action.actual, cur);
       const diff = round(actual - acc.balance, cur);
@@ -598,6 +608,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
       // Transfer legs are immutable too: editing one leg would desync the pair
       // and silently move Net Worth. Delete the transfer and redo it instead.
       if (!prev || isAdjustment(prev) || isAdjustment(action.tx)) return state;
+      if (!finite(action.tx.amount)) return state;
       if (isTransferTx(prev) || isTransferTx(action.tx)) return state;
       const nextAcc = state.accounts.find((a) => a.id === action.tx.accountId);
       // Re-denominate amount into the new account's currency if the account
@@ -639,8 +650,11 @@ export function reducer(state: NovaState, action: Action): NovaState {
         delta.has(a.id) ? { ...a, balance: round(a.balance + (delta.get(a.id) ?? 0), a.currency) } : a,
       );
       // Reversing a goal contribution must also give the money back to the goal.
-      const goalId = tx.transferId?.startsWith("goal_")
-        ? tx.transferId.slice("goal_".length).split("_")[0]
+      // Goal ids themselves contain underscores (`g_<ts>_<rand>`), so the id
+      // can never be recovered by splitting the transfer id — match the whole
+      // id against the known goals instead.
+      const goalId = tx.transferId
+        ? state.goals.find((g) => tx.transferId!.startsWith(`goal_${g.id}_`))?.id
         : undefined;
       const goals = goalId
         ? state.goals.map((g) => {
@@ -666,6 +680,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
       };
     }
     case "addAccount":
+      if (!finite(action.account.balance)) return state;
       return {
         ...state,
         accounts: [
@@ -675,7 +690,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
       };
     case "updateAccount": {
       const prev = state.accounts.find((a) => a.id === action.account.id);
-      if (!prev) return state;
+      if (!prev || !finite(action.account.balance)) return state;
       const next = { ...action.account };
       const prevCur = (prev.currency ?? "USD") as CurrencyCode;
       const nextCur = (next.currency ?? "USD") as CurrencyCode;
@@ -890,6 +905,8 @@ export function reducer(state: NovaState, action: Action): NovaState {
       };
     }
     case "setBudget": {
+      // A non-finite or negative limit makes every budget percentage nonsense.
+      if (!finite(action.limit) || action.limit < 0) return state;
       const existing = state.budgets.find((b) => b.category === action.category);
       if (existing) {
         return {
@@ -923,8 +940,10 @@ export function reducer(state: NovaState, action: Action): NovaState {
     case "setSettings":
       return { ...state, settings: { ...state.settings, ...action.patch } };
     case "addLiability":
+      if (!finite(action.l.balance)) return state;
       return { ...state, liabilities: [...state.liabilities, action.l] };
     case "updateLiability":
+      if (!finite(action.l.balance)) return state;
       return {
         ...state,
         liabilities: state.liabilities.map((l) => (l.id === action.l.id ? action.l : l)),
@@ -966,7 +985,8 @@ export function reducer(state: NovaState, action: Action): NovaState {
       const stamped: Transaction[] = [];
       for (const tx of action.txs) {
         const a = accountsMap.get(tx.accountId);
-        if (!a) continue;
+        // A single unparsable row must never poison the whole account balance.
+        if (!a || !finite(tx.amount)) continue;
         const cur = (tx.currency ?? a.currency) as CurrencyCode | undefined;
         const amt = round(tx.amount, cur);
         const ruled = tx.categoryLocked
@@ -1034,7 +1054,8 @@ export function reducer(state: NovaState, action: Action): NovaState {
     case "transfer": {
       const from = state.accounts.find((a) => a.id === action.fromId);
       const to = state.accounts.find((a) => a.id === action.toId);
-      if (!from || !to || from.id === to.id) return state;
+      // NaN <= 0 is false, so the outAmt check below cannot catch it.
+      if (!from || !to || from.id === to.id || !finite(action.amount)) return state;
       const fromCur = (from.currency ?? "USD") as CurrencyCode;
       const toCur = (to.currency ?? "USD") as CurrencyCode;
       const outAmt = round(Math.abs(action.amount), fromCur);
