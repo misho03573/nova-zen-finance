@@ -40,6 +40,15 @@ function round(n: number, cur?: CurrencyCode): number {
   return Math.round((n + Number.EPSILON) * d) / d;
 }
 
+/**
+ * Money guard. A single NaN/Infinity entering the state poisons the account
+ * balance, Net Worth, every snapshot and every aggregate forever, with no way
+ * back for the user. Actions carrying a non-finite amount are rejected.
+ */
+function finite(n: unknown): n is number {
+  return typeof n === "number" && Number.isFinite(n);
+}
+
 export type AccountType = "cash" | "bank" | "revolut" | "trading" | "crypto";
 
 export type Account = {
@@ -542,6 +551,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
       };
     case "addTransaction": {
       // (see adjustBalance below for reconciliation records)
+      if (!finite(action.tx.amount)) return state;
       const accCur = state.accounts.find((a) => a.id === action.tx.accountId)?.currency;
       const ruled = action.tx.categoryLocked
         ? null
@@ -565,7 +575,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
     }
     case "adjustBalance": {
       const acc = state.accounts.find((a) => a.id === action.accountId);
-      if (!acc) return state;
+      if (!acc || !finite(action.actual) || !finite(acc.balance)) return state;
       const cur = accountCurrency(acc);
       const actual = round(action.actual, cur);
       const diff = round(actual - acc.balance, cur);
@@ -598,6 +608,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
       // Transfer legs are immutable too: editing one leg would desync the pair
       // and silently move Net Worth. Delete the transfer and redo it instead.
       if (!prev || isAdjustment(prev) || isAdjustment(action.tx)) return state;
+      if (!finite(action.tx.amount)) return state;
       if (isTransferTx(prev) || isTransferTx(action.tx)) return state;
       const nextAcc = state.accounts.find((a) => a.id === action.tx.accountId);
       // Re-denominate amount into the new account's currency if the account
