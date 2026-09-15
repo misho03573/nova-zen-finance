@@ -690,7 +690,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
       };
     case "updateAccount": {
       const prev = state.accounts.find((a) => a.id === action.account.id);
-      if (!prev) return state;
+      if (!prev || !finite(action.account.balance)) return state;
       const next = { ...action.account };
       const prevCur = (prev.currency ?? "USD") as CurrencyCode;
       const nextCur = (next.currency ?? "USD") as CurrencyCode;

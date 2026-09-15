@@ -115,9 +115,9 @@ export function filterByRange(list: NetWorthSnapshot[], range: NwRange): NetWort
  * Change since the first snapshot on/after the start of the current month
  * (falls back to the earliest snapshot in the list).
  */
-export function monthChange(list: NetWorthSnapshot[]) {
+export function monthChange(list: NetWorthSnapshot[], asOf: Date = new Date()) {
   if (list.length === 0) return { delta: 0, pct: 0, hasBaseline: false };
-  const now = new Date();
+  const now = asOf;
   const startKey = dayKey(new Date(now.getFullYear(), now.getMonth(), 1));
   const before = [...list].reverse().find((s) => s.date < startKey);
   const baseline = before ?? list[0];
