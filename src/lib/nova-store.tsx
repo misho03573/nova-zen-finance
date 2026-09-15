@@ -680,6 +680,7 @@ export function reducer(state: NovaState, action: Action): NovaState {
       };
     }
     case "addAccount":
+      if (!finite(action.account.balance)) return state;
       return {
         ...state,
         accounts: [
@@ -904,6 +905,8 @@ export function reducer(state: NovaState, action: Action): NovaState {
       };
     }
     case "setBudget": {
+      // A non-finite or negative limit makes every budget percentage nonsense.
+      if (!finite(action.limit) || action.limit < 0) return state;
       const existing = state.budgets.find((b) => b.category === action.category);
       if (existing) {
         return {
@@ -937,8 +940,10 @@ export function reducer(state: NovaState, action: Action): NovaState {
     case "setSettings":
       return { ...state, settings: { ...state.settings, ...action.patch } };
     case "addLiability":
+      if (!finite(action.l.balance)) return state;
       return { ...state, liabilities: [...state.liabilities, action.l] };
     case "updateLiability":
+      if (!finite(action.l.balance)) return state;
       return {
         ...state,
         liabilities: state.liabilities.map((l) => (l.id === action.l.id ? action.l : l)),
@@ -980,7 +985,8 @@ export function reducer(state: NovaState, action: Action): NovaState {
       const stamped: Transaction[] = [];
       for (const tx of action.txs) {
         const a = accountsMap.get(tx.accountId);
-        if (!a) continue;
+        // A single unparsable row must never poison the whole account balance.
+        if (!a || !finite(tx.amount)) continue;
         const cur = (tx.currency ?? a.currency) as CurrencyCode | undefined;
         const amt = round(tx.amount, cur);
         const ruled = tx.categoryLocked
@@ -1048,7 +1054,8 @@ export function reducer(state: NovaState, action: Action): NovaState {
     case "transfer": {
       const from = state.accounts.find((a) => a.id === action.fromId);
       const to = state.accounts.find((a) => a.id === action.toId);
-      if (!from || !to || from.id === to.id) return state;
+      // NaN <= 0 is false, so the outAmt check below cannot catch it.
+      if (!from || !to || from.id === to.id || !finite(action.amount)) return state;
       const fromCur = (from.currency ?? "USD") as CurrencyCode;
       const toCur = (to.currency ?? "USD") as CurrencyCode;
       const outAmt = round(Math.abs(action.amount), fromCur);
