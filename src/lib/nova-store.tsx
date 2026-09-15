@@ -650,8 +650,11 @@ export function reducer(state: NovaState, action: Action): NovaState {
         delta.has(a.id) ? { ...a, balance: round(a.balance + (delta.get(a.id) ?? 0), a.currency) } : a,
       );
       // Reversing a goal contribution must also give the money back to the goal.
-      const goalId = tx.transferId?.startsWith("goal_")
-        ? tx.transferId.slice("goal_".length).split("_")[0]
+      // Goal ids themselves contain underscores (`g_<ts>_<rand>`), so the id
+      // can never be recovered by splitting the transfer id — match the whole
+      // id against the known goals instead.
+      const goalId = tx.transferId
+        ? state.goals.find((g) => tx.transferId!.startsWith(`goal_${g.id}_`))?.id
         : undefined;
       const goals = goalId
         ? state.goals.map((g) => {
