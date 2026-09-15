@@ -8,7 +8,8 @@ describe("nw history",()=>{
  });
  it("same snapshot detection",()=>{ expect(sameSnapshot(s("2026-08-10",100,10),s("2026-08-10",100,10))).toBe(true); });
  it("month change",()=>{ const h=[s("2026-07-31",1000,0),s("2026-08-05",1100,0),s("2026-08-10",1184.2,0)];
-  const m=monthChange(h); expect(Math.round(m.delta*10)/10).toBe(184.2); expect(Math.round(m.pct*10)/10).toBe(18.4); });
+  // Evaluated as of August 2026 — the result must not depend on today's date.
+  const m=monthChange(h,new Date(2026,7,10)); expect(Math.round(m.delta*10)/10).toBe(184.2); expect(Math.round(m.pct*10)/10).toBe(18.4); });
  it("range filter",()=>{ const today=dayKey(); const old=s("2020-01-01",1,0); const h=[old,s(today,2,0)];
   expect(filterByRange(h,"1M").length).toBe(1); expect(filterByRange(h,"ALL").length).toBe(2); });
  it("liability reduces net",()=>{ expect(s("2026-08-10",1000,300).net).toBe(700); });
