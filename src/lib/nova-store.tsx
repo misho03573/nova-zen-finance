@@ -1254,21 +1254,59 @@ export function NovaProvider({ children }: { children: ReactNode }) {
   const userId = user?.id ?? null;
   const activeKeyRef = useRef<string>(keyFor(null));
   const hydratedRef = useRef<boolean>(false);
-  const remoteSyncRef = useRef<boolean>(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncRef = useRef<CloudSync<NovaState>>(new CloudSync<NovaState>(supabaseTransport));
+  const stateRef = useRef<NovaState>(state);
+  stateRef.current = state;
+
+  const runSave = useCallback(async (uid: string, snapshot: NovaState) => {
+    const sync = syncRef.current;
+    if (!sync.canWrite) return;
+    setSyncState("saving");
+    const res = await sync.save(uid, snapshot);
+    if (res.status === "saved") setSyncState("synced");
+    else if (res.status === "skipped") setSyncState("synced");
+    else if (res.status === "save-error") setSyncState("save-error");
+    else if (res.status === "conflict") {
+      // Newer data exists in the cloud. We refuse to overwrite it and keep the
+      // local document recoverable instead of silently discarding either side.
+      try {
+        window.localStorage.setItem(
+          recoveryKeyFor(uid),
+          JSON.stringify({ savedAt: new Date().toISOString(), state: snapshot }),
+        );
+      } catch {
+        /* ignore */
+      }
+      setSyncState("conflict");
+    }
+  }, []);
+
+  /** Writes any pending change immediately; used before reset / sign-out. */
+  const flushSync = useCallback(async () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    if (!userId) return;
+    await runSave(userId, stateRef.current);
+  }, [userId, runSave]);
 
   // Load state for the active user (or guest).
   // - Guest: local demo seed.
-  // - Authenticated: load from Supabase (`user_data.data`). If no row exists yet
-  //   this is the user's first sign-in → create an empty row. Never wipe an
-  //   existing row.
+  // - Authenticated: load from the cloud. A failed read leaves the session
+  //   cloud-read-only so optimistic local state can never clobber the server.
   useEffect(() => {
     if (typeof window === "undefined") return;
     let cancelled = false;
     const key = keyFor(userId);
     activeKeyRef.current = key;
     hydratedRef.current = false;
-    remoteSyncRef.current = false;
+    syncRef.current.detach();
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
 
     if (!userId) {
       try {
@@ -1287,6 +1325,7 @@ export function NovaProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "hydrate", state: seed });
       }
       hydratedRef.current = true;
+      setSyncState("local");
       return;
     }
 
@@ -1304,39 +1343,24 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     }
 
     (async () => {
-      const { data, error } = await supabase
-        .from("user_data")
-        .select("data")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const res = await syncRef.current.load(userId, emptyState);
       if (cancelled) return;
-      if (error) {
-        if (import.meta.env.DEV) console.error("[nova] load failed", error.message);
-        // We never saw the server row, so the optimistic local cache may be
-        // stale. Stay read-only for this session instead of uploading it and
-        // clobbering data written from another device.
+      if (res.status === "load-error") {
         hydratedRef.current = true;
-        remoteSyncRef.current = false;
         setSyncState("load-error");
         return;
       }
-      if (data?.data && typeof data.data === "object" && (data.data as NovaState).accounts) {
-        dispatch({ type: "hydrate", state: data.data as NovaState });
-      } else {
-        // First-time registration: create empty row.
-        dispatch({ type: "hydrate", state: emptyState });
-        await supabase
-          .from("user_data")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .insert({ user_id: userId, data: emptyState as any });
-      }
+      dispatch({ type: "hydrate", state: res.state });
       hydratedRef.current = true;
-      remoteSyncRef.current = true;
       setSyncState("synced");
     })();
 
     return () => {
       cancelled = true;
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
     };
   }, [userId]);
 
@@ -1348,32 +1372,21 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     // Debounced remote persist for signed-in users.
-    if (!remoteSyncRef.current || !userId) {
-      if (!userId) setSyncState("local");
+    if (!userId) {
+      setSyncState("local");
       return;
     }
+    if (!syncRef.current.canWrite) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     const snapshot = state;
     const uid = userId;
     setSyncState("saving");
     saveTimerRef.current = setTimeout(() => {
-      supabase
-        .from("user_data")
-        .upsert(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          { user_id: uid, data: snapshot as any },
-          { onConflict: "user_id" },
-        )
-        .then(({ error }) => {
-          if (error) {
-            if (import.meta.env.DEV) console.error("[nova] save failed", error.message);
-            setSyncState("save-error");
-          } else {
-            setSyncState("synced");
-          }
-        });
+      saveTimerRef.current = null;
+      void runSave(uid, snapshot);
     }, 600);
-  }, [state, userId]);
+  }, [state, userId, runSave]);
+
 
   // Daily Net Worth snapshot. Recomputed whenever accounts/liabilities change
   // and upserted under today's local date, so there is never more than one
