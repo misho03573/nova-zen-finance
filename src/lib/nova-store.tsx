@@ -1657,7 +1657,11 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       updateCategoryRule,
       deleteCategoryRule,
       toggleCategoryRule,
+      renameMerchant,
+      mergeMerchants,
+      flushSync,
     ],
+
   );
 
 
