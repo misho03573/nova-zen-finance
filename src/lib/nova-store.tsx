@@ -9,8 +9,10 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { setSyncState } from "@/lib/sync-status";
+import { CloudSync, recoveryKeyFor } from "@/lib/sync-core";
+import { supabaseTransport } from "@/lib/sync-transport";
+
 import { GUEST_STORE_KEY, storeKeyFor } from "@/lib/local-cache";
 import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
@@ -1242,7 +1244,10 @@ type Ctx = {
   renameMerchant: (key: string, name: string) => void;
   /** Fold one or more merchant identities into a single canonical one. */
   mergeMerchants: (targetKey: string, targetName: string, sourceKeys: string[]) => void;
+  /** Flushes any pending cloud write; resolves once the write settled. */
+  flushSync: () => Promise<void>;
 };
+
 
 const NovaContext = createContext<Ctx | null>(null);
 
@@ -1607,7 +1612,9 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       toggleCategoryRule,
       renameMerchant,
       mergeMerchants,
+      flushSync,
     }),
+
     [
       state,
       addTransaction,
