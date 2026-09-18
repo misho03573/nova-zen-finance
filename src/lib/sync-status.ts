@@ -12,7 +12,9 @@ export type SyncState =
   | "saving" // a cloud write is in flight
   | "offline" // browser reports no network
   | "load-error" // cloud read failed — the app stays read-only for the cloud
-  | "save-error"; // cloud write failed — local edits are NOT in the cloud
+  | "save-error" // cloud write failed — local edits are NOT in the cloud
+  | "conflict"; // cloud moved ahead elsewhere — writing here is stopped
+
 
 
 let current: SyncState = "local";

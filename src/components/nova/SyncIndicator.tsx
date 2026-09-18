@@ -37,7 +37,13 @@ export function SyncIndicator() {
   const status = useSyncExternalStore(subscribeSync, getSyncState, getSyncServerState);
 
   if (!mounted) return null;
-  if (status !== "offline" && status !== "load-error" && status !== "save-error") return null;
+  if (
+    status !== "offline" &&
+    status !== "load-error" &&
+    status !== "save-error" &&
+    status !== "conflict"
+  )
+    return null;
 
   const offline = status === "offline";
   const Icon = offline ? WifiOff : CloudOff;
@@ -45,7 +51,10 @@ export function SyncIndicator() {
     ? tr("sync.offline")
     : status === "load-error"
       ? tr("sync.loadError")
-      : tr("sync.saveError");
+      : status === "conflict"
+        ? tr("sync.conflict")
+        : tr("sync.saveError");
+
 
   return (
     <div

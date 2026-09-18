@@ -1300,6 +1300,7 @@ const en: Dict = {
   "sec.al.m5": "After 5 minutes",
   "sec.al.m15": "After 15 minutes",
   "sec.al.never": "Never",
+  "sync.conflict": "Newer data was saved elsewhere. This device stopped saving to protect it — reload to get the latest.",
 };
 
 const bg: Dict = {
@@ -2563,6 +2564,7 @@ const bg: Dict = {
   "sec.al.m5": "След 5 минути",
   "sec.al.m15": "След 15 минути",
   "sec.al.never": "Никога",
+  "sync.conflict": "По-нови данни са записани от друго устройство. Записът тук е спрян, за да ги защити — презаредете за последната версия.",
 };
 
 const de: Dict = {
@@ -3832,6 +3834,7 @@ const de: Dict = {
   "sec.al.m5": "Nach 5 Minuten",
   "sec.al.m15": "Nach 15 Minuten",
   "sec.al.never": "Nie",
+  "sync.conflict": "Neuere Daten wurden anderswo gespeichert. Dieses Gerät speichert nicht mehr, um sie zu schützen — neu laden für den aktuellen Stand.",
 };
 
 const fr: Dict = {
@@ -5101,6 +5104,7 @@ const fr: Dict = {
   "sec.al.m5": "Après 5 minutes",
   "sec.al.m15": "Après 15 minutes",
   "sec.al.never": "Jamais",
+  "sync.conflict": "Des données plus récentes ont été enregistrées ailleurs. Cet appareil a cessé d'enregistrer pour les protéger — rechargez pour la dernière version.",
 };
 
 const es: Dict = {
@@ -6370,6 +6374,7 @@ const es: Dict = {
   "sec.al.m5": "Tras 5 minutos",
   "sec.al.m15": "Tras 15 minutos",
   "sec.al.never": "Nunca",
+  "sync.conflict": "Se guardaron datos más recientes en otro lugar. Este dispositivo dejó de guardar para protegerlos: recarga para ver lo último.",
 };
 
 const DICTS: Record<string, Dict> = { en, bg, de, fr, es };
