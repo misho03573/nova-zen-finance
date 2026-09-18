@@ -58,7 +58,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { state, setSettings, exportData, importData } = useNova();
+  const { state, setSettings, exportData, importData, flushSync } = useNova();
   const t = useT();
   const s = state.settings;
   const fileRef = useRef<HTMLInputElement>(null);
@@ -159,16 +159,17 @@ function SettingsPage() {
     });
     if (!ok) return;
     // Signed-in users must be reset in the cloud too, otherwise the next load
-    // simply re-hydrates the deleted data from `user_data`.
+    // simply re-hydrates the deleted data from the cloud. We wait for the
+    // write to actually settle instead of racing a timer.
     if (user) {
       const ok2 = importData(JSON.stringify(emptyState));
       if (!ok2) {
         toast.error(t("settings.err.reset"));
         return;
       }
-      // Give the debounced cloud write time to land before reloading.
-      await new Promise((r) => setTimeout(r, 1200));
+      await flushSync();
     }
+
     clearLocalNovaData(user?.id ?? null);
     location.reload();
   };
