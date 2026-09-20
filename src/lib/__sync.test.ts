@@ -162,10 +162,11 @@ describe("save", () => {
     const other = new CloudSync<Doc>(cloud);
     await other.load("u1", empty);
     await other.save("u1", doc("base", [{ id: "t1" }]));
-    // The stale device tries to push its old copy back.
-    const res = await stale.save("u1", doc("base", [{ id: "t1" }, { id: "t2" }]));
+    // The stale device edits its old copy (which still contains t2) and pushes.
+    const res = await stale.save("u1", doc("base", [{ id: "t1" }, { id: "t2" }, { id: "t3" }]));
     expect(res.status).toBe("conflict");
     expect((cloud.row!.data as Doc).transactions).toHaveLength(1);
+
   });
 
   it("adopting the remote document re-enables safe writes", async () => {
