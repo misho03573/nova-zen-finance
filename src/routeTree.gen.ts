@@ -24,6 +24,7 @@ import { Route as NetworthRouteImport } from './routes/networth'
 import { Route as MerchantsRouteImport } from './routes/merchants'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ImportRouteImport } from './routes/import'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ForecastRouteImport } from './routes/forecast'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
@@ -111,6 +112,11 @@ const ImportRoute = ImportRouteImport.update({
   path: '/import',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GoalsRoute = GoalsRouteImport.update({
   id: '/goals',
   path: '/goals',
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/diagnostics': typeof DiagnosticsRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
+  '/health': typeof HealthRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
   '/merchants': typeof MerchantsRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/diagnostics': typeof DiagnosticsRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
+  '/health': typeof HealthRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
   '/merchants': typeof MerchantsRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/diagnostics': typeof DiagnosticsRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
+  '/health': typeof HealthRoute
   '/import': typeof ImportRoute
   '/insights': typeof InsightsRoute
   '/merchants': typeof MerchantsRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/diagnostics'
     | '/forecast'
     | '/goals'
+    | '/health'
     | '/import'
     | '/insights'
     | '/merchants'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/diagnostics'
     | '/forecast'
     | '/goals'
+    | '/health'
     | '/import'
     | '/insights'
     | '/merchants'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/diagnostics'
     | '/forecast'
     | '/goals'
+    | '/health'
     | '/import'
     | '/insights'
     | '/merchants'
@@ -351,6 +363,7 @@ export interface RootRouteChildren {
   DiagnosticsRoute: typeof DiagnosticsRoute
   ForecastRoute: typeof ForecastRoute
   GoalsRoute: typeof GoalsRoute
+  HealthRoute: typeof HealthRoute
   ImportRoute: typeof ImportRoute
   InsightsRoute: typeof InsightsRoute
   MerchantsRoute: typeof MerchantsRoute
@@ -475,6 +488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/goals': {
       id: '/goals'
       path: '/goals'
@@ -567,6 +587,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiagnosticsRoute: DiagnosticsRoute,
   ForecastRoute: ForecastRoute,
   GoalsRoute: GoalsRoute,
+  HealthRoute: HealthRoute,
   ImportRoute: ImportRoute,
   InsightsRoute: InsightsRoute,
   MerchantsRoute: MerchantsRoute,

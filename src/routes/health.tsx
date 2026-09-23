@@ -133,13 +133,11 @@ function HealthPage() {
   const tr = useT();
   const [nonce, setNonce] = useState(0);
   const [open, setOpen] = useState<HealthKind | null>(null);
-  const [error, setError] = useState(false);
 
   const categoryIds = useMemo(() => state.categories.map((c) => c.id), [state.categories]);
 
   const report = useMemo(() => {
     try {
-      setError(false);
       return scanDataHealth({
         transactions: display.transactions,
         accounts: display.accounts,
@@ -148,9 +146,8 @@ function HealthPage() {
         categoryIds,
         now: Date.now(),
       });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch {
-      setError(true);
+      // A scan failure must stay contained: show the error state, change nothing.
       return null;
     }
     // `nonce` forces an in-memory recompute when the user taps Refresh.
@@ -165,7 +162,7 @@ function HealthPage() {
     <PageHeader back subtitle={tr("dh.subtitle")} title={tr("dh.title")} right={<CurrencyPicker />} />
   );
 
-  if (error || !report) {
+  if (!report) {
     return (
       <AppShell>
         {header}
