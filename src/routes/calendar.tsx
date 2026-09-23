@@ -326,8 +326,8 @@ function CalendarPage() {
                   {new Date(selectedDay.ts).toLocaleDateString(locale, {
                     day: "numeric",
                     month: "long",
-                    year: "numeric",
                   })}
+
                 </p>
               </div>
               {selectedDay.balance !== null ? (
