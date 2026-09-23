@@ -79,7 +79,7 @@ function Onboarding() {
           <button
             type="button"
             onClick={finish}
-            className="tap px-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="tap min-h-11 px-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             {t("onb.skip")}
           </button>
@@ -130,7 +130,7 @@ function Onboarding() {
             <button
               type="button"
               onClick={finish}
-              className="tap mt-3 w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground"
+              className="tap mt-3 min-h-11 w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               {t("onb.explore")}
             </button>
