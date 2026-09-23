@@ -196,7 +196,7 @@ function HealthPage() {
           className="rounded-3xl border border-border p-5 shadow-[var(--shadow-card)]"
           style={{ background: "var(--gradient-card)" }}
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                 {tr("dh.findings")}
@@ -217,7 +217,7 @@ function HealthPage() {
             <button
               onClick={refresh}
               aria-label={tr("dh.refresh")}
-              className="press inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border border-border px-4 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="press inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 text-xs font-semibold sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <RefreshCw className="h-4 w-4" />
               {tr("dh.refresh")}
