@@ -20,7 +20,9 @@ const AskInput = z.object({
   locale: z.enum(["en", "bg", "de", "fr", "es"]),
 });
 
-const LANGUAGE_NAMES: Record<AskInput["shape"]["locale"], string> = {
+type AskData = z.infer<typeof AskInput>;
+
+const LANGUAGE_NAMES: Record<AskData["locale"], string> = {
   en: "English",
   bg: "Bulgarian",
   de: "German",
@@ -28,7 +30,7 @@ const LANGUAGE_NAMES: Record<AskInput["shape"]["locale"], string> = {
   es: "Spanish",
 };
 
-function systemPrompt(locale: AskInput["shape"]["locale"], lines: string[]): string {
+function systemPrompt(locale: AskData["locale"], lines: string[]): string {
   return [
     "You are NOVA AI, the assistant inside the NOVA personal finance app.",
     "Below are anonymized financial metrics for the user's current month. They are ground truth: never contradict them, and never invent numbers not derivable from them. If the metrics cannot answer a question, say so briefly.",
