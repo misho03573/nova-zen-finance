@@ -455,13 +455,8 @@ export function sectionCounts(state: Partial<NovaState>): Record<ExportSection, 
 export type ExportFile = { name: string; mime: string; content: string; section?: ExportSection };
 
 function headerFor(rows: Record<string, unknown>[], section: ExportSection): string[] {
+  // Stable headers so an empty selection still produces a valid CSV.
   if (rows.length > 0) return Object.keys(rows[0]);
-  // Stable empty-file headers so an empty export is still a valid CSV.
-  const sample = sectionRows(
-    { [section]: [] } as Partial<NovaState>,
-    section,
-  );
-  void sample;
   return EMPTY_HEADERS[section] ?? [];
 }
 
