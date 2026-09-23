@@ -10,6 +10,8 @@ import {
   ArrowRight,
   CalendarDays,
   LifeBuoy,
+  ShieldCheck,
+
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { NotificationBell } from "@/components/nova/NotificationBell";
