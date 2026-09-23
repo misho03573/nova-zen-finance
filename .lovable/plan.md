@@ -1,37 +1,33 @@
-# NOVA release-readiness quality pass
+# NOVA AI assistant production hardening
 
 ## Scope
-Fix only issues reproduced in the preview or proven directly from current code. Preserve financial calculations, synchronization, security, routes, translations, and visual design.
+Complete the existing read-only assistant without changing financial calculations, sync, native security, routes, or the visual system.
 
-## Verified fixes
+## Implementation
+1. **Secure the server boundary**
+   - Require an authenticated session for every assistant request.
+   - Stop trusting client-supplied financial metrics: load the signed-in user’s saved state server-side, validate it, and derive the existing aggregate-only AI snapshot there.
+   - Keep raw accounts, transaction records, names, notes, identifiers, credentials, and secrets out of prompts and browser responses.
+   - Validate questions, locale, and complete bounded conversation history; reject malformed and oversized input.
 
-1. **Touch and keyboard usability**
-   - Increase shared form controls and key text actions to at least 44px on touch devices.
-   - Make Wallet transaction actions visible on touch and when keyboard focus enters a row.
-   - Add visible focus styling to custom buttons and ensure selection controls expose their selected state.
-   - Prevent translated bottom-navigation labels from wrapping or clipping.
+2. **Harden model calls**
+   - Preserve `openai/gpt-6-astra` on the streaming Responses API with server-only credentials, stateless history, and low reasoning.
+   - Add bounded server-side abuse controls per authenticated user.
+   - Classify provider failures so only retryable rate-limit/server failures offer retry; surface safe localized messages for authentication, credits, configuration, validation, and provider errors.
+   - Do not add artificial timeouts; allow explicit user retry instead.
 
-2. **Form validation and feedback**
-   - Reject invalid goal targets, saved amounts, monthly amounts, and zero/non-finite contributions before state changes.
-   - Show localized validation feedback instead of silently doing nothing.
-   - Add proper input constraints and accessible labels to affected goal controls.
+3. **Complete the assistant experience**
+   - Send the full bounded conversation on each turn and keep failed user input recoverable.
+   - Render assistant Markdown safely, announce loading/errors, disable duplicate submissions, add Retry, and label navigation/actions accessibly.
+   - Add a localized privacy and educational-information disclaimer, plus honest empty-data behavior.
+   - Preserve the current NOVA visual language and structured read-only navigation suggestions.
 
-3. **Stored-data resilience and privacy**
-   - Validate persisted NOVA state before hydration so malformed collection fields cannot crash screens after reload.
-   - Fall back safely without changing valid financial data.
-   - Include conflict-recovery snapshots in sign-out/reset cleanup so financial data is not left on the device.
+4. **Verification**
+   - Add focused tests for aggregate-data privacy, input validation, auth enforcement, rate limiting, malformed cloud state, provider failures, and successful responses.
+   - Exercise the authenticated happy path end-to-end when a test session is available; otherwise verify the unauthorized path and document the blocked authenticated browser check.
+   - Run all tests, type checks, translation checks, and the production build.
 
-4. **Accessibility fixes**
-   - Announce lock-screen authentication errors to assistive technology.
-   - Add missing dialog descriptions and semantic labels for verified icon-only controls.
-   - Keep the selected application language reflected on the document.
-
-## Tests and verification
-
-- Add focused unit tests for persisted-state validation, recovery-key cleanup, and goal amount validation.
-- Re-test at 320px mobile and 1280px desktop widths, including keyboard focus and overflow checks.
-- Run the full test suite, typecheck, translation checks, production build, and inspect the final build log.
-
-## Remaining-risk reporting
-
-Report only risks that remain observable after verification, especially areas that require a real native device or authenticated multi-device session.
+## Technical notes
+- Reuse the existing authenticated server middleware and the existing user-data row; no new financial tables or write-capable AI tools.
+- The server will reconstruct the established financial context and `AiSnapshot`; the browser sends only the question, locale, and conversation transcript.
+- Rate limiting will be lightweight and server-side, appropriate to the current stack, without introducing a separate service.
