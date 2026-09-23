@@ -20,7 +20,7 @@ import type {
   Transaction,
 } from "@/lib/nova-store";
 import { isAdjustment, isTransferTx } from "@/lib/nova-store";
-import { merchantIdentity } from "@/lib/merchant";
+import { merchantKey } from "@/lib/merchant";
 
 export type HealthKind =
   | "duplicate"
@@ -154,7 +154,7 @@ function cleanTransactions(txs: readonly Transaction[] | undefined): { rows: Cle
     rows.push({
       id: t.id,
       title,
-      merchantKey: title ? merchantIdentity(title).key : "",
+      merchantKey: title ? merchantKey(title) : "",
       category: safeText(t.category).toLowerCase(),
       amount,
       ts,
@@ -378,7 +378,7 @@ export function findStaleSchedules(
 
   for (const s of Array.isArray(subscriptions) ? subscriptions : []) {
     if (!s || typeof s.id !== "string") continue;
-    if (s.status !== "active") continue;
+    if ((s.status ?? "active") !== "active") continue;
     const ts = safeTime(s.nextDate);
     if (ts === null || ts >= cutoff) continue;
     const days = Math.floor((now - ts) / DAY);
