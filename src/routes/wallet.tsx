@@ -558,7 +558,7 @@ function AccountCardInner({ account }: { account: Account }) {
             trigger={
               <button
                 aria-label={tr("wallet.editAccount")}
-                className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+                className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -587,7 +587,7 @@ function AccountCardInner({ account }: { account: Account }) {
                 toast.message(tr("wallet.deleted"));
               }
             }}
-            className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+            className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -721,7 +721,7 @@ function AdjustBalanceDialog({ account }: { account: Account }) {
         <button
           aria-label={tr("adjust.cta")}
           title={tr("adjust.cta")}
-          className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+          className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
         >
           <Scale className="h-3.5 w-3.5" />
         </button>
