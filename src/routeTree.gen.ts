@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhatifRouteImport } from './routes/whatif'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
 import { Route as StatsRouteImport } from './routes/stats'
@@ -35,6 +36,11 @@ import { Route as AiRouteImport } from './routes/ai'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WhatifRoute = WhatifRouteImport.update({
+  id: '/whatif',
+  path: '/whatif',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/stats': typeof StatsRoute
   '/subscriptions': typeof SubscriptionsRoute
   '/wallet': typeof WalletRoute
+  '/whatif': typeof WhatifRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
   '/stats': typeof StatsRoute
   '/subscriptions': typeof SubscriptionsRoute
   '/wallet': typeof WalletRoute
+  '/whatif': typeof WhatifRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/stats': typeof StatsRoute
   '/subscriptions': typeof SubscriptionsRoute
   '/wallet': typeof WalletRoute
+  '/whatif': typeof WhatifRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/subscriptions'
     | '/wallet'
+    | '/whatif'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/subscriptions'
     | '/wallet'
+    | '/whatif'
   id:
     | '__root__'
     | '/'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/subscriptions'
     | '/wallet'
+    | '/whatif'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -353,10 +365,18 @@ export interface RootRouteChildren {
   StatsRoute: typeof StatsRoute
   SubscriptionsRoute: typeof SubscriptionsRoute
   WalletRoute: typeof WalletRoute
+  WhatifRoute: typeof WhatifRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/whatif': {
+      id: '/whatif'
+      path: '/whatif'
+      fullPath: '/whatif'
+      preLoaderRoute: typeof WhatifRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wallet': {
       id: '/wallet'
       path: '/wallet'
@@ -561,6 +581,7 @@ const rootRouteChildren: RootRouteChildren = {
   StatsRoute: StatsRoute,
   SubscriptionsRoute: SubscriptionsRoute,
   WalletRoute: WalletRoute,
+  WhatifRoute: WhatifRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
