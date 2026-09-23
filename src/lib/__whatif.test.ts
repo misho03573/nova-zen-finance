@@ -16,15 +16,15 @@ const DAY = 86_400_000;
 const iso = (offsetDays: number) => new Date(NOW + offsetDays * DAY).toISOString();
 
 const accounts: Account[] = [
-  { id: "a1", name: "Main", type: "bank", balance: 2000, currency: "USD", number: "•• 01", gradient: "" } as Account,
-  { id: "a2", name: "Savings", type: "savings", balance: 5000, currency: "USD", number: "•• 02", gradient: "" } as Account,
+  { id: "a1", name: "Main", type: "bank", balance: 2000, currency: "USD", number: "•• 01", gradient: "" } as unknown as Account,
+  { id: "a2", name: "Savings", type: "savings", balance: 5000, currency: "USD", number: "•• 02", gradient: "" } as unknown as Account,
 ];
 const recurring: Recurring[] = [
-  { id: "r1", title: "Salary", category: "income", amount: 3000, accountId: "a1", frequency: "monthly", nextDate: iso(5), currency: "USD" } as Recurring,
-  { id: "r2", title: "Rent", category: "home", amount: -1200, accountId: "a1", frequency: "monthly", nextDate: iso(2), currency: "USD" } as Recurring,
+  { id: "r1", title: "Salary", category: "income", amount: 3000, accountId: "a1", frequency: "monthly", nextDate: iso(5), currency: "USD" } as unknown as Recurring,
+  { id: "r2", title: "Rent", category: "home", amount: -1200, accountId: "a1", frequency: "monthly", nextDate: iso(2), currency: "USD" } as unknown as Recurring,
 ];
 const subscriptions: Subscription[] = [
-  { id: "s1", name: "Netflix", amount: 15, accountId: "a1", frequency: "monthly", nextDate: iso(7), status: "active", currency: "USD" } as Subscription,
+  { id: "s1", name: "Netflix", amount: 15, accountId: "a1", frequency: "monthly", nextDate: iso(7), status: "active", currency: "USD" } as unknown as Subscription,
 ];
 
 const raw = (o: Partial<WhatIfRawInput> = {}): WhatIfRawInput => ({ ...EMPTY_RAW, ...o });
@@ -105,7 +105,7 @@ describe("buildWhatIf projection", () => {
   it("detects a shortfall the baseline does not have", () => {
     const s = buildWhatIf({
       ...base,
-      accounts: [{ ...accounts[0], balance: 300 } as Account],
+      accounts: [{ ...accounts[0], balance: 300 } as unknown as Account],
       scenario: { oneOff: -4000, oneOffAt: NOW + 1 * DAY, monthly: 0, horizon: 30 },
     });
     expect(s.scenarioNegativeDate).not.toBeNull();
@@ -115,7 +115,7 @@ describe("buildWhatIf projection", () => {
   it("honours a safety buffer without mutating it", () => {
     const s = buildWhatIf({
       ...base,
-      accounts: [{ ...accounts[0], balance: 1000 } as Account],
+      accounts: [{ ...accounts[0], balance: 1000 } as unknown as Account],
       safetyBuffer: 900,
       scenario: { oneOff: -800, oneOffAt: NOW + 1 * DAY, monthly: 0, horizon: 30 },
     });
