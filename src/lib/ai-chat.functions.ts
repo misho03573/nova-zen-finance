@@ -37,7 +37,7 @@ export function systemPrompt(locale: AskNovaData["locale"], lines: string[]): st
 
 export const askNova = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => AskNovaInput.parse(data))
+  .validator((data: unknown) => AskNovaInput.parse(data))
   .handler(async ({ data, context }): Promise<AskNovaResult> => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) {
