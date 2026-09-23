@@ -58,7 +58,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { state, setSettings, exportData, importData, flushSync } = useNova();
+  const { state, setSettings, importData, flushSync } = useNova();
   const t = useT();
   const s = state.settings;
   const fileRef = useRef<HTMLInputElement>(null);
@@ -133,21 +133,6 @@ function SettingsPage() {
     if (!ok) return;
     await signOut();
     navigate({ to: "/auth" });
-  };
-
-  const handleExport = () => {
-    try {
-      const blob = new Blob([exportData()], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `nova-export-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(t("settings.ok.export"));
-    } catch {
-      toast.error(t("settings.err.export"));
-    }
   };
 
   const handleReset = async () => {
@@ -533,19 +518,19 @@ function SettingsPage() {
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Link>
-          <button
-            onClick={handleExport}
+          <Link
+            to="/export"
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"
           >
             <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
               <Download className="h-4 w-4" />
             </span>
             <span className="flex-1">
-              <span className="block text-sm font-semibold">{t("set.export")}</span>
-              <span className="block text-xs text-muted-foreground">{t("set.exportDesc")}</span>
+              <span className="block text-sm font-semibold">{t("ex.open")}</span>
+              <span className="block text-xs text-muted-foreground">{t("ex.openDesc")}</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+          </Link>
           <button
             onClick={() => fileRef.current?.click()}
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3 text-left text-sm shadow-[var(--shadow-card)]"

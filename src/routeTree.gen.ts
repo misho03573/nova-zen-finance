@@ -27,6 +27,7 @@ import { Route as ImportRouteImport } from './routes/import'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ForecastRouteImport } from './routes/forecast'
+import { Route as ExportRouteImport } from './routes/export'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
 import { Route as DebtRouteImport } from './routes/debt'
 import { Route as CategoriesRouteImport } from './routes/categories'
@@ -127,6 +128,11 @@ const ForecastRoute = ForecastRouteImport.update({
   path: '/forecast',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExportRoute = ExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DiagnosticsRoute = DiagnosticsRouteImport.update({
   id: '/diagnostics',
   path: '/diagnostics',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/categories': typeof CategoriesRoute
   '/debt': typeof DebtRoute
   '/diagnostics': typeof DiagnosticsRoute
+  '/export': typeof ExportRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
   '/health': typeof HealthRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/categories': typeof CategoriesRoute
   '/debt': typeof DebtRoute
   '/diagnostics': typeof DiagnosticsRoute
+  '/export': typeof ExportRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
   '/health': typeof HealthRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/categories': typeof CategoriesRoute
   '/debt': typeof DebtRoute
   '/diagnostics': typeof DiagnosticsRoute
+  '/export': typeof ExportRoute
   '/forecast': typeof ForecastRoute
   '/goals': typeof GoalsRoute
   '/health': typeof HealthRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/debt'
     | '/diagnostics'
+    | '/export'
     | '/forecast'
     | '/goals'
     | '/health'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/debt'
     | '/diagnostics'
+    | '/export'
     | '/forecast'
     | '/goals'
     | '/health'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/debt'
     | '/diagnostics'
+    | '/export'
     | '/forecast'
     | '/goals'
     | '/health'
@@ -361,6 +373,7 @@ export interface RootRouteChildren {
   CategoriesRoute: typeof CategoriesRoute
   DebtRoute: typeof DebtRoute
   DiagnosticsRoute: typeof DiagnosticsRoute
+  ExportRoute: typeof ExportRoute
   ForecastRoute: typeof ForecastRoute
   GoalsRoute: typeof GoalsRoute
   HealthRoute: typeof HealthRoute
@@ -509,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForecastRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/export': {
+      id: '/export'
+      path: '/export'
+      fullPath: '/export'
+      preLoaderRoute: typeof ExportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/diagnostics': {
       id: '/diagnostics'
       path: '/diagnostics'
@@ -585,6 +605,7 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriesRoute: CategoriesRoute,
   DebtRoute: DebtRoute,
   DiagnosticsRoute: DiagnosticsRoute,
+  ExportRoute: ExportRoute,
   ForecastRoute: ForecastRoute,
   GoalsRoute: GoalsRoute,
   HealthRoute: HealthRoute,
