@@ -54,7 +54,7 @@ describe("duplicate detection", () => {
 
   it("lowers confidence as the gap grows and ignores gaps beyond the window", () => {
     const near = findDuplicates(
-      (scanDataHealth as never, cleanRows([tx({ id: "t1", amount: -9 }), tx({ id: "t2", amount: -9, date: iso(0) })])),
+      cleanRows([tx({ id: "t1", amount: -9 }), tx({ id: "t2", amount: -9, date: iso(0) })]),
     );
     expect(near[0]!.confidence).toBe("medium");
 
