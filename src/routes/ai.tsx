@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Send, LineChart, ArrowLeft, Bot } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import { useNova, totalBalance, monthlyTotals, savingsRate, monthlySpendByCategory, netWorthBreakdown, useDisplayState } from "@/lib/nova-store";
-import { useCurrency } from "@/lib/currency";
-import { useT, fmt } from "@/lib/i18n";
+import { useT, useLocale } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useFinancialContext } from "@/lib/use-financial-context";
-import { suggestActions } from "@/lib/ai-context";
+import { suggestActions, buildAiSnapshot, snapshotLines } from "@/lib/ai-context";
+import { askNova } from "@/lib/ai-chat.functions";
 
 export const Route = createFileRoute("/ai")({
   head: () => ({
@@ -22,13 +22,14 @@ export const Route = createFileRoute("/ai")({
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
+const LANGS = ["en", "bg", "de", "fr", "es"] as const;
+type Lang = (typeof LANGS)[number];
+
 function AIChat() {
-  const { state: rawState } = useNova();
-  // Aggregates must be currency-normalized before any cross-account math.
-  const state = useDisplayState();
-  void rawState;
-  const { format, currency } = useCurrency();
+  const { format: _format } = useCurrencySafe();
+  void _format;
   const tr = useT();
+  const locale = useLocale();
   const { fullName } = useAuth();
   const firstName = fullName?.split(" ")[0] || "there";
   const [messages, setMessages] = useState<Msg[]>([
@@ -49,19 +50,36 @@ function AIChat() {
   const ctx = useFinancialContext();
   // Structured actions instead of free-text links: the UI navigates for real.
   const actions = useMemo(() => suggestActions(ctx), [ctx]);
-  const answer = useMemo(() => makeAnswer(state, format, currency.code, tr), [state, format, currency.code, tr]);
 
-  const send = (text: string) => {
-    if (!text.trim()) return;
-    const um: Msg = { id: `u_${Date.now()}`, role: "user", content: text.trim() };
-    setMessages((m) => [...m, um]);
+  const askNovaFn = useServerFn(askNova);
+  const lang: Lang = (LANGS as readonly string[]).includes(locale) ? (locale as Lang) : "en";
+
+  const send = async (text: string) => {
+    const q = text.trim();
+    if (!q || typing) return;
+    const userMsg: Msg = { id: `u_${Date.now()}`, role: "user", content: q };
+    // Only anonymized aggregates leave the device — never raw state.
+    const payload = {
+      question: q,
+      lines: snapshotLines(buildAiSnapshot(ctx)),
+      history: messages
+        .filter((m) => m.id !== "welcome")
+        .slice(-6)
+        .map((m) => ({ role: m.role, content: m.content })),
+      locale: lang,
+    };
+    setMessages((m) => [...m, userMsg]);
     setInput("");
     setTyping(true);
-    setTimeout(() => {
-      const reply = answer(text);
+    try {
+      const res = await askNovaFn({ data: payload });
+      const reply = res.ok ? res.text : tr("ai.error");
       setMessages((m) => [...m, { id: `a_${Date.now()}`, role: "assistant", content: reply }]);
+    } catch {
+      setMessages((m) => [...m, { id: `a_${Date.now()}`, role: "assistant", content: tr("ai.error") }]);
+    } finally {
       setTyping(false);
-    }, 650 + Math.random() * 500);
+    }
   };
 
   const suggestions = [
