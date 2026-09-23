@@ -1,9 +1,9 @@
 /**
  * NOVA AI assistant — real model call through the Lovable AI Gateway.
  *
- * Privacy contract: the client sends only `snapshotLines(buildAiSnapshot(ctx))`
- * — aggregated, anonymized metrics with no names, ids or transaction titles.
- * The model never sees raw app state.
+ * Privacy contract: the browser sends only a question, bounded history, locale,
+ * and display currency. The authenticated server derives anonymized aggregates
+ * from that user's own cloud state. Raw records never enter the model prompt.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { streamText } from "ai";
@@ -13,7 +13,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AskNovaInput, classifyAiError, consumeAiRateLimit, type AskNovaData, type AskNovaResult } from "@/lib/ai-assistant-core";
 import { buildServerSnapshotLines } from "@/lib/ai-financial-context.server";
 
-const LANGUAGE_NAMES: Record<AskData["locale"], string> = {
+const LANGUAGE_NAMES: Record<AskNovaData["locale"], string> = {
   en: "English",
   bg: "Bulgarian",
   de: "German",
