@@ -227,7 +227,7 @@ export function buildCalendar(args: {
   }
 
   // ---- Totals and the running available-cash balance ----
-  let running = num(forecast.startBalance);
+  let running = num(forecast.startBalance) + carried;
   let lowestBalance: number | null = null;
   let lowestDateKey: string | null = null;
   let expectedIncome = 0;
