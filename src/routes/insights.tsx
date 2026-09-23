@@ -152,6 +152,22 @@ function InsightsPage() {
 
       <section className="px-5 pb-3">
         <Link
+          to="/whatif"
+          className="press flex items-center gap-3 rounded-2xl border border-border bg-card/70 p-4 backdrop-blur"
+        >
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
+            <TrendingUp className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold">{tr("wi.open")}</span>
+            <span className="block truncate text-xs text-muted-foreground">{tr("wi.openDesc")}</span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
+      </section>
+
+      <section className="px-5 pb-3">
+        <Link
           to="/runway"
           className="press flex items-center gap-3 rounded-2xl border border-border bg-card/70 p-4 backdrop-blur"
         >
