@@ -75,7 +75,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               onClick={() => settle(false)}
               className="rounded-full border border-border bg-background/60 px-4 py-2 text-sm font-medium"
             >
-              {opts.cancelLabel ?? "Cancel"}
+              {opts.cancelLabel ?? tr("action.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => settle(true)}
@@ -91,7 +91,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   : { background: "var(--gradient-primary)" }
               }
             >
-              {opts.confirmLabel ?? "Confirm"}
+              {opts.confirmLabel ?? tr("action.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
