@@ -4,7 +4,7 @@ import { Camera, Check, Image as ImageIcon, Loader2, RefreshCw, ShieldCheck, Tra
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
 import { useNova } from "@/lib/nova-store";
 import { useCategories, iconRegistry } from "@/lib/categories";
-import { useT, useCategoryName } from "@/lib/i18n";
+import { useT, useCategoryName, fmt } from "@/lib/i18n";
 import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
