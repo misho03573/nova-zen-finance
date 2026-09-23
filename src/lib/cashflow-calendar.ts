@@ -204,9 +204,17 @@ export function buildCalendar(args: {
     now,
   });
 
+  // Expected movement between today and a future range start still affects the
+  // balance shown inside the range, so it is carried forward.
+  let carried = 0;
   for (const e of forecast.events) {
     const ts = safeTime(e.date);
     if (ts === null || ts < today) continue;
+    if (ts < start) {
+      carried += num(e.amount);
+      continue;
+    }
+
     push({
       id: `f-${e.id}`,
       title: e.title,
