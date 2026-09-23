@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Send, LineChart, ArrowLeft, Bot } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/nova/AppShell";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, fmt } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useFinancialContext } from "@/lib/use-financial-context";
 import { suggestActions, buildAiSnapshot, snapshotLines } from "@/lib/ai-context";
@@ -26,8 +26,6 @@ const LANGS = ["en", "bg", "de", "fr", "es"] as const;
 type Lang = (typeof LANGS)[number];
 
 function AIChat() {
-  const { format: _format } = useCurrencySafe();
-  void _format;
   const tr = useT();
   const locale = useLocale();
   const { fullName } = useAuth();
@@ -211,92 +209,4 @@ function Dot({ delay = "0ms" }: { delay?: string }) {
       style={{ animationDelay: delay }}
     />
   );
-}
-
-// Rule-based mock intelligence
-function makeAnswer(
-  state: ReturnType<typeof useNova>["state"],
-  format: (n: number) => string,
-  code: string,
-  tr: (k: string) => string,
-) {
-  return (q: string) => {
-    const query = q.toLowerCase();
-    const nb = netWorthBreakdown(state);
-    const balance = totalBalance(state.accounts);
-    const { income, expenses } = monthlyTotals(state.transactions);
-    const rate = savingsRate(income, expenses);
-    const byCat = monthlySpendByCategory(state.transactions);
-    const top = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-
-    const amountMatch = query.match(/(\d+[\d,.]*)/);
-    if (query.includes("afford")) {
-      const cost = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, "")) : 400;
-      const safe = balance * 0.15;
-      const pct = Math.round((cost / (balance || 1)) * 100);
-      if (cost <= safe) {
-        return fmt(tr("ai.reply.afford.yes"), { cost: format(cost), balance: format(balance), pct });
-      }
-      const weeks = Math.max(1, Math.ceil(cost / (income - expenses || 500)));
-      return fmt(tr("ai.reply.afford.tight"), { cost: format(cost), pct, weeks });
-    }
-
-    if (query.includes("waste") || query.includes("wasting")) {
-      const wasteCats = ["coffee", "subscription", "entertainment", "shopping"];
-      const waste = top.filter(([c]) => wasteCats.includes(c)).slice(0, 3);
-      const total = waste.reduce((s, [, v]) => s + v, 0);
-      const list = waste.map(([c, v]) => `• ${c} — ${format(v)}`).join("\n");
-      return fmt(tr("ai.reply.waste"), { total: format(total), list, saved: format(total * 0.3) });
-    }
-
-    if (query.match(/\b(fuel|gas|transport|uber)\b/)) {
-      const y = new Date().getFullYear();
-      const total = state.transactions
-        .filter((t) => new Date(t.date).getFullYear() === y && (t.category === "transport" || /fuel|gas|uber/i.test(t.title)))
-        .reduce((s, t) => s + (t.amount < 0 ? -t.amount : 0), 0);
-      return fmt(tr("ai.reply.fuel"), { total: format(total), year: y, monthly: format(total / 12) });
-    }
-
-    if (query.includes("save") && amountMatch) {
-      const amt = parseFloat(amountMatch[1].replace(/,/g, ""));
-      return fmt(tr("ai.reply.save"), {
-        amt: format(amt),
-        y1: format(amt * 12),
-        y3: format(amt * 36),
-        y5: format(amt * 60),
-        y5r: format(amt * 68),
-      });
-    }
-
-    if (query.includes("net worth")) {
-      return fmt(tr("ai.reply.networth"), {
-        net: format(nb.net),
-        assets: format(nb.assets),
-        liab: format(nb.liab),
-        pct: Math.round((nb.invest / (nb.assets || 1)) * 100),
-      });
-    }
-
-    if (query.includes("savings rate") || query.includes("saving rate")) {
-      return fmt(tr("ai.reply.savingsRate"), {
-        pct: Math.round(rate * 100),
-        income: format(income),
-        expenses: format(expenses),
-      });
-    }
-
-    if (query.includes("top") || query.includes("biggest") || query.includes("category")) {
-      const list = top.slice(0, 3).map(([c, v], i) => `${i + 1}. ${c} — ${format(v)}`).join("\n");
-      return fmt(tr("ai.reply.top"), { list });
-    }
-
-    return fmt(tr("ai.reply.snapshot"), {
-      code,
-      net: format(nb.net),
-      liquid: format(balance),
-      income: format(income),
-      expenses: format(expenses),
-      rate: Math.round(rate * 100),
-    });
-  };
 }
