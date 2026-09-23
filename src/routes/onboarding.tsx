@@ -77,8 +77,9 @@ function Onboarding() {
             </span>
           </span>
           <button
+            type="button"
             onClick={finish}
-            className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="tap px-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             {t("onb.skip")}
           </button>
@@ -117,6 +118,7 @@ function Onboarding() {
             ))}
           </div>
           <button
+            type="button"
             onClick={() => (last ? finish() : setI((v) => v + 1))}
             className="group flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform active:scale-[0.98]"
             style={{ background: "var(--gradient-primary)" }}
@@ -126,8 +128,9 @@ function Onboarding() {
           </button>
           {!last ? (
             <button
+              type="button"
               onClick={finish}
-              className="mt-3 w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground"
+              className="tap mt-3 w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               {t("onb.explore")}
             </button>

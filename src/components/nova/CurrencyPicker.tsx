@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -40,6 +41,7 @@ export function CurrencyPicker({ variant = "icon" }: { variant?: "icon" | "chip"
           <DialogTitle className="flex items-center gap-2 text-base">
             <Coins className="h-4 w-4 text-primary" /> {t("cur.title")}
           </DialogTitle>
+          <DialogDescription className="sr-only">{t("cur.aria")}</DialogDescription>
         </DialogHeader>
         <ul className="mt-2 max-h-[60vh] space-y-1 overflow-y-auto pr-1">
           {CURRENCIES.map((c) => {

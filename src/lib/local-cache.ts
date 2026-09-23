@@ -22,7 +22,7 @@ export function sensitiveKeys(userId?: string | null): string[] {
     "nova.store.v2",
     "nova.store.v1",
     "nova.txfilters.v1.guest",
-    ...(userId ? [storeKeyFor(userId), `nova.txfilters.v1.${userId}`] : []),
+    ...(userId ? [storeKeyFor(userId), `nova.txfilters.v1.${userId}`, `nova.recovery.v1.${userId}`] : []),
   ];
 }
 
@@ -40,7 +40,7 @@ export function clearLocalNovaData(userId?: string | null) {
 
 /** True when a localStorage key holds financial data (used by diagnostics). */
 export function isSensitiveKey(key: string): boolean {
-  return key.startsWith("nova.store.") || key.startsWith("nova.txfilters.");
+  return key.startsWith("nova.store.") || key.startsWith("nova.txfilters.") || key.startsWith("nova.recovery.");
 }
 
 /**

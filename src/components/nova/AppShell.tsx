@@ -93,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
               >
                 <Icon className={cn("h-5 w-5", active && "text-primary")} strokeWidth={active ? 2.1 : 1.7} />
-                <span>{label}</span>
+                <span className="max-w-full truncate">{label}</span>
               </Link>
             );
           })}
