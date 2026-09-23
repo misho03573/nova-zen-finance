@@ -1,28 +1,19 @@
 /**
  * NOVA AI assistant — real model call through the Lovable AI Gateway.
  *
- * Privacy contract: the client sends only `snapshotLines(buildAiSnapshot(ctx))`
- * — aggregated, anonymized metrics with no names, ids or transaction titles.
- * The model never sees raw app state.
+ * Privacy contract: the browser sends only a question, bounded history, locale,
+ * and display currency. The authenticated server derives anonymized aggregates
+ * from that user's own cloud state. Raw records never enter the model prompt.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { z } from "zod";
 import { createLovableAiGatewayRunIdFetch } from "./ai-gateway.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { AskNovaInput, runAiAssistant, type AskNovaData, type AskNovaResult } from "@/lib/ai-assistant-core";
+import { buildServerSnapshotLines } from "@/lib/ai-financial-context.server";
 
-const AskInput = z.object({
-  question: z.string().min(1).max(500),
-  lines: z.array(z.string().max(300)).max(40),
-  history: z
-    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(2000) }))
-    .max(8),
-  locale: z.enum(["en", "bg", "de", "fr", "es"]),
-});
-
-type AskData = z.infer<typeof AskInput>;
-
-const LANGUAGE_NAMES: Record<AskData["locale"], string> = {
+const LANGUAGE_NAMES: Record<AskNovaData["locale"], string> = {
   en: "English",
   bg: "Bulgarian",
   de: "German",
@@ -30,12 +21,14 @@ const LANGUAGE_NAMES: Record<AskData["locale"], string> = {
   es: "Spanish",
 };
 
-function systemPrompt(locale: AskData["locale"], lines: string[]): string {
+export function systemPrompt(locale: AskNovaData["locale"], lines: string[]): string {
   return [
     "You are NOVA AI, the assistant inside the NOVA personal finance app.",
     "Below are anonymized financial metrics for the user's current month. They are ground truth: never contradict them, and never invent numbers not derivable from them. If the metrics cannot answer a question, say so briefly.",
     "You know nothing about the user's identity — never ask for or repeat personal details.",
-    `Reply in ${LANGUAGE_NAMES[locale]}. Keep answers under 120 words: warm, concrete, practical. Plain text only — short sentences, at most 3 bullet lines using \"•\". No markdown headings, no tables.`,
+    "You are strictly read-only. Never claim to execute transactions, transfers, budget changes, account changes, or any other financial action.",
+    "Offer educational, non-binding guidance only. Never claim to be a financial adviser or guarantee outcomes. Encourage professional advice for consequential decisions.",
+    `Reply in ${LANGUAGE_NAMES[locale]}. Keep answers under 180 words: warm, concrete, practical. Use concise Markdown with short paragraphs or bullet lists; avoid tables.`,
     "",
     "Metrics:",
     ...lines,
@@ -43,28 +36,40 @@ function systemPrompt(locale: AskData["locale"], lines: string[]): string {
 }
 
 export const askNova = createServerFn({ method: "POST" })
-  .validator((data: unknown) => AskInput.parse(data))
-  .handler(async ({ data }) => {
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) => AskNovaInput.parse(data))
+  .handler(async ({ data, context }): Promise<AskNovaResult> => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) {
-      return { ok: false as const, error: "AI service is not configured." };
+      return { ok: false, code: "configuration", retryable: false };
     }
 
-    const runIdFetch = createLovableAiGatewayRunIdFetch();
-    const lovable = createOpenAI({
-      baseURL: "https://ai.gateway.lovable.dev/v1",
-      apiKey: key, // satisfies the SDK; the gateway authenticates on the header below
-      headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-      fetch: runIdFetch.fetch,
-    });
-
-    try {
-      const result = streamText({
+    return runAiAssistant({
+      userId: context.userId,
+      data,
+      readAggregateLines: async () => {
+        const { data: row, error } = await context.supabase
+          .from("user_data")
+          .select("data")
+          .eq("user_id", context.userId)
+          .maybeSingle();
+        if (error) throw Object.assign(new Error("Cloud read failed"), { status: 503 });
+        return buildServerSnapshotLines(row?.data ?? null, data.currency);
+      },
+      generate: async ({ data: request, lines }) => {
+        const runIdFetch = createLovableAiGatewayRunIdFetch();
+        const lovable = createOpenAI({
+          baseURL: "https://ai.gateway.lovable.dev/v1",
+          apiKey: key,
+          headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+          fetch: runIdFetch.fetch,
+        });
+        const result = streamText({
         model: lovable.responses("openai/gpt-6-astra"),
-        system: systemPrompt(data.locale, data.lines),
+        system: systemPrompt(request.locale, lines),
         messages: [
-          ...data.history.map((m) => ({ role: m.role, content: m.content })),
-          { role: "user" as const, content: data.question },
+          ...request.history.map((m) => ({ role: m.role, content: m.content })),
+          { role: "user" as const, content: request.question },
         ],
         providerOptions: {
           openai: {
@@ -75,18 +80,11 @@ export const askNova = createServerFn({ method: "POST" })
             include: ["reasoning.encrypted_content"],
           },
         },
-      });
-
-      const text = (await result.text)?.trim();
-      if (!text) {
-        return { ok: false as const, error: "The assistant returned no answer. Please try again." };
-      }
-      return { ok: true as const, text };
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message.slice(0, 300)
-          : "The AI service could not be reached. Please try again shortly.";
-      return { ok: false as const, error: message };
-    }
+        });
+        return result.text;
+      },
+    }).then((result) => {
+      if (!result.ok) console.error("[NOVA AI] Request failed", result.code);
+      return result;
+    });
   });
