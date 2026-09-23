@@ -73,7 +73,7 @@ describe("NOVA AI security boundary", () => {
     };
     const lines = buildServerSnapshotLines(raw, "USD", new Date("2026-08-15T12:00:00Z").getTime());
     const prompt = lines.join("\n");
-    expect(prompt).toContain("has_data: true");
+    expect(prompt).toContain("net_worth=108.7");
     expect(prompt).not.toContain("Secret Bank");
     expect(prompt).not.toContain("Jane Doe");
     expect(prompt).not.toContain("private-account-id");
