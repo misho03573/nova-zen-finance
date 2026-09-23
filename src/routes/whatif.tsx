@@ -119,7 +119,7 @@ function WhatIfPage() {
 
   return (
     <AppShell>
-      <PageHeader subtitle={tr("wi.subtitle")} title={tr("wi.title")} right={<CurrencyPicker />} />
+      <PageHeader back subtitle={tr("wi.subtitle")} title={tr("wi.title")} right={<CurrencyPicker />} />
 
       <section className="px-5">
         <div className="flex gap-3 rounded-3xl border border-border bg-card/60 p-4 backdrop-blur">
