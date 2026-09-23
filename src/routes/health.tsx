@@ -119,7 +119,7 @@ function FindingRow({ f }: { f: HealthFinding }) {
             className="press inline-flex min-h-[36px] items-center gap-1 rounded-full border border-border px-3 text-[11px] font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {tr("dh.review")}
-            <ArrowRight className="h-3 w-3" />
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
           </Link>
         </div>
       </div>
@@ -176,7 +176,7 @@ function HealthPage() {
             onClick={refresh}
             className="press mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
             {tr("dh.refresh")}
           </button>
         </section>
@@ -219,7 +219,7 @@ function HealthPage() {
               aria-label={tr("dh.refresh")}
               className="press inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 text-xs font-semibold sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
               {tr("dh.refresh")}
             </button>
           </div>
@@ -228,7 +228,7 @@ function HealthPage() {
 
       <section className="px-5 pt-4">
         <div className="flex items-start gap-2 rounded-2xl border border-border bg-card/70 p-3 backdrop-blur">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
           <div className="min-w-0">
             <p className="text-sm font-semibold">{tr("dh.privacy.title")}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{tr("dh.privacy.body")}</p>
@@ -275,7 +275,7 @@ function HealthPage() {
                   className="press grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold">{tr(`dh.kind.${g.kind}`)}</span>

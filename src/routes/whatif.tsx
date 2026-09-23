@@ -93,7 +93,11 @@ function WhatIfPage() {
   const isEmptyScenario = validation.issues.includes("empty");
 
   const dirToggle = (value: WhatIfDirection, onChange: (d: WhatIfDirection) => void, idPrefix: string) => (
-    <div className="inline-flex rounded-full border border-border bg-background/60 p-0.5 text-[11px]">
+    <div
+      className="inline-flex rounded-full border border-border bg-background/60 p-0.5 text-[11px]"
+      role="group"
+      aria-label={tr("wi.direction")}
+    >
       {(["expense", "income"] as const).map((k) => (
         <button
           key={k}
@@ -102,7 +106,7 @@ function WhatIfPage() {
           aria-pressed={value === k}
           onClick={() => onChange(k)}
           className={cn(
-            "rounded-full px-3 py-1.5 transition-colors",
+            "rounded-full px-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             value === k ? "text-primary-foreground" : "text-muted-foreground",
           )}
           style={value === k ? { background: "var(--gradient-primary)" } : undefined}
@@ -155,7 +159,7 @@ function WhatIfPage() {
                     value={raw.oneOffAmount}
                     onChange={(e) => patch({ oneOffAmount: e.target.value })}
                     placeholder="0"
-                    className="mt-1 w-full bg-transparent text-base outline-none"
+                    className="mt-1 w-full rounded-lg bg-transparent text-base"
                   />
                 </label>
                 {dirToggle(raw.oneOffDirection, (d) => patch({ oneOffDirection: d }), "wi-oneoff")}
@@ -167,7 +171,7 @@ function WhatIfPage() {
                   type="date"
                   value={raw.oneOffDate}
                   onChange={(e) => patch({ oneOffDate: e.target.value })}
-                  className="mt-1 w-full bg-transparent text-sm outline-none"
+                  className="mt-1 w-full rounded-lg bg-transparent text-sm"
                 />
               </label>
             </fieldset>
@@ -185,7 +189,7 @@ function WhatIfPage() {
                     value={raw.monthlyAmount}
                     onChange={(e) => patch({ monthlyAmount: e.target.value })}
                     placeholder="0"
-                    className="mt-1 w-full bg-transparent text-base outline-none"
+                    className="mt-1 w-full rounded-lg bg-transparent text-base"
                   />
                 </label>
                 {dirToggle(raw.monthlyDirection, (d) => patch({ monthlyDirection: d }), "wi-monthly")}
@@ -202,7 +206,7 @@ function WhatIfPage() {
                     aria-pressed={raw.horizon === h}
                     onClick={() => patch({ horizon: h })}
                     className={cn(
-                      "flex-1 rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
+                      "flex-1 rounded-full border px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       raw.horizon === h ? "border-primary/60 bg-primary/10 text-foreground" : "border-border bg-card/60 text-muted-foreground",
                     )}
                   >

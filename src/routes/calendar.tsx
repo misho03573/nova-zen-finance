@@ -176,7 +176,7 @@ function CalendarPage() {
             aria-label={tr("cal.prev")}
             className="tap grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
           <p className="truncate text-center text-sm font-semibold" aria-live="polite">
             {periodLabel}
@@ -186,7 +186,7 @@ function CalendarPage() {
             aria-label={tr("cal.next")}
             className="tap grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
@@ -228,7 +228,7 @@ function CalendarPage() {
         className="mt-4 px-4 sm:px-5"
         ref={gridRef}
         tabIndex={0}
-        role="grid"
+        role="group"
         aria-label={tr("cal.gridLabel")}
         onKeyDown={onKeyDown}
       >
@@ -307,7 +307,7 @@ function CalendarPage() {
           <Legend color="oklch(0.7 0.2 30)" label={tr("cal.legend.out")} />
           <Legend color="oklch(0.75 0.15 260)" label={tr("cal.legend.expected")} dashed />
           <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-3 w-3" />
+            <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
             {tr("cal.legend.posted")}
           </span>
         </div>
@@ -469,12 +469,12 @@ function EventRow({
         className="grid h-9 w-9 shrink-0 place-items-center rounded-xl"
         style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 22%, transparent)` }}
       >
-        <Icon className="h-4 w-4" style={{ color: cat.color }} />
+        <Icon className="h-4 w-4" style={{ color: cat.color }} aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">{event.title}</span>
         <span className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-          {expected ? <Clock3 className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+          {expected ? <Clock3 className="h-3 w-3" aria-hidden="true" /> : <CheckCircle2 className="h-3 w-3" aria-hidden="true" />}
           {expected ? tr("cal.status.expected") : tr("cal.status.posted")}
           {event.transfer ? ` · ${tr("cal.transferNote")}` : null}
           {event.adjustment ? ` · ${tr("cal.adjustmentNote")}` : null}
