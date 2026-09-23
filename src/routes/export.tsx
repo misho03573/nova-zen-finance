@@ -247,8 +247,9 @@ function ExportPage() {
                       role="checkbox"
                       aria-checked={on}
                       aria-disabled={!usable}
-                      disabled={!usable}
-                      onClick={() => toggle(s)}
+                      onClick={() => {
+                        if (usable) toggle(s);
+                      }}
                       className={cn(
                         "press grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         on ? "border-primary/50 bg-primary/10" : "border-border bg-card/70",

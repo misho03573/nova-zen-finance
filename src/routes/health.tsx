@@ -197,7 +197,7 @@ function HealthPage() {
           style={{ background: "var(--gradient-card)" }}
         >
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-            <div className="min-w-0">
+            <div className="min-w-0" role="status" aria-live="polite">
               <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                 {tr("dh.findings")}
               </p>
@@ -272,6 +272,7 @@ function HealthPage() {
                 <button
                   onClick={() => setOpen(expanded ? null : g.kind)}
                   aria-expanded={expanded}
+                  aria-controls={`dh-panel-${g.kind}`}
                   className="press grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
@@ -288,7 +289,7 @@ function HealthPage() {
                   </span>
                 </button>
                 {expanded ? (
-                  <ul className="space-y-2 px-4 pb-4">
+                  <ul id={`dh-panel-${g.kind}`} className="space-y-2 px-4 pb-4">
                     {g.findings.map((f) => (
                       <FindingRow key={f.id} f={f} />
                     ))}

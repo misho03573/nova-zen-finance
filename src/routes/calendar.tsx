@@ -316,7 +316,7 @@ function CalendarPage() {
       {/* Selected day */}
       <section className="mt-4 px-4 sm:px-5">
         {selectedDay ? (
-          <div className="animate-fade-in rounded-3xl border border-border bg-card/80 p-4 shadow-[var(--shadow-card)] backdrop-blur">
+          <div role="status" aria-live="polite" className="animate-fade-in rounded-3xl border border-border bg-card/80 p-4 shadow-[var(--shadow-card)] backdrop-blur">
             <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
