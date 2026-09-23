@@ -237,7 +237,7 @@ function ScanPage() {
             <p className="mt-3 text-sm font-semibold">{t("scan.choose")}</p>
             <p className="mt-1 text-xs text-muted-foreground">{t("scan.chooseDesc")}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              {t("scan.limit")} {Math.round(RECEIPT_MAX_BYTES / (1024 * 1024))} MB
+              {fmt(t("scan.limit"), { size: Math.round(RECEIPT_MAX_BYTES / (1024 * 1024)) })}
             </p>
           </div>
         )}
