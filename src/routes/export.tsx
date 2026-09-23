@@ -156,14 +156,14 @@ function ExportPage() {
             aria-label={tr("ex.close")}
             className="press grid h-10 w-10 place-items-center rounded-full border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         }
       />
 
       <section className="px-5">
         <div className="flex items-start gap-2 rounded-2xl border border-border bg-card/70 p-3 backdrop-blur">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
           <div className="min-w-0">
             <p className="text-sm font-semibold">{tr("ex.privacy.title")}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{tr("ex.privacy.body")}</p>
@@ -204,7 +204,7 @@ function ExportPage() {
                     )}
                   >
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold">{tr(`ex.fmt.${f}`)}</span>
@@ -247,8 +247,9 @@ function ExportPage() {
                       role="checkbox"
                       aria-checked={on}
                       aria-disabled={!usable}
-                      disabled={!usable}
-                      onClick={() => toggle(s)}
+                      onClick={() => {
+                        if (usable) toggle(s);
+                      }}
                       className={cn(
                         "press grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         on ? "border-primary/50 bg-primary/10" : "border-border bg-card/70",
@@ -261,7 +262,7 @@ function ExportPage() {
                           on ? "border-primary bg-primary text-primary-foreground" : "border-border",
                         )}
                       >
-                        {on ? <Check className="h-3.5 w-3.5" /> : null}
+                        {on ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
                       </span>
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold">{tr(`ex.sec.${s}`)}</span>
@@ -294,7 +295,7 @@ function ExportPage() {
                 aria-live="assertive"
                 className="flex items-start gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 p-3"
               >
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">{tr("ex.err.title")}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{error}</p>
@@ -309,7 +310,7 @@ function ExportPage() {
               disabled={active.length === 0 || busy}
               className="press inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4" aria-hidden="true" />
               {busy ? tr("ex.working") : tr("ex.download")}
             </button>
             <button

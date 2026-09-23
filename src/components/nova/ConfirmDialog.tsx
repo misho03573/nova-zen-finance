@@ -16,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export type ConfirmOptions = {
@@ -31,6 +32,7 @@ type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>;
 const ConfirmCtx = createContext<ConfirmFn | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const tr = useT();
   const [open, setOpen] = useState(false);
   const [opts, setOpts] = useState<ConfirmOptions>({ title: "" });
   const resolverRef = useRef<((v: boolean) => void) | null>(null);
@@ -73,7 +75,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               onClick={() => settle(false)}
               className="rounded-full border border-border bg-background/60 px-4 py-2 text-sm font-medium"
             >
-              {opts.cancelLabel ?? "Cancel"}
+              {opts.cancelLabel ?? tr("action.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => settle(true)}
@@ -89,7 +91,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   : { background: "var(--gradient-primary)" }
               }
             >
-              {opts.confirmLabel ?? "Confirm"}
+              {opts.confirmLabel ?? tr("action.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
