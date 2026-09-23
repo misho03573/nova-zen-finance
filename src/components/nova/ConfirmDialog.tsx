@@ -16,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export type ConfirmOptions = {
@@ -31,6 +32,7 @@ type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>;
 const ConfirmCtx = createContext<ConfirmFn | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const tr = useT();
   const [open, setOpen] = useState(false);
   const [opts, setOpts] = useState<ConfirmOptions>({ title: "" });
   const resolverRef = useRef<((v: boolean) => void) | null>(null);
