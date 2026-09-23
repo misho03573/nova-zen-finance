@@ -27,6 +27,7 @@ import { useConfirm } from "@/components/nova/ConfirmDialog";
 import { useHideBalances, maskAmount } from "@/lib/hide-balance";
 import { EmptyState } from "@/components/nova/EmptyState";
 import { useT, fmt, useLocale } from "@/lib/i18n";
+import { parseContribution, parseGoalValues } from "@/lib/goal-validation";
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -198,6 +199,7 @@ function ContributeDialog({ goalId }: { goalId: string }) {
   const [amount, setAmount] = useState("50");
   const [accountId, setAccountId] = useState<string>("");
   const [destId, setDestId] = useState<string>(goal?.accountId ?? "");
+  const [invalid, setInvalid] = useState(false);
   const chip = (active: boolean) =>
     `rounded-full border px-3 py-1 text-xs ${
       active
@@ -216,20 +218,23 @@ function ContributeDialog({ goalId }: { goalId: string }) {
           <DialogTitle>{tr("goals.addFunds.title")}</DialogTitle>
         </DialogHeader>
         <Input
+          aria-label={tr("goals.amount")}
           type="number"
+          step="0.01"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={(e) => { setAmount(e.target.value); setInvalid(false); }}
           placeholder="50"
           autoFocus
         />
+        {invalid ? <p role="alert" className="text-xs text-destructive">{tr("goals.invalidValues")}</p> : null}
         <div className="space-y-1.5">
           <Label className="text-xs">{tr("goals.fromAccount")}</Label>
           <div className="flex flex-wrap gap-1.5">
-            <button onClick={() => setAccountId("")} className={chip(accountId === "")}>
+            <button type="button" aria-pressed={accountId === ""} onClick={() => setAccountId("")} className={chip(accountId === "")}>
               {tr("goals.trackOnly")}
             </button>
             {state.accounts.map((a) => (
-              <button key={a.id} onClick={() => setAccountId(a.id)} className={chip(accountId === a.id)}>
+              <button type="button" aria-pressed={accountId === a.id} key={a.id} onClick={() => setAccountId(a.id)} className={chip(accountId === a.id)}>
                 {a.name} · {accountCurrency(a)}
               </button>
             ))}
@@ -239,13 +244,13 @@ function ContributeDialog({ goalId }: { goalId: string }) {
         <div className="space-y-1.5">
           <Label className="text-xs">{tr("goals.toAccount")}</Label>
           <div className="flex flex-wrap gap-1.5">
-            <button onClick={() => setDestId("")} className={chip(destId === "")}>
+            <button type="button" aria-pressed={destId === ""} onClick={() => setDestId("")} className={chip(destId === "")}>
               {tr("goals.noLinkedAccount")}
             </button>
             {state.accounts
               .filter((a) => a.id !== accountId)
               .map((a) => (
-                <button key={a.id} onClick={() => setDestId(a.id)} className={chip(destId === a.id)}>
+                <button type="button" aria-pressed={destId === a.id} key={a.id} onClick={() => setDestId(a.id)} className={chip(destId === a.id)}>
                   {a.name} · {accountCurrency(a)}
                 </button>
               ))}
@@ -254,9 +259,10 @@ function ContributeDialog({ goalId }: { goalId: string }) {
         </div>
         <DialogFooter>
           <button
+            type="button"
             onClick={() => {
-              const n = Number.parseFloat(amount);
-              if (!Number.isFinite(n) || n === 0) return;
+              const n = parseContribution(amount);
+              if (n === null) { setInvalid(true); return; }
               if (goal && (goal.accountId ?? "") !== destId) {
                 updateGoal({ ...goal, accountId: destId || undefined });
               }
@@ -288,12 +294,12 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
   const [saved, setSaved] = useState(String(goal?.saved ?? 0));
   const [monthly, setMonthly] = useState(String(goal?.monthly ?? 100));
   const [emoji, setEmoji] = useState(goal?.emoji ?? "🎯");
+  const [invalid, setInvalid] = useState(false);
 
   const save = () => {
-    if (!name.trim()) return;
-    const t = Number.parseFloat(target) || 0;
-    const s = Number.parseFloat(saved) || 0;
-    const m = Number.parseFloat(monthly) || 0;
+    const values = parseGoalValues(target, saved, monthly);
+    if (!name.trim() || !values) { setInvalid(true); return; }
+    const { target: t, saved: s, monthly: m } = values;
     if (goal) {
       updateGoal({
         ...goal,
@@ -339,6 +345,9 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {emojis.map((e) => (
                 <button
+                  type="button"
+                  aria-label={e}
+                  aria-pressed={emoji === e}
                   key={e}
                   onClick={() => setEmoji(e)}
                   className={`tap grid h-9 w-9 place-items-center rounded-xl border text-lg ${
@@ -364,9 +373,11 @@ function GoalDialog({ trigger, goal }: { trigger: React.ReactNode; goal?: Goal }
               <Input type="number" value={monthly} onChange={(e) => setMonthly(e.target.value)} />
             </div>
           </div>
+          {invalid ? <p role="alert" className="text-xs text-destructive">{tr("goals.invalidValues")}</p> : null}
         </div>
         <DialogFooter>
           <button
+            type="button"
             onClick={save}
             className="w-full rounded-full py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
             style={{ background: "var(--gradient-primary)" }}

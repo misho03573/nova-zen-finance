@@ -14,6 +14,7 @@ import { CloudSync, recoveryKeyFor } from "@/lib/sync-core";
 import { supabaseTransport } from "@/lib/sync-transport";
 
 import { GUEST_STORE_KEY, storeKeyFor } from "@/lib/local-cache";
+import { sanitizePersistedState } from "@/lib/persisted-state";
 import type { CurrencyCode } from "@/lib/currency";
 import { convertAmount, useCurrency } from "@/lib/currency";
 import { defaultCategories, type UserCategory } from "@/lib/categories";
@@ -1317,8 +1318,8 @@ export function NovaProvider({ children }: { children: ReactNode }) {
       try {
         const raw = window.localStorage.getItem(key);
         if (raw) {
-          const parsed = JSON.parse(raw) as NovaState;
-          if (parsed?.accounts && parsed?.transactions) {
+          const parsed = sanitizePersistedState<NovaState>(JSON.parse(raw));
+          if (parsed) {
             dispatch({ type: "hydrate", state: parsed });
           } else {
             dispatch({ type: "hydrate", state: seed });
@@ -1338,13 +1339,15 @@ export function NovaProvider({ children }: { children: ReactNode }) {
     try {
       const raw = window.localStorage.getItem(key);
       if (raw) {
-        const parsed = JSON.parse(raw) as NovaState;
-        if (parsed?.accounts && parsed?.transactions) {
+        const parsed = sanitizePersistedState<NovaState>(JSON.parse(raw));
+        if (parsed) {
           dispatch({ type: "hydrate", state: parsed });
+        } else {
+          window.localStorage.removeItem(key);
         }
       }
     } catch {
-      /* ignore */
+      try { window.localStorage.removeItem(key); } catch { /* ignore */ }
     }
 
     (async () => {

@@ -274,7 +274,7 @@ function WalletPage() {
                             search={{ merchant: t.title, category: t.category }}
                             aria-label={tr("rules.fromTx")}
                             title={tr("rules.fromTx")}
-                            className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                            className="tap ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-100 transition-opacity hover:text-primary sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
                           >
                             <Wand2 className="h-3.5 w-3.5" />
                           </Link>
@@ -282,6 +282,7 @@ function WalletPage() {
                         </>
                       )}
                       <button
+                        type="button"
                         onClick={async () => {
                           const ok = await confirm({
                             title: tr("wallet.deleteTx"),
@@ -298,7 +299,7 @@ function WalletPage() {
                           }
                         }}
                         aria-label={tr("wallet.deleteTxAria")}
-                        className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                        className="tap ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-100 transition-opacity hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -399,9 +400,10 @@ function EditTxDialog({ tx }: { tx: Transaction }) {
     >
       <DialogTrigger asChild>
         <button
+          type="button"
           aria-label={tr("wallet.editTx")}
           title={tr("wallet.editTx")}
-          className="ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+          className="tap ml-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground opacity-100 transition-opacity hover:text-primary sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
@@ -556,7 +558,7 @@ function AccountCardInner({ account }: { account: Account }) {
             trigger={
               <button
                 aria-label={tr("wallet.editAccount")}
-                className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+                className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -585,7 +587,7 @@ function AccountCardInner({ account }: { account: Account }) {
                 toast.message(tr("wallet.deleted"));
               }
             }}
-            className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+            className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -719,7 +721,7 @@ function AdjustBalanceDialog({ account }: { account: Account }) {
         <button
           aria-label={tr("adjust.cta")}
           title={tr("adjust.cta")}
-          className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+          className="tap grid h-7 w-7 place-items-center rounded-full bg-white/10 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
         >
           <Scale className="h-3.5 w-3.5" />
         </button>

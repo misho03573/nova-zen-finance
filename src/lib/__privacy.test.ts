@@ -70,6 +70,7 @@ describe("local cache isolation", () => {
       [storeKeyFor(UID_B)]: "{}",
       "nova.store.v3": "{}",
       [`nova.txfilters.v1.${UID_A}`]: "{}",
+      [`nova.recovery.v1.${UID_A}`]: "{}",
       "nova.theme": "dark",
       "nova.onboarded.v1": "1",
     };
@@ -88,6 +89,7 @@ describe("local cache isolation", () => {
     expect(store[storeKeyFor(UID_A)]).toBeUndefined();
     expect(store["nova.store.v3"]).toBeUndefined();
     expect(store[`nova.txfilters.v1.${UID_A}`]).toBeUndefined();
+    expect(store[`nova.recovery.v1.${UID_A}`]).toBeUndefined();
     // Another account's cache is untouched — only its owner can clear it.
     expect(store[storeKeyFor(UID_B)]).toBe("{}");
     // Non-sensitive preferences survive.
@@ -98,6 +100,7 @@ describe("local cache isolation", () => {
   it("classifies financial keys as sensitive", () => {
     expect(isSensitiveKey(storeKeyFor(UID_A))).toBe(true);
     expect(isSensitiveKey("nova.txfilters.v1.guest")).toBe(true);
+    expect(isSensitiveKey(`nova.recovery.v1.${UID_A}`)).toBe(true);
     expect(isSensitiveKey("nova.theme")).toBe(false);
     expect(sensitiveKeys(UID_A)).toContain(storeKeyFor(UID_A));
     expect(sensitiveKeys(null)).not.toContain(storeKeyFor(UID_A));

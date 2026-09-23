@@ -76,7 +76,7 @@ export function LockScreen() {
             if (e.key === "Enter" && pin.length === 6) void submit();
           }}
         />
-        {error ? <p className="text-center text-xs text-destructive">{error}</p> : null}
+        {error ? <p role="alert" className="text-center text-xs text-destructive">{error}</p> : null}
         <Button className="w-full" disabled={pin.length !== 6 || busy} onClick={() => void submit()}>
           {t("lock.unlock")}
         </Button>
