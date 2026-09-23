@@ -58,7 +58,7 @@ describe("data health", () => {
 describe("data export", () => {
   it("keeps JSON-only sections keyboard reachable instead of removing them from tab order", () => {
     expect(exportPage).toContain("aria-disabled={!usable}");
-    expect(exportPage).not.toContain("disabled={!usable}");
+    expect(exportPage).not.toMatch(/(?<!aria-)disabled=\{!usable\}/);
   });
 
   it("marks decorative icons as hidden from assistive tech", () => {
