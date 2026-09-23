@@ -8,19 +8,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { z } from "zod";
 import { createLovableAiGatewayRunIdFetch } from "./ai-gateway.server";
-
-const AskInput = z.object({
-  question: z.string().min(1).max(500),
-  lines: z.array(z.string().max(300)).max(40),
-  history: z
-    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(2000) }))
-    .max(8),
-  locale: z.enum(["en", "bg", "de", "fr", "es"]),
-});
-
-type AskData = z.infer<typeof AskInput>;
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { AskNovaInput, classifyAiError, consumeAiRateLimit, type AskNovaData, type AskNovaResult } from "@/lib/ai-assistant-core";
+import { buildServerSnapshotLines } from "@/lib/ai-financial-context.server";
 
 const LANGUAGE_NAMES: Record<AskData["locale"], string> = {
   en: "English",
@@ -30,12 +21,14 @@ const LANGUAGE_NAMES: Record<AskData["locale"], string> = {
   es: "Spanish",
 };
 
-function systemPrompt(locale: AskData["locale"], lines: string[]): string {
+export function systemPrompt(locale: AskNovaData["locale"], lines: string[]): string {
   return [
     "You are NOVA AI, the assistant inside the NOVA personal finance app.",
     "Below are anonymized financial metrics for the user's current month. They are ground truth: never contradict them, and never invent numbers not derivable from them. If the metrics cannot answer a question, say so briefly.",
     "You know nothing about the user's identity — never ask for or repeat personal details.",
-    `Reply in ${LANGUAGE_NAMES[locale]}. Keep answers under 120 words: warm, concrete, practical. Plain text only — short sentences, at most 3 bullet lines using \"•\". No markdown headings, no tables.`,
+    "You are strictly read-only. Never claim to execute transactions, transfers, budget changes, account changes, or any other financial action.",
+    "Offer educational, non-binding guidance only. Never claim to be a financial adviser or guarantee outcomes. Encourage professional advice for consequential decisions.",
+    `Reply in ${LANGUAGE_NAMES[locale]}. Keep answers under 180 words: warm, concrete, practical. Use concise Markdown with short paragraphs or bullet lists; avoid tables.`,
     "",
     "Metrics:",
     ...lines,
@@ -43,12 +36,23 @@ function systemPrompt(locale: AskData["locale"], lines: string[]): string {
 }
 
 export const askNova = createServerFn({ method: "POST" })
-  .validator((data: unknown) => AskInput.parse(data))
-  .handler(async ({ data }) => {
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => AskNovaInput.parse(data))
+  .handler(async ({ data, context }): Promise<AskNovaResult> => {
+    if (!context.userId) return { ok: false, code: "unauthorized", retryable: false };
+    if (!consumeAiRateLimit(context.userId)) return { ok: false, code: "rate_limited", retryable: true };
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) {
-      return { ok: false as const, error: "AI service is not configured." };
+      return { ok: false, code: "configuration", retryable: false };
     }
+
+    const { data: row, error: readError } = await context.supabase
+      .from("user_data")
+      .select("data")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (readError) return { ok: false, code: "provider", retryable: true };
+    const lines = buildServerSnapshotLines(row?.data ?? null, data.currency);
 
     const runIdFetch = createLovableAiGatewayRunIdFetch();
     const lovable = createOpenAI({
@@ -61,7 +65,7 @@ export const askNova = createServerFn({ method: "POST" })
     try {
       const result = streamText({
         model: lovable.responses("openai/gpt-6-astra"),
-        system: systemPrompt(data.locale, data.lines),
+        system: systemPrompt(data.locale, lines),
         messages: [
           ...data.history.map((m) => ({ role: m.role, content: m.content })),
           { role: "user" as const, content: data.question },
@@ -79,14 +83,11 @@ export const askNova = createServerFn({ method: "POST" })
 
       const text = (await result.text)?.trim();
       if (!text) {
-        return { ok: false as const, error: "The assistant returned no answer. Please try again." };
+        return { ok: false, code: "empty", retryable: true };
       }
-      return { ok: true as const, text };
+      return { ok: true, text };
     } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message.slice(0, 300)
-          : "The AI service could not be reached. Please try again shortly.";
-      return { ok: false as const, error: message };
+      console.error("[NOVA AI] Provider request failed", classifyAiError(error).code);
+      return classifyAiError(error);
     }
   });
