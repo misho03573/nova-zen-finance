@@ -10,7 +10,7 @@ import { streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createLovableAiGatewayRunIdFetch } from "./ai-gateway.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { AskNovaInput, classifyAiError, runAiAssistant, type AskNovaData, type AskNovaResult } from "@/lib/ai-assistant-core";
+import { AskNovaInput, runAiAssistant, type AskNovaData, type AskNovaResult } from "@/lib/ai-assistant-core";
 import { buildServerSnapshotLines } from "@/lib/ai-financial-context.server";
 
 const LANGUAGE_NAMES: Record<AskNovaData["locale"], string> = {
