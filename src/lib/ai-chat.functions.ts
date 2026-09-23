@@ -43,7 +43,7 @@ function systemPrompt(locale: AskData["locale"], lines: string[]): string {
 }
 
 export const askNova = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => AskInput.parse(data))
+  .validator((data: unknown) => AskInput.parse(data))
   .handler(async ({ data }) => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) {
