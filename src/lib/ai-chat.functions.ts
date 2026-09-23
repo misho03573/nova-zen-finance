@@ -10,7 +10,7 @@ import { streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createLovableAiGatewayRunIdFetch } from "./ai-gateway.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { AskNovaInput, classifyAiError, consumeAiRateLimit, type AskNovaData, type AskNovaResult } from "@/lib/ai-assistant-core";
+import { AskNovaInput, classifyAiError, runAiAssistant, type AskNovaData, type AskNovaResult } from "@/lib/ai-assistant-core";
 import { buildServerSnapshotLines } from "@/lib/ai-financial-context.server";
 
 const LANGUAGE_NAMES: Record<AskNovaData["locale"], string> = {
@@ -39,36 +39,37 @@ export const askNova = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => AskNovaInput.parse(data))
   .handler(async ({ data, context }): Promise<AskNovaResult> => {
-    if (!context.userId) return { ok: false, code: "unauthorized", retryable: false };
-    if (!consumeAiRateLimit(context.userId)) return { ok: false, code: "rate_limited", retryable: true };
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) {
       return { ok: false, code: "configuration", retryable: false };
     }
 
-    const { data: row, error: readError } = await context.supabase
-      .from("user_data")
-      .select("data")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (readError) return { ok: false, code: "provider", retryable: true };
-    const lines = buildServerSnapshotLines(row?.data ?? null, data.currency);
-
-    const runIdFetch = createLovableAiGatewayRunIdFetch();
-    const lovable = createOpenAI({
-      baseURL: "https://ai.gateway.lovable.dev/v1",
-      apiKey: key, // satisfies the SDK; the gateway authenticates on the header below
-      headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-      fetch: runIdFetch.fetch,
-    });
-
-    try {
-      const result = streamText({
+    return runAiAssistant({
+      userId: context.userId,
+      data,
+      readAggregateLines: async () => {
+        const { data: row, error } = await context.supabase
+          .from("user_data")
+          .select("data")
+          .eq("user_id", context.userId)
+          .maybeSingle();
+        if (error) throw Object.assign(new Error("Cloud read failed"), { status: 503 });
+        return buildServerSnapshotLines(row?.data ?? null, data.currency);
+      },
+      generate: async ({ data: request, lines }) => {
+        const runIdFetch = createLovableAiGatewayRunIdFetch();
+        const lovable = createOpenAI({
+          baseURL: "https://ai.gateway.lovable.dev/v1",
+          apiKey: key,
+          headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+          fetch: runIdFetch.fetch,
+        });
+        const result = streamText({
         model: lovable.responses("openai/gpt-6-astra"),
-        system: systemPrompt(data.locale, lines),
+        system: systemPrompt(request.locale, lines),
         messages: [
-          ...data.history.map((m) => ({ role: m.role, content: m.content })),
-          { role: "user" as const, content: data.question },
+          ...request.history.map((m) => ({ role: m.role, content: m.content })),
+          { role: "user" as const, content: request.question },
         ],
         providerOptions: {
           openai: {
@@ -79,15 +80,11 @@ export const askNova = createServerFn({ method: "POST" })
             include: ["reasoning.encrypted_content"],
           },
         },
-      });
-
-      const text = (await result.text)?.trim();
-      if (!text) {
-        return { ok: false, code: "empty", retryable: true };
-      }
-      return { ok: true, text };
-    } catch (error) {
-      console.error("[NOVA AI] Provider request failed", classifyAiError(error).code);
-      return classifyAiError(error);
-    }
+        });
+        return result.text;
+      },
+    }).then((result) => {
+      if (!result.ok) console.error("[NOVA AI] Request failed", result.code);
+      return result;
+    });
   });

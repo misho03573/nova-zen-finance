@@ -48,3 +48,22 @@ export function consumeAiRateLimit(userId: string, now = Date.now()): boolean {
 export function resetAiRateLimitsForTests() {
   rateEntries.clear();
 }
+
+export async function runAiAssistant(args: {
+  userId: string;
+  data: AskNovaData;
+  readAggregateLines: () => Promise<string[]>;
+  generate: (input: { data: AskNovaData; lines: string[] }) => Promise<string>;
+}): Promise<AskNovaResult> {
+  if (!args.userId) return { ok: false, code: "unauthorized", retryable: false };
+  if (!consumeAiRateLimit(args.userId)) return { ok: false, code: "rate_limited", retryable: true };
+  try {
+    const lines = await args.readAggregateLines();
+    const text = (await args.generate({ data: args.data, lines })).trim();
+    return text
+      ? { ok: true, text }
+      : { ok: false, code: "empty", retryable: true };
+  } catch (error) {
+    return classifyAiError(error);
+  }
+}

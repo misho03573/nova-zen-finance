@@ -12,7 +12,8 @@ import {
 import { sanitizePersistedState } from "@/lib/persisted-state";
 
 export function buildServerSnapshotLines(raw: unknown, to: CurrencyCode, now = Date.now()): string[] {
-  const state = sanitizePersistedState<NovaState>(raw) ?? emptyState;
+  const state = raw == null ? emptyState : sanitizePersistedState<NovaState>(raw);
+  if (!state) throw new Error("Malformed persisted financial state");
   const accountCurrencies = new Map(state.accounts.map((a) => [a.id, accountCurrency(a)]));
   const convert = (value: number, from: CurrencyCode) => convertAmount(value, from, to);
   const accounts = state.accounts.map((a) => ({ ...a, balance: convert(a.balance, accountCurrency(a)) }));
